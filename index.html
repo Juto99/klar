@@ -371,8 +371,8 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 }
 @media (max-width:760px){
   .app,.app.has-detail{grid-template-columns:minmax(0,1fr)}
-  .sidebar{position:fixed;top:0;left:0;bottom:0;width:min(300px,86vw);z-index:50;transform:translateX(-105%);transition:transform .25s ease;box-shadow:var(--shadow-lg)}
-  body.sb-open .sidebar{transform:none}
+  .sidebar{position:fixed;top:0;left:0;bottom:0;width:min(300px,86vw);z-index:50;transform:translateX(-105%);transition:transform .25s ease,visibility .25s;visibility:hidden}
+  body.sb-open .sidebar{transform:none;visibility:visible;box-shadow:var(--shadow-lg)}
   .main-inner{padding:calc(20px + env(safe-area-inset-top)) 18px calc(120px + env(safe-area-inset-bottom))}
   h1{font-size:28px}
   .detail{width:100%}

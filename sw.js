@@ -1,6 +1,6 @@
 // Klar – Service Worker: macht die App offline-fähig.
 // Bei jeder Veröffentlichung VERSION erhöhen, damit Geräte die neue Fassung laden.
-const VERSION = 'klar-v2';
+const VERSION = 'klar-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -11,7 +11,8 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // cache: 'reload' umgeht den HTTP-Cache, damit wirklich die neue Fassung gespeichert wird.
+  e.waitUntil(caches.open(VERSION).then(c => c.addAll(ASSETS.map(u => new Request(u, { cache:'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -32,7 +33,7 @@ self.addEventListener('fetch', e => {
       try {
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), 3000);
-        const res = await fetch(req.url, { signal: ctrl.signal, credentials: 'same-origin' });
+        const res = await fetch(req.url, { signal: ctrl.signal, credentials: 'same-origin', cache: 'no-cache' });
         clearTimeout(timer);
         if (res.ok) (await caches.open(VERSION)).put('./index.html', res.clone());
         return res;
