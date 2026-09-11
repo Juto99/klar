@@ -615,7 +615,7 @@ function header(title, sub, eyebrow = '', right = ''){
 }
 const addBtn = () => `<button class="btn btn-p" data-act="assist-full">${ic('plus')}<span class="hide-m">Geführt anlegen</span></button>`;
 function quickAdd(){
-  return `<label class="qa">${ic('mic')}<input id="qa" placeholder="Neues To-do – sprechen oder tippen" autocomplete="off" enterkeyhint="done" aria-label="Neues To-do"><kbd class="hide-m">N</kbd></label>
+  return `<form class="qa" id="qaf" autocomplete="off">${ic('mic')}<input id="qa" placeholder="Neues To-do – sprechen oder tippen" autocomplete="off" enterkeyhint="send" aria-label="Neues To-do"><kbd class="hide-m">N</kbd></form>
   <div class="qa-hint">Frei sprechen, z. B. „Angebote vergleichen, privat, bis nächste Woche“ – dann ⏎. Personen, Projekte und Deadlines werden erkannt.</div>`;
 }
 
@@ -1245,6 +1245,7 @@ function quickSubmit(v){
   $('#qa').blur();
   openAssistant('fill', draft, { rec, raw:v.trim() });
 }
+document.addEventListener('submit', e => { if (e.target.id === 'qaf'){ e.preventDefault(); quickSubmit($('#qa').value); } });
 document.addEventListener('keydown', e => {
   const tag = e.target.tagName;
   if (e.key === 'Escape'){

@@ -1,6 +1,6 @@
 // Klar – Service Worker: macht die App offline-fähig.
 // Bei jeder Veröffentlichung VERSION erhöhen, damit Geräte die neue Fassung laden.
-const VERSION = 'klar-v1';
+const VERSION = 'klar-v2';
 const ASSETS = [
   './',
   './index.html',
