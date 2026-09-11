@@ -363,6 +363,9 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .recog-t{font-size:15.5px;font-weight:550;margin-bottom:8px}
 .recog .chips{gap:6px}
 .recog .chip{background:var(--surface)}
+.recog .chip.sugg{background:transparent;box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent);cursor:pointer}
+.recog .chip.sugg svg.i{width:14px;height:14px}
+.sugg-l{font-size:12px;color:var(--text-2);margin:10px 0 6px}
 .raw{font-size:13px;color:var(--text-2);font-style:italic;margin-top:8px}
 .review{display:flex;flex-direction:column}
 .rv{display:grid;grid-template-columns:110px 1fr auto;gap:12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
@@ -933,48 +936,133 @@ function syncScrim(){
 function render(){ renderSidebar(); renderMain(); renderDetail(); renderTabbar(); syncScrim(); }
 
 /* ============ Sprach-Parser (regelbasiert; KI folgt in Etappe 4) ============ */
-function dateFromDM(dd, mm){
-  let d = new Date(TODAY.getFullYear(), mm - 1, dd);
-  if (d < addD(TODAY, -60)) d = new Date(TODAY.getFullYear() + 1, mm - 1, dd);
-  return d;
+const L = '[a-zäöüß]';   // Buchstabe – für Wortgrenzen mit Umlauten
+const MONTH = '(januar|jan|februar|feb|märz|maerz|mär|april|apr|mai|juni|jun|juli|jul|august|aug|september|sept|sep|oktober|okt|november|nov|dezember|dez)';
+const MONTH_FULL = '(januar|februar|märz|april|mai|juni|juli|august|september|oktober|november|dezember)';
+const monthIdx = s => ({ jan:0, feb:1, mär:2, mae:2, apr:3, mai:4, jun:5, jul:6, aug:7, sep:8, okt:9, nov:10, dez:11 })[s.toLowerCase().slice(0, 3)];
+const ORD = ['erste','zweite','dritte','vierte','fünfte','sechste','siebte','achte','neunte','zehnte','elfte','zwölfte','dreizehnte','vierzehnte','fünfzehnte','sechzehnte','siebzehnte','achtzehnte','neunzehnte','zwanzigste','einundzwanzigste','zweiundzwanzigste','dreiundzwanzigste','vierundzwanzigste','fünfundzwanzigste','sechsundzwanzigste','siebenundzwanzigste','achtundzwanzigste','neunundzwanzigste','dreißigste','einunddreißigste'];
+const ORD_RE = '(' + [...ORD].sort((a, b) => b.length - a.length).join('|') + ')[nrs]?';
+const NUMW = { ein:1, eine:1, einem:1, einer:1, zwei:2, drei:3, vier:4, fünf:5, sechs:6, sieben:7, acht:8, neun:9, zehn:10 };
+const WEEKDAYS = '(montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag)';
+// Füllwörter vor einer Datumsangabe („bis zum“, „spätestens am“ …) – werden mit entfernt
+const PFX = '(?:,?\\s*(?:und\\s+)?(?:zwar\\s+)?(?:spätestens\\s+)?(?:(?:bis|ab)\\s+(?:spätestens\\s+)?(?:zum\\s+|zur\\s+|am\\s+)?|am\\s+|zum\\s+|für\\s+|in\\s+der\\s+|im\\s+)?)';
+const BOUND = '(^|[^a-zäöüß0-9])';
+function mkDate(y, m, d){ const x = new Date(y, m, d); return x.getMonth() === ((m % 12) + 12) % 12 && x.getDate() === d ? x : null; }
+function dateDM(d, m, y){
+  if (y != null && !isNaN(y)){ if (y < 100) y += 2000; return mkDate(y, m, d); }
+  let x = mkDate(TODAY.getFullYear(), m, d);
+  if (x && x < addD(TODAY, -60)) x = mkDate(TODAY.getFullYear() + 1, m, d);
+  return x;
 }
+const monthStart = mi => new Date(TODAY.getFullYear() + (mi < TODAY.getMonth() ? 1 : 0), mi, 1);
+const dayDue = d => d ? day(iso(d)) : null;
+function weekOfIso(n){
+  const mon1 = y => mondayOf(new Date(y, 0, 4));
+  let s = addD(mon1(TODAY.getFullYear()), (n - 1) * 7);
+  if (addD(s, 6) < TODAY) s = addD(mon1(TODAY.getFullYear() + 1), (n - 1) * 7);
+  return s;
+}
+function nextWeekday(w, allowToday){ let d = allowToday ? TODAY : addD(TODAY, 1); while (d.getDay() !== w) d = addD(d, 1); return d; }
+const numOf = s => /^\d+$/.test(s) ? +s : NUMW[s.toLowerCase()];
+// Reihenfolge = Priorität: spezifische Angaben zuerst.
 const DUE_RULES = [
-  { re:/,?\s*(?:bis\s+)?(?:zur\s+|in\s+der\s+|spätestens\s+)?nächste[nr]?\s+woche/i, f:() => week(iso(NEXT_MON)), l:'Nächste Woche' },
-  { re:/,?\s*(?:bis\s+)?(?:ende\s+)?diese[rn]?\s+woche/i, f:() => week(iso(THIS_MON)), l:'Diese Woche' },
-  { re:/,?\s*(?:irgendwann\s+)?(?:im\s+|bis\s+)?(?:ende\s+)?nächste[nr]?\s+monat/i, f:() => month(nextMonthKey()), l:'Nächster Monat' },
-  { re:/,?\s*(?:bis\s+)?übermorgen/i, f:() => day(iso(addD(TODAY, 2))), l:'Übermorgen' },
-  { re:/,?\s*(?:am\s+besten\s+)?(?:bis\s+)?morgen(?:\s+früh|\s+abend)?/i, f:() => day(iso(addD(TODAY, 1))), l:'Morgen' },
-  { re:/,?\s*(?:bis\s+)?heute(?:\s+noch|\s+abend)?/i, f:() => day(iso(TODAY)), l:'Heute' },
-  { re:/,?\s*(?:bis\s+|am\s+)?(?:zum\s+)?(\d{1,2})\.\s?(\d{1,2})\.?(?:\s?\d{2,4})?/i, f:m => day(iso(dateFromDM(+m[1], +m[2]))), l:m => `${+m[1]}.${+m[2]}.` },
-  { re:/,?\s*(?:bis\s+|am\s+)?(?:kommenden\s+|nächsten\s+)?(montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag)/i, f:m => { const w = WDL.findIndex(x => x.toLowerCase() === m[1].toLowerCase()); let d = addD(TODAY, 1); while (d.getDay() !== w) d = addD(d, 1); return day(iso(d)); }, l:m => m[1][0].toUpperCase() + m[1].slice(1).toLowerCase() }
+  { re:'(\\d{1,2})\\.\\s?(\\d{1,2})\\.\\s?(\\d{4}|\\d{2})(?!\\d)', f:m => dayDue(dateDM(+m[1], +m[2] - 1, +m[3])) },                    // 15.09.2026
+  { re:'(\\d{1,2})\\.\\s?(\\d{1,2})\\.(?!\\d)', f:m => dayDue(dateDM(+m[1], +m[2] - 1)) },                                           // 15.9.
+  { re:'(?:bis(?:\\s+zum)?|am|zum|ab)\\s+(\\d{1,2})\\.(\\d{1,2})(?![\\d.])', f:m => dayDue(dateDM(+m[1], +m[2] - 1)) },               // bis 15.9
+  { re:'(\\d{1,2})\\.?\\s*' + MONTH + '\\.?(?:\\s+(\\d{4}))?(?!' + L + ')', f:m => dayDue(dateDM(+m[1], monthIdx(m[2]), m[3] ? +m[3] : null)) },   // 15. September
+  { re:ORD_RE + '\\s+' + MONTH + '(?:\\s+(\\d{4}))?(?!' + L + ')', f:m => dayDue(dateDM(ORD.indexOf(m[1].toLowerCase()) + 1, monthIdx(m[2]), m[3] ? +m[3] : null)) }, // fünfzehnten September
+  { re:'(ende|mitte|anfang)\\s+(?:des\\s+)?' + MONTH + '(?!' + L + ')', f:m => {                                                    // Ende September
+      const s = monthStart(monthIdx(m[2])), k = m[1].toLowerCase();
+      if (k === 'ende') return dayDue(new Date(s.getFullYear(), s.getMonth() + 1, 0));
+      if (k === 'mitte') return dayDue(new Date(s.getFullYear(), s.getMonth(), 15));
+      return week(iso(mondayOf(s.getDay() >= 5 || s.getDay() === 0 ? addD(s, 3) : s)));
+  } },
+  { re:'ende\\s+(?:des\\s+)?(?:nächsten|kommenden)\\s+monats', f:() => dayDue(new Date(TODAY.getFullYear(), TODAY.getMonth() + 2, 0)) },
+  { re:'ende\\s+(?:des|dieses)\\s+monats', f:() => dayDue(new Date(TODAY.getFullYear(), TODAY.getMonth() + 1, 0)) },
+  { re:'(?:kw|kalenderwoche)\\s*(\\d{1,2})(?!\\d)', f:m => +m[1] >= 1 && +m[1] <= 53 ? week(iso(weekOfIso(+m[1]))) : null },          // KW 40
+  { re:'(?:ende\\s+)?übernächste[nr]?\\s+woche', f:() => week(iso(addD(THIS_MON, 14))) },
+  { re:'(?:ende\\s+)?(?:nächste[nr]?|kommende[nr]?)\\s+woche', f:() => week(iso(NEXT_MON)) },
+  { re:'(?:ende\\s+)?(?:diese[rns]?\\s+woche|der\\s+woche)', f:() => week(iso(THIS_MON)) },
+  { re:'(?:ende\\s+)?(?:nächste[nrs]?|kommende[nrs]?)\\s+monats?', f:() => month(nextMonthKey()) },
+  { re:'(?:diese[nrs]?|im\\s+laufe\\s+des)\\s+monats?', f:() => month(monthKey(TODAY)) },
+  { re:'in\\s+(\\d{1,2}|einem|einer|eine|ein|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn)\\s+(tag|tagen|woche|wochen|monat|monaten)(?!' + L + ')', f:m => {   // in zwei Wochen
+      const n = numOf(m[1]), u = m[2].toLowerCase();
+      if (!n) return null;
+      if (u.startsWith('tag')) return dayDue(addD(TODAY, n));
+      if (u.startsWith('woche')) return week(iso(mondayOf(addD(TODAY, 7 * n))));
+      return month(monthKey(new Date(TODAY.getFullYear(), TODAY.getMonth() + n, 1)));
+  } },
+  { re:'übermorgen', f:() => dayDue(addD(TODAY, 2)) },
+  { re:'(?:am\\s+besten\\s+)?morgen(?!' + L + ')(?:\\s+(?:früh|vormittag|mittag|nachmittag|abend))?', f:() => dayDue(addD(TODAY, 1)) },
+  { re:'heute(?!' + L + ')(?:\\s+(?:noch|abend|nachmittag))?', f:() => dayDue(TODAY) },
+  { re:'(?:übers\\s+)?wochenende', f:() => dayDue(nextWeekday(6, true)) },
+  { re:'(?:(kommenden|nächsten|diesen)\\s+)?' + WEEKDAYS + '(?!' + L + ')', f:m => dayDue(nextWeekday(WDL.findIndex(x => x.toLowerCase() === m[2].toLowerCase()), /diesen/i.test(m[1] || ''))) },
+  { re:'(?:im|bis|bis\\s+ende|anfang)\\s+' + MONTH_FULL + '(?!' + L + ')', f:m => month(monthKey(monthStart(monthIdx(m[1])))) },    // im Oktober
+  { re:'(?:bis\\s+zum|am|zum)\\s+(\\d{1,2})\\.(?!\\s*\\d)', f:m => {                                                                  // bis zum 20.
+      let d = mkDate(TODAY.getFullYear(), TODAY.getMonth(), +m[1]);
+      if (!d || d < TODAY) d = mkDate(TODAY.getFullYear(), TODAY.getMonth() + 1, +m[1]);
+      return dayDue(d);
+  } }
 ];
+const DUE_RX = DUE_RULES.map(r => ({ rx:new RegExp(BOUND + PFX + r.re, 'i'), f:r.f }));
+const PERSON_STOP = new Set(('projekt team meeting termin termine kunde kunden kundin chef chefin präsentation budget angebot angebote arbeit woche monat ende anfang mitte '
+  + 'frau herr herrn kollege kollegen kollegin kolleginnen familie kinder firma abteilung board steuer steuern bank versicherung arzt ärztin zahnarzt handwerker dachdecker '
+  + 'hilfe feedback freigabe rückmeldung unterlagen bericht antrag rechnung vertrag hr it ceo cfo leadership management geschäftsleitung vorstand bereich abstimmung review '
+  + 'workshop call telefonat besprechung protokoll zahlen daten info infos einladung mail email nachricht brief paket idee ideen konzept strategie planung deadline heute morgen '
+  + 'der die das den dem des ein eine einen einem einer alle allen mich uns sie ihn ihr euch').split(' '));
+const projPhraseRe = name => new RegExp(',?\\s*(?:im\\s+|für\\s+(?:das\\s+)?|zum\\s+)?projekt\\s+' + escRe(name), 'i');
+function tidy(s){
+  s = s.replace(/^\s*idee\s*:\s*/i, '').replace(/,?\s*\b(am besten|irgendwann|bitte)\b\s*/gi, ' ')
+       .replace(/\s+,/g, ',').replace(/,(\s*,)+/g, ',').replace(/\s{2,}/g, ' ')
+       .replace(/(?:^|\s)(?:bis zum|bis|am|zum|spätestens|und|ab)\s*[,.]?\s*$/i, '')
+       .replace(/^[\s,:–-]+|[\s,:.–-]+$/g, '');
+  return s ? s[0].toUpperCase() + s.slice(1) : '';
+}
+const dueText = due => { const l = dueLabel({ due, status:'open' }); return l.txt + (l.k && l.k !== 'ganzer Monat' ? ' · ' + l.k : ''); };
 const day = s => ({ type:'day', date:s });
 const week = s => ({ type:'week', start:s });
 const month = s => ({ type:'month', month:s });
+/* Wertet einen diktierten Satz aus: Projekt, Personen, Deadline, Bereich, Unterkategorie.
+   Unbekannte Namen („mit Claas“, „Projekt Neubau“) kommen als Vorschläge zum Antippen zurück. */
 function parse(text){
-  let s = ' ' + text.trim() + ' ';
-  const r = { title:'', desc:'', ctx:'', area:null, cat:null, persons:[], project:null, due:null }, rec = [];
+  let s = ' ' + text.trim().replace(/\s+/g, ' ') + ' ';
+  const r = blank(), rec = [], sugg = [];
   for (const p of [...PROJECTS].sort((a, b) => b.name.length - a.name.length)){
     if (wordRe(p.name).test(s)){
       r.project = p.id; r.area = p.area;
-      s = s.replace(new RegExp(',?\\s*(?:im\\s+|für\\s+(?:das\\s+)?)?projekt\\s+' + escRe(p.name), 'i'), ' ');
+      s = s.replace(projPhraseRe(p.name), ' ');
       rec.push('Projekt: ' + p.name); break;
     }
   }
-  PEOPLE.forEach(p => { if (wordRe(p.name).test(s)){ r.persons.push(p.id); rec.push('Person: ' + p.name); } });
-  for (const rule of DUE_RULES){
-    const m = s.match(rule.re);
-    if (m){ r.due = rule.f(m); s = s.replace(rule.re, ' '); rec.push('Deadline: ' + (typeof rule.l === 'function' ? rule.l(m) : rule.l)); break; }
+  if (!r.project){
+    const pm = s.match(/(?:im\s+|für\s+(?:das\s+)?|zum\s+)?[Pp]rojekt\s+([A-ZÄÖÜ0-9][\wÄÖÜäöüß&.+-]*(?:\s+[A-ZÄÖÜ0-9][\wÄÖÜäöüß&.+-]*){0,3})/);
+    if (pm) sugg.push({ type:'project', name:pm[1].replace(/[.,]+$/, '') });
   }
-  const am = s.match(/,?\s*(?:^|\s)(arbeit|beruflich|büro|privat)(?=[\s,.]|$)/i);
-  if (am){ r.area = /privat/i.test(am[1]) ? 'private' : 'work'; s = s.replace(am[0], ' '); }
+  PEOPLE.forEach(p => { if (wordRe(p.name).test(s)){ r.persons.push(p.id); rec.push('Person: ' + p.name); } });
+  for (const rule of DUE_RX){
+    const m = s.match(rule.rx); if (!m) continue;
+    const due = rule.f([m[0], ...m.slice(2)]); if (!due) continue;
+    r.due = due; s = s.replace(rule.rx, (all, b) => b + ' ');
+    rec.push('Deadline: ' + dueText(due)); break;
+  }
+  const pm2 = s.match(/(^|[\s,])(privat|privates|privater)(?![a-zäöüß])/i);
+  const wm = s.match(/(,\s*|\s(?:für\s+die|auf\s+der|in\s+der)\s+|\s)(arbeit|büro|beruflich)(?=\s*[,.]?\s*$|\s*,)/i) || s.match(/(,?\s*)(beruflich)(?![a-zäöüß])/i);
+  if (pm2){ r.area = 'private'; s = s.replace(pm2[0], pm2[1] + ' '); }
+  else if (wm){ r.area = 'work'; s = s.replace(wm[0], ' '); }
   const cm = CATS.filter(c => c.name !== 'Allgemein').find(c => (!r.area || c.area === r.area) && wordRe(c.name).test(s));
   if (cm){ r.cat = cm.id; r.area = cm.area; }
   if (r.area) rec.push('Bereich: ' + AREAS[r.area].name + (r.cat ? ' · ' + catById(r.cat).name : ''));
-  s = s.replace(/^\s*idee\s*:\s*/i, '').replace(/,?\s*\b(am besten|irgendwann|bitte)\b\s*/gi, ' ')
-       .replace(/\s+,/g, ',').replace(/,(\s*,)+/g, ',').replace(/\s{2,}/g, ' ').replace(/^[\s,:–-]+|[\s,:.–-]+$/g, '');
-  r.title = s ? s[0].toUpperCase() + s.slice(1) : '';
-  return { draft:r, rec };
+  // Unbekannte Personen nach „mit / für / an / bei / von …“ vorschlagen
+  const known = new Set([...PEOPLE.map(p => p.name.toLowerCase()), ...CATS.map(c => c.name.toLowerCase()), ...PROJECTS.flatMap(p => p.name.toLowerCase().split(/\s+/))]);
+  const seen = new Set();
+  for (const m of s.matchAll(/(?:^|[\s,(])(?:mit|Mit|für|Für|an|An|bei|Bei|von|Von|und|zusammen mit|Zusammen mit|sowie)\s+([A-ZÄÖÜ][a-zäöüß]{1,20})(?![A-Za-zÄÖÜäöüß])/g)){
+    const n = m[1], k = n.toLowerCase();
+    if (PERSON_STOP.has(k) || known.has(k) || seen.has(k)) continue;
+    if (sugg.some(x => x.type === 'project' && x.name.toLowerCase().split(/\s+/).includes(k))) continue;
+    seen.add(k); sugg.push({ type:'person', name:n });
+  }
+  r.title = tidy(s);
+  return { draft:r, rec, sugg };
 }
 
 /* ============ Stammdaten anlegen ============ */
@@ -1011,7 +1099,7 @@ function removeEntity(store, id){
 const FULL_STEPS = ['title', 'desc', 'ctx', 'area', 'cat', 'persons', 'projdue'];
 const blank = () => ({ title:'', desc:'', ctx:'', area:null, cat:null, persons:[], project:null, due:null });
 function openAssistant(mode, draft = {}, opts = {}){
-  A = { mode, draft:{ ...blank(), ...JSON.parse(JSON.stringify(draft)) }, i:0, rec:opts.rec || null, raw:opts.raw || '', fromId:opts.fromId || null, capture:'' };
+  A = { mode, draft:{ ...blank(), ...JSON.parse(JSON.stringify(draft)) }, i:0, rec:opts.rec || null, sugg:opts.sugg || [], raw:opts.raw || '', fromId:opts.fromId || null, capture:'' };
   A.steps = mode === 'full' ? [...FULL_STEPS, 'review'] : mode === 'capture' ? ['capture'] : fillSteps();
   document.body.classList.remove('sb-open'); syncScrim();
   $('#modal').hidden = false;
@@ -1088,6 +1176,7 @@ function recogHTML(){
   return `<div class="recog"><div class="recog-h">${ic('spark')}Aus deiner Eingabe erkannt</div>
     <div class="recog-t">${esc(A.draft.title)}</div>
     <div class="chips">${A.rec.length ? A.rec.map(r => `<span class="chip">${esc(r)}</span>`).join('') : '<span class="muted">Nur der Titel – den Rest fragen wir kurz ab.</span>'}</div>
+    ${A.sugg?.length ? `<div class="sugg-l">Neu erkannt – antippen zum Übernehmen</div><div class="chips">${A.sugg.map((g, i) => `<button class="chip sugg" data-act="a-sugg" data-i="${i}">${ic('plus')}${esc(g.name)} ${g.type === 'person' ? 'als Person' : 'als Projekt'}</button>`).join('')}</div>` : ''}
     ${A.raw && A.raw !== A.draft.title ? `<div class="raw">„${esc(A.raw)}“</div>` : ''}</div>`;
 }
 function renderModal(){
@@ -1129,11 +1218,23 @@ function aNext(){
   if (k === 'capture'){
     const txt = A.capture.trim();
     if (!txt){ toast('Sag oder tipp kurz, worum es geht.'); return; }
-    const { draft, rec } = parse(txt);
-    A.mode = 'fill'; A.draft = { ...blank(), ...draft }; A.rec = rec; A.raw = txt; A.i = 0; A.steps = fillSteps();
+    const { draft, rec, sugg } = parse(txt);
+    A.mode = 'fill'; A.draft = { ...blank(), ...draft }; A.rec = rec; A.sugg = sugg; A.raw = txt; A.i = 0; A.steps = fillSteps();
     renderModal(); return;
   }
   if (k === 'title' && !A.draft.title.trim()){ toast('Wie heißt das To-do?'); return; }
+  // Auch im Schritt-für-Schritt-Modus: Deadline, Personen, Projekt direkt aus dem Titel übernehmen
+  if (k === 'title' && A.mode === 'full' && !A.fromId && !A.parsedTitle){
+    const { draft, rec, sugg } = parse(A.draft.title);
+    A.parsedTitle = true;
+    if (rec.length || sugg.length){
+      const d = A.draft;
+      ['area', 'cat', 'project', 'due'].forEach(f => { if (draft[f] && !d[f]) d[f] = draft[f]; });
+      draft.persons.forEach(p => { if (!d.persons.includes(p)) d.persons.push(p); });
+      if (draft.title) { A.raw = d.title; d.title = draft.title; }
+      A.rec = rec; A.sugg = sugg;
+    }
+  }
   if (A.i < A.steps.length - 1) A.i++;
   renderModal();
 }
@@ -1296,6 +1397,24 @@ document.addEventListener('click', e => {
     case 'a-back': commitInputs(); A.i = Math.max(0, A.i - 1); renderModal(); break;
     case 'a-skip': commitInputs(); A.i = Math.min(A.steps.length - 1, A.i + 1); renderModal(); break;
     case 'a-jump': aJump(el.dataset.step); break;
+    case 'a-sugg': {
+      const i = +el.dataset.i, g = A.sugg?.[i]; if (!g) break;
+      A.rec ||= [];
+      if (g.type === 'person'){
+        const p = addEntity('person', g.name);
+        if (!A.draft.persons.includes(p.id)) A.draft.persons.push(p.id);
+        A.rec.push('Person: ' + p.name);
+      } else {
+        const prev = S.newProjArea; S.newProjArea = A.draft.area || 'work';
+        const p = addEntity('project', g.name); S.newProjArea = prev;
+        A.draft.project = p.id; if (!A.draft.area) A.draft.area = p.area;
+        A.draft.title = tidy(A.draft.title.replace(projPhraseRe(g.name), ' ')) || A.draft.title;
+        A.rec.push('Projekt: ' + p.name);
+      }
+      A.sugg.splice(i, 1);
+      if (A.mode === 'fill'){ const cur = A.steps[A.i]; A.steps = fillSteps(); A.i = Math.max(0, A.steps.indexOf(cur)); }
+      renderModal(); break;
+    }
     case 'a-save': commitInputs(); aSave(); break;
     case 'a-area':
       A.draft.area = el.dataset.v;
@@ -1334,10 +1453,10 @@ document.addEventListener('change', e => {
 
 function quickSubmit(v){
   if (!v.trim()) return;
-  const { draft, rec } = parse(v);
+  const { draft, rec, sugg } = parse(v);
   $('#qa').value = '';
   $('#qa').blur();
-  openAssistant('fill', draft, { rec, raw:v.trim() });
+  openAssistant('fill', draft, { rec, sugg, raw:v.trim() });
 }
 document.addEventListener('submit', e => { if (e.target.id === 'qaf'){ e.preventDefault(); quickSubmit($('#qa').value); } });
 document.addEventListener('keydown', e => {
