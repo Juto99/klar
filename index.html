@@ -197,6 +197,12 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .row-right .over{color:var(--danger);font-weight:550}
 .row-right .fuzzy{color:var(--text)}
 .muted{color:var(--text-3);font-size:12.5px}
+.swipe{position:relative;overflow:hidden;border-radius:10px}
+.swipe>.row{background:var(--surface);transition:transform .18s ease}
+.swipe.dragging>.row{transition:none}
+.swipe-act{position:absolute;inset:0;display:flex;justify-content:flex-end;background:var(--danger);border-radius:10px}
+.swipe-act button{display:flex;align-items:center;gap:6px;color:#fff;font-weight:600;font-size:13.5px;padding:0 18px}
+.swipe-act svg.i{stroke:#fff}
 .confirm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .empty{padding:26px 8px;color:var(--text-3);font-size:14px;line-height:1.5}
 .empty-big{padding:40px 8px;text-align:center;color:var(--text-3)}
@@ -281,6 +287,7 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .cbar .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cbar .k{margin-left:auto;color:var(--text-2);font-size:11px;flex:none;font-variant-numeric:tabular-nums}
 .cbar.done{opacity:.45;text-decoration:line-through}
+.cbar.mini{height:6px;padding:0;margin:1px 6px 2px;border-radius:3px;pointer-events:none;background:color-mix(in srgb,var(--c) 55%,transparent)}
 .citems{padding:1px 4px 6px;display:flex;flex-direction:column;gap:1px}
 .citem{display:flex;align-items:center;gap:5px;padding:2px 4px;border-radius:5px;font-size:11.5px;text-align:left;min-width:0}
 .citem:hover{background:var(--surface-3)}
@@ -411,7 +418,8 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
   .citem .t{display:none}
   .citems{flex-direction:row;flex-wrap:wrap;gap:3px;padding:2px 6px 6px}
   .citem{padding:0}
-  .wk{min-height:78px}
+  .wk{min-height:92px}
+  .cnum span{min-width:28px;height:28px}
   .cbar{font-size:11px;padding:2px 6px}
   .cbar .k{display:none}
   .prog{width:64px}
@@ -620,11 +628,11 @@ function rowHTML(t, o = {}){
   if (t.status === 'inbox') meta.push(`<span>${ic('wave')}Per Sprache erfasst</span>`);
   let right = o.right;
   if (right === undefined) right = d.txt ? `<span class="${d.cls}">${esc(d.txt)}</span>${d.k ? `<span class="k">${esc(d.k)}</span>` : ''}` : '';
-  return `<div class="row ${done ? 'is-done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}">
+  return `<div class="swipe" data-swipe="${t.id}"><div class="swipe-act"><button data-act="swipe-del" data-id="${t.id}">${ic('trash')}Löschen</button></div><div class="row ${done ? 'is-done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}">
     <button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="${done ? 'Wieder öffnen' : 'Als erledigt markieren'}"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>
     <div class="row-main"><div class="row-title">${esc(t.title)}</div>${meta.length ? `<div class="row-meta">${meta.join('')}</div>` : ''}</div>
     <div class="row-right">${right}</div>
-  </div>`;
+  </div></div>`;
 }
 function groupsHTML(groups, o = {}){
   const html = groups.filter(g => g.items.length).map(g => `
@@ -733,12 +741,15 @@ function viewAll(){
     groupsHTML(groups, { empty: S.q ? 'Keine Treffer.' : 'Keine offenen To-dos.' });
 }
 function viewCalendar(){
+  const mob = isMobile();
   const m = S.calMonth, y = m.getFullYear(), mo = m.getMonth();
   const first = new Date(y, mo, 1), last = new Date(y, mo + 1, 0);
   const vis = T.filter(t => t.due && (isOpen(t) || t.status === 'done'));
   let weeks = '';
   for (let ws = mondayOf(first); ws <= last; ws = addD(ws, 7)){
-    const bars = vis.filter(t => t.due.type === 'week' && same(P(t.due.start), ws));
+    const allBars = vis.filter(t => t.due.type === 'week' && same(P(t.due.start), ws));
+    // Handy: höchstens 3 schmale Streifen, damit genug Fläche zum Antippen des Tages bleibt
+    const bars = mob ? allBars.slice(0, 3) : allBars;
     const rows = `auto ${bars.map(() => 'auto').join(' ')} 1fr`;
     let cells = '', nums = '', items = '';
     for (let i = 0; i < 7; i++){
@@ -748,7 +759,9 @@ function viewCalendar(){
       const di = vis.filter(t => t.due.type === 'day' && same(P(t.due.date), d)).sort((a, b) => a.title.localeCompare(b.title, 'de'));
       items += `<div class="citems" style="grid-row:${2 + bars.length};grid-column:${i + 1}">${di.slice(0, 3).map(t => `<button class="citem ${t.status === 'done' ? 'done' : ''} ${dueLabel(t).cls === 'over' ? 'over' : ''}" data-act="open" data-id="${t.id}" title="${esc(t.title)}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span class="t">${esc(t.title)}</span></button>`).join('')}${di.length > 3 ? `<span class="cmore">+${di.length - 3}</span>` : ''}</div>`;
     }
-    const barHTML = bars.map((t, j) => `<button class="cbar ${t.status === 'done' ? 'done' : ''}" style="grid-row:${2 + j};--c:${areaColor(areaOf(t))}" data-act="open" data-id="${t.id}"><i class="dot"></i><span class="t">${esc(t.title)}</span><span class="k">KW ${kw(ws)}</span></button>`).join('');
+    const barHTML = bars.map((t, j) => mob
+      ? `<span class="cbar mini ${t.status === 'done' ? 'done' : ''}" style="grid-row:${2 + j};--c:${areaColor(areaOf(t))}" title="${esc(t.title)}"></span>`
+      : `<button class="cbar ${t.status === 'done' ? 'done' : ''}" style="grid-row:${2 + j};--c:${areaColor(areaOf(t))}" data-act="open" data-id="${t.id}"><i class="dot"></i><span class="t">${esc(t.title)}</span><span class="k">KW ${kw(ws)}</span></button>`).join('');
     weeks += `<div class="wk" style="grid-template-rows:${rows}">${cells}${nums}${barHTML}${items}</div>`;
   }
   const monthItems = vis.filter(t => t.due.type === 'month' && t.due.month === monthKey(first));
@@ -1267,6 +1280,14 @@ function toast(msg, action, sticky){
   el.hidden = false; clearTimeout(toastTimer);
   if (!sticky) toastTimer = setTimeout(() => el.hidden = true, 3800);
 }
+function deleteTodo(t){
+  const copy = JSON.parse(JSON.stringify(t));
+  tomb('todos', t);
+  if (S.sel === t.id) S.sel = null;
+  undo = () => { T.push(copy); save('todos', copy); };
+  render();
+  toast('Gelöscht', { act:'undo', label:'Rückgängig' });
+}
 function toggleDone(id){
   const t = T.find(x => x.id === id); if (!t) return;
   const prev = { status:t.status, doneAt:t.doneAt, archivedAt:t.archivedAt };
@@ -1335,6 +1356,7 @@ document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]');
   if (!el) return;
   const act = el.dataset.act, id = el.dataset.id;
+  if (swOpen && act !== 'swipe-del'){ const wasOpen = swOpen; swClose(wasOpen); if (wasOpen.contains(el)) return; }
   switch (act){
     case 'nav': nav(el.dataset.view); break;
     case 'open': if (S.sel === id && innerWidth > 1100) closeDetail(); else openDetail(id); break;
@@ -1366,6 +1388,7 @@ document.addEventListener('click', e => {
     case 'cal-today': S.calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); S.calDay = iso(TODAY); renderMain(); break;
     case 'del': S.confirmDel = id; render(); break;
     case 'del-no': S.confirmDel = null; render(); break;
+    case 'swipe-del': { const t = T.find(x => x.id === id); if (t) deleteTodo(t); break; }
     case 'del-yes': { const t = T.find(x => x.id === id); if (t) tomb('todos', t); S.confirmDel = null; if (S.sel === id) S.sel = null; render(); toast('Endgültig gelöscht'); break; }
     case 'mdel': S.confirmM = id; renderMain(); break;
     case 'mdel-no': S.confirmM = null; renderMain(); break;
@@ -1516,6 +1539,46 @@ document.addEventListener('change', e => {
   if (f === 'title') e.target.dataset.orig = t.title;
   flushSaves(); renderMain(); renderSidebar();
 });
+/* Wischen nach links (wie in Apple Mail): kurz = Löschen-Knopf, weit = direkt löschen */
+const SWIPE_OPEN = 104, SWIPE_FAR = 0.55;
+let sw = null, swOpen = null;
+function swClose(el){ if (!el) return; const r = el.querySelector('.row'); if (r) r.style.transform = ''; el.classList.remove('dragging', 'is-open'); if (swOpen === el) swOpen = null; }
+document.addEventListener('touchstart', e => {
+  const el = e.target.closest('.swipe');
+  if (swOpen && swOpen !== el) swClose(swOpen);
+  if (!el || e.touches.length !== 1) return;
+  sw = { el, row:el.querySelector('.row'), x:e.touches[0].clientX, y:e.touches[0].clientY, dx:0, lock:null };
+}, { passive:true });
+document.addEventListener('touchmove', e => {
+  if (!sw) return;
+  const dx = e.touches[0].clientX - sw.x, dy = e.touches[0].clientY - sw.y;
+  if (!sw.lock){
+    if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)){ sw.lock = 'y'; }
+    else if (dx < -12 && Math.abs(dx) > Math.abs(dy) * 1.3){ sw.lock = 'x'; sw.el.classList.add('dragging'); }
+    else return;
+  }
+  if (sw.lock !== 'x') return;
+  e.preventDefault();
+  sw.dx = Math.min(0, dx);
+  sw.row.style.transform = `translateX(${sw.dx}px)`;
+}, { passive:false });
+document.addEventListener('touchend', () => {
+  if (!sw) return;
+  const { el, row, dx } = sw; const width = el.offsetWidth || 320;
+  sw.el.classList.remove('dragging');
+  const cur = sw; sw = null;
+  if (cur.lock !== 'x'){ return; }
+  if (dx < -width * SWIPE_FAR){
+    row.style.transform = `translateX(-${width}px)`;
+    const t = T.find(x => x.id === el.dataset.swipe);
+    setTimeout(() => { if (t) deleteTodo(t); else render(); }, 160);
+  } else if (dx < -40){
+    row.style.transform = `translateX(-${SWIPE_OPEN}px)`;
+    el.classList.add('is-open'); swOpen = el;
+  } else {
+    row.style.transform = '';
+  }
+}, { passive:true });
 addEventListener('resize', syncScrim);
 matchMedia('(max-width:760px)').addEventListener?.('change', () => render());
 // Sichtbarer Bereich über der iPhone-Tastatur → Eingabefenster bleibt darüber.
