@@ -98,6 +98,9 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stro
 .sb-h{display:flex;align-items:center;justify-content:space-between;padding:0 6px 4px;font-size:11.5px;font-weight:600;color:var(--text-3);letter-spacing:.03em;text-transform:uppercase}
 .sb-h button.h{display:flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:.03em;font-weight:600;color:var(--text-2)}
 .sb-h button.h:hover{color:var(--text)}
+.sb-h .chev{width:14px;height:14px;color:var(--text-3);transition:transform .15s}
+.sb-h button.h.open .chev{transform:rotate(90deg)}
+.sb-h .cnt{margin-left:4px;color:var(--text-3);text-transform:none;font-variant-numeric:tabular-nums}
 .sb-add{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:var(--text-3)}
 .sb-add:hover{background:var(--surface-3);color:var(--text)}
 .sb-add svg{width:14px;height:14px}
@@ -427,6 +430,10 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
   .toast{bottom:calc(80px + env(safe-area-inset-bottom))}
   .hide-m{display:none}
   .search input,.sb-new input,.add-in,.opt-new input,.opt-new.sm input,.date-in,.ren,.d-in{font-size:16px}
+  .set-row{flex-wrap:wrap;padding:8px 0}
+  .set-row .ren{flex:1 1 140px;min-width:120px;padding:6px 8px}
+  .set-row .seg{flex:1 1 100%;max-width:220px}
+  .addbar .add-in{max-width:none;flex:1 1 100%}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -612,7 +619,7 @@ function autoArchive(){
 const S = {
   view:'today', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
   sort:'due', area:'all', q:'', online:navigator.onLine, memOnly:false,
-  addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto'
+  addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false }
 };
 let A = null;
 let undo = null;
@@ -650,6 +657,12 @@ function quickAdd(){
 }
 
 /* ============ Sidebar ============ */
+// Bereich ist offen, wenn aufgeklappt – oder wenn gerade etwas daraus angezeigt wird
+function areaOpen(a){
+  if (S.openArea[a]) return true;
+  if (S.view === 'area:' + a || S.addingCat === a) return true;
+  return S.view.startsWith('cat:') && catById(S.view.slice(4))?.area === a;
+}
 function renderSidebar(){
   const open = T.filter(isOpen);
   const cnt = {
@@ -660,11 +673,15 @@ function renderSidebar(){
   };
   const tile = (v, icon, label, n) => `<button class="tile ${S.view === v ? 'on' : ''}" data-act="nav" data-view="${v}"><span class="tile-top">${ic(icon)}<span class="tile-n">${n}</span></span><span class="tile-l">${label}</span></button>`;
   const item = (v, label, n, lead) => `<button class="sb-item ${S.view === v ? 'on' : ''}" data-act="nav" data-view="${v}">${lead}<span>${esc(label)}</span>${n !== '' ? `<span class="cnt">${n}</span>` : ''}</button>`;
-  const areaBlock = a => `<div class="sb-group">
-      <div class="sb-h"><button class="h" data-act="nav" data-view="area:${a}"><i class="dot" style="--c:${areaColor(a)}"></i>${AREAS[a].name}</button><button class="sb-add" data-act="add-cat" data-area="${a}" aria-label="Unterkategorie für ${AREAS[a].name} anlegen">${ic('plus')}</button></div>
-      ${catsOf(a).map(c => item('cat:' + c.id, c.name, open.filter(t => t.cat === c.id).length || '', `<i class="dot" style="--c:${areaColor(a)}"></i>`)).join('')}
-      ${S.addingCat === a ? `<div class="sb-new"><input id="newcat" data-add="cat:${a}" placeholder="Neue Unterkategorie" enterkeyhint="done"></div>` : ''}
+  const areaBlock = a => {
+    const op = areaOpen(a), n = open.filter(t => areaOf(t) === a).length;
+    return `<div class="sb-group">
+      <div class="sb-h"><button class="h ${op ? 'open' : ''}" data-act="toggle-area" data-area="${a}" aria-expanded="${op}">${ic('chevR', 'i chev')}<i class="dot" style="--c:${areaColor(a)}"></i>${AREAS[a].name}${n ? `<span class="cnt">${n}</span>` : ''}</button><button class="sb-add" data-act="add-cat" data-area="${a}" aria-label="Unterkategorie für ${AREAS[a].name} anlegen">${ic('plus')}</button></div>
+      ${op ? item('area:' + a, 'Alle anzeigen', '', `<i class="dot" style="--c:${areaColor(a)};opacity:.3"></i>`)
+           + catsOf(a).map(c => item('cat:' + c.id, c.name, open.filter(t => t.cat === c.id).length || '', `<i class="dot" style="--c:${areaColor(a)}"></i>`)).join('')
+           + (S.addingCat === a ? `<div class="sb-new"><input id="newcat" data-add="cat:${a}" placeholder="Neue Unterkategorie" enterkeyhint="done"></div>` : '') : ''}
     </div>`;
+  };
   const syncTxt = S.memOnly ? 'Speichern nicht möglich (privates Fenster?)' : S.online ? 'Auf diesem Gerät gespeichert' : 'Offline · alles lokal gespeichert';
   const syncCol = S.memOnly ? 'var(--danger)' : S.online ? 'var(--ok)' : 'var(--warn)';
   $('#sidebar').innerHTML = `
@@ -783,13 +800,13 @@ function nextDueTxt(list){
 }
 function viewPeople(){
   const rows = [...PEOPLE].sort(byName).map(p => { const l = T.filter(t => t.persons.includes(p.id)); const o = l.filter(isOpen).length; return `<button class="prow" data-act="nav" data-view="person:${p.id}"><span class="av">${esc(initials(p.name))}</span><span class="pm"><div class="pn">${esc(p.name)}</div><div class="ps">${o} offen · ${nextDueTxt(l)}</div></span><span class="chev">${ic('chevR')}</span></button>`; }).join('');
-  return header('Personen', 'Nur Vornamen oder Kürzel – nichts, was auf reale Personen rückführbar ist.') +
+  return header('Personen', 'Nur Vornamen oder Kürzel – nichts, was auf reale Personen rückführbar ist.', '', `<button class="btn btn-g" data-act="nav" data-view="settings">${ic('gear')}Verwalten</button>`) +
     (rows ? `<div class="plist">${rows}</div>` : `<div class="empty">Noch keine Personen. Leg sie hier oder beim Anlegen eines To-dos an.</div>`) +
     `<div class="addbar"><input class="add-in" data-add="person" placeholder="+ Person hinzufügen" enterkeyhint="done"></div>`;
 }
 function viewProjects(){
   const rows = [...PROJECTS].sort(byName).map(p => { const l = T.filter(t => t.project === p.id); const d = l.filter(t => t.status === 'done' || t.status === 'archived').length; const pct = l.length ? Math.round(d / l.length * 100) : 0; const c = areaColor(p.area); return `<button class="prow" data-act="nav" data-view="project:${p.id}"><span class="pico" style="--c:${c}">${ic('diamond')}</span><span class="pm"><div class="pn">${esc(p.name)}</div><div class="ps">${AREAS[p.area].name} · ${l.filter(isOpen).length} offen · ${nextDueTxt(l)}</div></span><span class="prog" style="--c:${c}"><i style="width:${pct}%"></i></span><span class="prog-l">${pct} %</span></button>`; }).join('');
-  return header('Projekte', 'Fortschritt über alle To-dos eines Projekts, inklusive Archiv.') +
+  return header('Projekte', 'Umbenennen, löschen und neu anlegen unter Verwalten.', '', `<button class="btn btn-g" data-act="nav" data-view="settings">${ic('gear')}Verwalten</button>`) +
     (rows ? `<div class="plist">${rows}</div>` : `<div class="empty">Noch keine Projekte.</div>`) +
     `<div class="addbar"><input class="add-in" data-add="project" placeholder="+ Projekt hinzufügen" enterkeyhint="done">${areaSeg('newProjArea')}</div>`;
 }
@@ -833,14 +850,14 @@ function viewSettings(){
   const total = T.length;
   return header('Einstellungen', `Brain ${APP_VERSION} · ${total} ${total === 1 ? 'To-do' : 'To-dos'} gespeichert`) +
     `<div class="set-sec"><h3>Darstellung</h3><p>„Auto“ folgt der Einstellung deines Geräts.</p><div style="max-width:280px">${themeSeg()}</div></div>
-    <div class="set-sec"><h3>Unterkategorien</h3><p>Umbenennen durch Antippen. Beim Löschen behalten To-dos ihren Bereich, verlieren nur die Unterkategorie.</p>
+    <div class="set-sec"><h3>Kategorien</h3><p>Die beiden Bereiche Arbeit und Privat sind fest. Darunter legst du eigene Unterkategorien an: antippen zum Umbenennen, Papierkorb zum Löschen. Beim Löschen behalten die To-dos ihren Bereich und verlieren nur die Unterkategorie.</p>
       ${['work', 'private'].map(a => `<div class="set-sub"><i class="dot" style="--c:${areaColor(a)}"></i>${AREAS[a].name}</div><div class="set-card">${catRows(a) || '<div class="empty" style="padding:10px 0">Keine Unterkategorien.</div>'}</div><div class="addbar" style="margin-top:8px"><input class="add-in" data-add="cat:${a}" placeholder="+ Unterkategorie für ${AREAS[a].name}" enterkeyhint="done"></div>`).join('')}
     </div>
     <div class="set-sec"><h3>Personen</h3><p>Nur Vornamen oder Kürzel.</p>
       <div class="set-card">${[...PEOPLE].sort(byName).map(p => `<div class="set-row"><input class="ren" data-rename="people" data-id="${p.id}" value="${esc(p.name)}" aria-label="Person umbenennen">${cnt(t => t.persons.includes(p.id))}${delBtn('people', p.id)}</div>`).join('') || '<div class="empty" style="padding:10px 0">Noch keine Personen.</div>'}</div>
       <div class="addbar" style="margin-top:8px"><input class="add-in" data-add="person" placeholder="+ Person hinzufügen" enterkeyhint="done"></div>
     </div>
-    <div class="set-sec"><h3>Projekte</h3>
+    <div class="set-sec"><h3>Projekte</h3><p>Antippen zum Umbenennen, Arbeit/Privat umschalten, Papierkorb zum Löschen. Gelöschte Projekte lassen die zugehörigen To-dos unberührt.</p>
       <div class="set-card">${[...PROJECTS].sort(byName).map(p => `<div class="set-row"><input class="ren" data-rename="projects" data-id="${p.id}" value="${esc(p.name)}" aria-label="Projekt umbenennen">${areaSeg('proj', p.id)}${delBtn('projects', p.id)}</div>`).join('') || '<div class="empty" style="padding:10px 0">Noch keine Projekte.</div>'}</div>
       <div class="addbar" style="margin-top:8px"><input class="add-in" data-add="project" placeholder="+ Projekt hinzufügen" enterkeyhint="done">${areaSeg('newProjArea')}</div>
     </div>
@@ -1303,6 +1320,7 @@ function toggleDone(id){
   if (row && (isOpen(t) || t.status === 'inbox')){ row.querySelector('.check')?.classList.add('on'); setTimeout(() => row.classList.add('completing'), 180); setTimeout(finish, 480); }
   else finish();
 }
+function saveAreas(){ try { localStorage.setItem('brain-areas', JSON.stringify(S.openArea)); } catch (e) {} }
 function applyTheme(){
   if (S.theme === 'auto') document.documentElement.removeAttribute('data-theme');
   else document.documentElement.setAttribute('data-theme', S.theme);
@@ -1378,7 +1396,8 @@ document.addEventListener('click', e => {
     case 'e-sort': { const t = T.find(x => x.id === id); if (t){ editTodo(t, t => { t.status = 'open'; }); toast('Einsortiert'); } break; }
     case 'set': S[el.dataset.k] = el.dataset.v; render(); break;
     case 'theme': S.theme = el.dataset.v; applyTheme(); render(); break;
-    case 'add-cat': S.addingCat = S.addingCat === el.dataset.area ? null : el.dataset.area; renderSidebar(); break;
+    case 'toggle-area': S.openArea[el.dataset.area] = !areaOpen(el.dataset.area); saveAreas(); renderSidebar(); break;
+    case 'add-cat': S.addingCat = S.addingCat === el.dataset.area ? null : el.dataset.area; S.openArea[el.dataset.area] = true; saveAreas(); renderSidebar(); break;
     case 'new-proj-area': S.newProjArea = el.dataset.v; renderMain(); break;
     case 'proj-area': { const p = projById(id); if (p){ p.area = el.dataset.v; save('projects', p); render(); } break; }
     case 'goto-day': S.calDay = el.dataset.d; S.calMonth = new Date(P(el.dataset.d).getFullYear(), P(el.dataset.d).getMonth(), 1); nav('calendar'); break;
@@ -1603,6 +1622,7 @@ setInterval(onNewDay, 60000);
 /* ============ Start ============ */
 async function boot(){
   try { S.theme = localStorage.getItem('brain-theme') || localStorage.getItem('klar-theme') || 'auto'; } catch (e) {}
+  try { Object.assign(S.openArea, JSON.parse(localStorage.getItem('brain-areas') || '{}')); } catch (e) {}
   applyTheme();
   try {
     idb = await openDB();
