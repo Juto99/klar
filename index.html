@@ -117,7 +117,12 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stro
 .sb-new input:focus,.add-in:focus{border-color:var(--accent)}
 .sb-foot{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding:10px 4px 0;border-top:1px solid var(--line)}
 .sync{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-2);padding:0 4px}
-.sync .dot{width:7px;height:7px}
+".sync .dot{width:7px;height:7px}
+.sync .link{margin-left:auto;white-space:nowrap}
+.auth-l{display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:var(--text-2)}
+.auth-in{border:1.5px solid var(--line-2);border-radius:10px;padding:11px 12px;font-size:16px;background:var(--surface);color:var(--text);outline:none;font-weight:400}
+.auth-in:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.auth-err{color:var(--danger);font-size:13px;margin:0}
 .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--surface-3);border-radius:9px;padding:2px;gap:2px}
 .seg button{font-size:12.5px;padding:5px 9px;border-radius:7px;color:var(--text-2);white-space:nowrap}
 .seg button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.08);font-weight:550}
@@ -481,7 +486,8 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const wordRe = (k, flags = 'i') => new RegExp('(^|[^0-9A-Za-zÄÖÜäöüß])' + escRe(k) + '(?![0-9A-Za-zÄÖÜäöüß])', flags);
 const $ = s => document.querySelector(s);
-const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+const uid = () => crypto.randomUUID ? crypto.randomUUID()
+  : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, ch => { const r = Math.random() * 16 | 0; return (ch === 'x' ? r : (r & 3 | 8)).toString(16); });
 
 /* ============ Icons ============ */
 const ICONS = {
@@ -545,14 +551,29 @@ function put(store, obj){
     tx.onerror = () => toast('Speichern fehlgeschlagen. Bitte App neu laden.');
   } catch (e) { toast('Speichern fehlgeschlagen. Bitte App neu laden.'); }
 }
-function save(store, obj){ obj.updatedAt = Date.now(); put(store, JSON.parse(JSON.stringify(obj))); }
+function save(store, obj){ obj.updatedAt = Date.now(); put(store, JSON.parse(JSON.stringify(obj))); syncSoon(); }
 function tomb(store, obj){
   const arr = ARR[store](); const i = arr.indexOf(obj); if (i >= 0) arr.splice(i, 1);
-  put(store, { id:obj.id, deleted:true, updatedAt:Date.now() });
+  const ts = Date.now();
+  TOMB.set(obj.id, ts);
+  put(store, { id:obj.id, deleted:true, updatedAt:ts });
+  syncSoon();
 }
+// Feste IDs: legt ein zweites Gerät dieselben Startkategorien an, verschmelzen sie beim Abgleich.
+let pendingSeed = false;
 function seed(){
-  [['work', 'Allgemein'], ['private', 'Allgemein']].forEach(([area, name]) => { const c = { id:uid(), area, name }; CATS.push(c); save('cats', c); });
+  [['work', '00000000-0000-4000-8000-000000000001'], ['private', '00000000-0000-4000-8000-000000000002']].forEach(([area, id]) => {
+    if (CATS.some(c => c.id === id)) return;
+    const c = { id, area, name:'Allgemein' }; CATS.push(c); save('cats', c);
+  });
   put('meta', { key:'seeded', value:true });
+}
+// Mit Konto erst nach dem ersten Abgleich anlegen – sonst entstehen Doppelte.
+function maybeSeed(){
+  if (!pendingSeed) return;
+  pendingSeed = false;
+  if (CATS.length){ put('meta', { key:'seeded', value:true }); return; }
+  seed(); render();
 }
 
 /* ============ Ableitungen ============ */
@@ -617,11 +638,117 @@ function autoArchive(){
   T.forEach(t => { if (t.status === 'done' && t.doneAt && daysSince(t.doneAt) >= ARCHIVE_DAYS){ t.status = 'archived'; t.archivedAt = iso(addD(P(t.doneAt), ARCHIVE_DAYS)); save('todos', t); } });
 }
 
+/* ============ Konto & Abgleich (Supabase) ============ */
+const SB = { url:'https://usxwpujyunejqmthiidi.supabase.co', key:'sb_publishable_NJtpeQjXAbmFONZ-lja4Ig_kK6H3ePu' };
+const KINDS = ['todos', 'cats', 'people', 'projects'];
+const ARR_OF = k => ({ todos:T, cats:CATS, people:PEOPLE, projects:PROJECTS }[k]);
+const TOMB = new Map();               // gelöschte IDs → Zeitstempel
+let sess = null, syncing = false, syncTimer = null;
+
+function saveSess(v){ sess = v; try { v ? localStorage.setItem('brain-session', JSON.stringify(v)) : localStorage.removeItem('brain-session'); } catch (e) {} }
+function loadSess(){ try { sess = JSON.parse(localStorage.getItem('brain-session') || 'null'); } catch (e) { sess = null; } }
+async function authPost(path, body){
+  const r = await fetch(SB.url + path, { method:'POST', headers:{ apikey:SB.key, 'Content-Type':'application/json' }, body:JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.msg || j.error_description || j.message || `Fehler ${r.status}`);
+  return j;
+}
+function setSession(j){ saveSess({ access_token:j.access_token, refresh_token:j.refresh_token, expires_at:Date.now() + (j.expires_in || 3600) * 1000, email:j.user?.email || sess?.email }); }
+async function signIn(email, password){ setSession(await authPost('/auth/v1/token?grant_type=password', { email, password })); }
+async function signUp(email, password){
+  const j = await authPost('/auth/v1/signup', { email, password });
+  if (j.access_token) setSession(j); else await signIn(email, password);
+}
+async function token(){
+  if (!sess) return null;
+  if (Date.now() < sess.expires_at - 60000) return sess.access_token;
+  try { setSession(await authPost('/auth/v1/token?grant_type=refresh_token', { refresh_token:sess.refresh_token })); return sess.access_token; }
+  catch (e) { saveSess(null); return null; }
+}
+function signOut(){ saveSess(null); S.syncState = ''; render(); toast('Abgemeldet · deine To-dos bleiben auf diesem Gerät'); }
+
+const stripMeta = o => { const c = { ...o }; delete c._srv; return c; };
+async function markSynced(kind, id, ts){
+  const rec = await req(idb.transaction(kind).objectStore(kind).get(id));
+  if (rec){ rec._srv = ts; put(kind, rec); }
+  const local = ARR_OF(kind).find(x => x.id === id);
+  if (local) local._srv = ts;
+}
+async function pushChanges(tok){
+  const rows = [];
+  for (const kind of KINDS)
+    for (const o of await getAll(kind))
+      if (o.updatedAt && o._srv !== o.updatedAt) rows.push({ id:o.id, kind, data:stripMeta(o), updated_at:o.updatedAt, deleted:!!o.deleted });
+  for (let i = 0; i < rows.length; i += 200){
+    const chunk = rows.slice(i, i + 200);
+    const r = await fetch(`${SB.url}/rest/v1/items?on_conflict=id`, {
+      method:'POST',
+      headers:{ apikey:SB.key, Authorization:`Bearer ${tok}`, 'Content-Type':'application/json', Prefer:'resolution=merge-duplicates,return=minimal' },
+      body:JSON.stringify(chunk)
+    });
+    if (!r.ok) throw new Error('Hochladen fehlgeschlagen (' + r.status + '): ' + (await r.text()).slice(0, 120));
+    for (const row of chunk) await markSynced(row.kind, row.id, row.updated_at);
+  }
+  return rows.length;
+}
+function applyRemote(row){
+  const arr = ARR_OF(row.kind); if (!arr) return false;
+  if ((TOMB.get(row.id) || 0) >= row.updated_at) return false;      // lokal gelöscht und neuer
+  const local = arr.find(x => x.id === row.id);
+  if (local && local.updatedAt >= row.updated_at) return false;     // lokal ist neuer
+  if (row.deleted){
+    if (local) arr.splice(arr.indexOf(local), 1);
+    TOMB.set(row.id, row.updated_at);
+    put(row.kind, { id:row.id, deleted:true, updatedAt:row.updated_at, _srv:row.updated_at });
+  } else {
+    const obj = { ...row.data, id:row.id, updatedAt:row.updated_at, _srv:row.updated_at };
+    if (local) Object.assign(local, obj); else arr.push(obj);
+    put(row.kind, obj);
+  }
+  return true;
+}
+async function pullChanges(tok){
+  let since = (await getMeta('lastPull')) || '1970-01-01T00:00:00Z', applied = 0, guard = 0, more = true;
+  while (more && guard++ < 20){
+    const url = `${SB.url}/rest/v1/items?select=id,kind,data,updated_at,deleted,synced_at&synced_at=gt.${encodeURIComponent(since)}&order=synced_at.asc&limit=500`;
+    const r = await fetch(url, { headers:{ apikey:SB.key, Authorization:`Bearer ${tok}` } });
+    if (!r.ok) throw new Error('Laden fehlgeschlagen (' + r.status + '): ' + (await r.text()).slice(0, 120));
+    const rows = await r.json();
+    for (const row of rows){ if (applyRemote(row)) applied++; since = row.synced_at; }
+    more = rows.length === 500;
+  }
+  put('meta', { key:'lastPull', value:since });
+  return applied;
+}
+async function sync(){
+  if (syncing || !sess || !navigator.onLine || !idb) return;
+  syncing = true; S.syncState = 'busy'; renderSidebar();
+  try {
+    const tok = await token();
+    if (!tok){ S.syncState = 'auth'; renderSidebar(); toast('Bitte neu anmelden.'); return; }
+    await pushChanges(tok);
+    const down = await pullChanges(tok);
+    S.lastSync = Date.now(); put('meta', { key:'lastSync', value:S.lastSync });
+    S.syncState = 'ok'; S.syncError = '';
+    autoArchive();
+    down ? render() : renderSidebar();
+  } catch (e){
+    S.syncState = 'error'; S.syncError = String(e.message || e); renderSidebar();
+  } finally { syncing = false; maybeSeed(); }
+}
+const syncSoon = () => { if (!sess) return; clearTimeout(syncTimer); syncTimer = setTimeout(sync, 1500); };
+function relTime(ts){
+  if (!ts) return '';
+  const m = Math.round((Date.now() - ts) / 60000);
+  return m < 1 ? 'gerade eben' : m < 60 ? `vor ${m} Min.` : m < 1440 ? `vor ${Math.round(m / 60)} Std.` : `vor ${Math.round(m / 1440)} Tagen`;
+}
+
 /* ============ Zustand ============ */
 const S = {
   view:'today', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
   sort:'due', area:'all', q:'', online:navigator.onLine, memOnly:false,
-  addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false }
+  addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
+  syncState:'', syncError:'', lastSync:0, authOpen:false, authMode:'in', authBusy:false, authErr:''
 };
 let A = null;
 let undo = null;
@@ -687,8 +814,13 @@ function renderSidebar(){
       : '';
     return `<button class="sb-item ${op ? 'is-open' : ''}" data-act="toggle-area" data-area="${a}" aria-expanded="${op}">${lead}<span>${AREAS[a].name}</span><span class="cnt">${n || ''}</span>${ic('chevR', 'i chev')}</button>${sub}`;
   };
-  const syncTxt = S.memOnly ? 'Speichern nicht möglich (privates Fenster?)' : S.online ? 'Auf diesem Gerät gespeichert' : 'Offline · alles lokal gespeichert';
-  const syncCol = S.memOnly ? 'var(--danger)' : S.online ? 'var(--ok)' : 'var(--warn)';
+  let syncTxt, syncCol, syncBtn = '';
+  if (S.memOnly){ syncTxt = 'Speichern nicht möglich (privates Fenster?)'; syncCol = 'var(--danger)'; }
+  else if (!sess){ syncTxt = 'Nur auf diesem Gerät'; syncCol = 'var(--text-3)'; syncBtn = `<button class="link" data-act="auth-open">Anmelden</button>`; }
+  else if (!S.online){ syncTxt = 'Offline · wird nachgeholt'; syncCol = 'var(--warn)'; }
+  else if (S.syncState === 'busy'){ syncTxt = 'Gleicht ab …'; syncCol = 'var(--accent)'; }
+  else if (S.syncState === 'error'){ syncTxt = 'Abgleich fehlgeschlagen'; syncCol = 'var(--danger)'; syncBtn = `<button class="link" data-act="sync-now">Erneut</button>`; }
+  else { syncTxt = `Abgeglichen · ${relTime(S.lastSync) || 'gerade eben'}`; syncCol = 'var(--ok)'; }
   $('#sidebar').innerHTML = `
     <div class="brand"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span>Brain</span></div>
     <label class="search">${ic('search')}<input id="sbq" placeholder="Suchen" value="${esc(S.q)}" aria-label="To-dos durchsuchen"></label>
@@ -696,7 +828,7 @@ function renderSidebar(){
     <div class="sb-group">${areaRow('work')}${areaRow('private')}${item('people', 'Personen', PEOPLE.length, ic('person'))}${item('projects', 'Projekte', PROJECTS.length, ic('folder'))}</div>
     <div class="sb-group">${item('done', 'Erledigt', T.filter(t => t.status === 'done').length, ic('done'))}${item('archive', 'Archiv', T.filter(t => t.status === 'archived').length, ic('archive'))}${item('settings', 'Einstellungen', '', ic('gear'))}</div>
     <div class="sb-foot">
-      <div class="sync"><i class="dot" style="--c:${syncCol}"></i><span>${syncTxt}</span></div>
+      <div class="sync"><i class="dot" style="--c:${syncCol}"></i><span>${syncTxt}</span>${syncBtn}</div>
       ${themeSeg()}
     </div>`;
   if (S.addingCat) setTimeout(() => $('#newcat')?.focus(), 0);
@@ -865,8 +997,16 @@ function viewSettings(){
       <div class="set-card">${[...PROJECTS].sort(byName).map(p => `<div class="set-row"><input class="ren" data-rename="projects" data-id="${p.id}" value="${esc(p.name)}" aria-label="Projekt umbenennen">${areaSeg('proj', p.id)}${delBtn('projects', p.id)}</div>`).join('') || '<div class="empty" style="padding:10px 0">Noch keine Projekte.</div>'}</div>
       <div class="addbar" style="margin-top:8px"><input class="add-in" data-add="project" placeholder="+ Projekt hinzufügen" enterkeyhint="done">${areaSeg('newProjArea')}</div>
     </div>
+    <div class="set-sec"><h3>Konto & Abgleich</h3>
+      ${sess
+        ? `<p>Angemeldet als <strong>${esc(sess.email || '')}</strong>. Letzter Abgleich: ${relTime(S.lastSync) || 'noch keiner'}.</p>
+           ${S.syncError ? `<p class="auth-err">${esc(S.syncError)}</p>` : ''}
+           <div class="set-actions"><button class="btn btn-g" data-act="sync-now">Jetzt abgleichen</button><button class="btn btn-t" data-act="auth-out">Abmelden</button></div>`
+        : `<p>Ohne Anmeldung bleiben deine To-dos nur auf diesem Gerät. Mit Konto gleicht Brain iPhone, iPad und Rechner ab. Die Daten liegen bei Supabase in der EU.</p>
+           <div class="set-actions"><button class="btn btn-p" data-act="auth-open">Anmelden oder Konto anlegen</button></div>`}
+    </div>
     <div class="set-sec"><h3>Daten & Backup</h3>
-      <p>Deine To-dos liegen nur auf diesem Gerät, im Speicher dieser App. Den Abgleich zwischen Geräten bringt Etappe 3 – bis dahin kannst du ein Backup exportieren und auf einem anderen Gerät importieren.</p>
+      <p>Ein Backup enthält alle To-dos, Kategorien, Personen und Projekte dieses Geräts – praktisch als Sicherung oder zum Umziehen ohne Konto.</p>
       <p>Auf dem iPhone die App immer über das Symbol auf dem Home-Bildschirm öffnen: Safari-Tab und Home-Bildschirm-App haben getrennte Speicher.</p>
       <div class="set-actions"><button class="btn btn-g" data-act="export">${ic('down')}Backup exportieren</button><button class="btn btn-g" data-act="import">${ic('up')}Backup importieren</button></div>
     </div>`;
@@ -1146,6 +1286,44 @@ function fillSteps(){
   if (!d.due) st.push('projdue');
   st.push('review');
   return st;
+}
+function openAuth(){ S.authOpen = true; S.authErr = ''; document.body.classList.remove('sb-open'); syncScrim(); $('#modal').hidden = false; renderAuth(); }
+function closeAuth(){ S.authOpen = false; $('#modal').hidden = true; $('#modal').innerHTML = ''; }
+function renderAuth(){
+  const up = S.authMode === 'up';
+  $('#modal').innerHTML = `<div class="sheet">
+    <div class="sh-top"><span class="sh-step">${up ? 'Konto anlegen' : 'Anmelden'}</span><button class="icon-btn" data-act="auth-close" aria-label="Schließen">${ic('close')}</button></div>
+    <div class="sh-body">
+      <p class="q-help" style="margin:0">Mit Konto gleicht Brain deine To-dos zwischen iPhone, iPad und Rechner ab. Ohne Anmeldung bleibt alles nur auf diesem Gerät.</p>
+      <label class="auth-l">E-Mail<input class="auth-in" type="email" id="authmail" autocomplete="email" inputmode="email" value="${esc(sess?.email || '')}" enterkeyhint="next"></label>
+      <label class="auth-l">Passwort<input class="auth-in" type="password" id="authpw" autocomplete="${up ? 'new-password' : 'current-password'}" enterkeyhint="go"></label>
+      ${up ? '<p class="q-help" style="margin:0">Mindestens 8 Zeichen – am besten in 1Password speichern.</p>' : ''}
+      ${S.authErr ? `<p class="auth-err">${esc(S.authErr)}</p>` : ''}
+    </div>
+    <div class="sh-foot">
+      <button class="btn btn-t" data-act="auth-mode">${up ? 'Ich habe schon ein Konto' : 'Neues Konto anlegen'}</button>
+      <span class="sp"></span>
+      <button class="btn btn-p" data-act="auth-go"${S.authBusy ? ' disabled' : ''}>${S.authBusy ? 'Moment …' : up ? 'Konto anlegen' : 'Anmelden'}</button>
+    </div></div>`;
+  const f = $('#authmail'); if (f && !f.value) f.focus(); else $('#authpw')?.focus();
+}
+async function authGo(){
+  const email = ($('#authmail')?.value || '').trim(), pw = $('#authpw')?.value || '';
+  if (!email || !pw){ S.authErr = 'Bitte E-Mail und Passwort eingeben.'; renderAuth(); return; }
+  S.authBusy = true; S.authErr = ''; renderAuth();
+  try {
+    S.authMode === 'up' ? await signUp(email, pw) : await signIn(email, pw);
+    S.authBusy = false; closeAuth(); render(); toast('Angemeldet · gleiche ab …'); sync();
+  } catch (e){
+    S.authBusy = false;
+    const m = String(e.message || e);
+    S.authErr = /invalid login|invalid credentials/i.test(m) ? 'E-Mail oder Passwort stimmt nicht.'
+      : /already registered|already been registered/i.test(m) ? 'Dieses Konto gibt es schon – melde dich einfach an.'
+      : /password should be|at least/i.test(m) ? 'Das Passwort ist zu kurz (mindestens 8 Zeichen).'
+      : /Failed to fetch|NetworkError/i.test(m) ? 'Keine Verbindung. Bist du online?'
+      : m;
+    renderAuth();
+  }
 }
 function closeModal(){ $('#modal').hidden = true; $('#modal').innerHTML = ''; A = null; }
 const DUE_OPTS = () => [
@@ -1434,6 +1612,12 @@ document.addEventListener('click', e => {
       break;
     }
     // Assistent
+    case 'auth-open': S.authMode = 'in'; openAuth(); break;
+    case 'auth-close': closeAuth(); break;
+    case 'auth-mode': S.authMode = S.authMode === 'in' ? 'up' : 'in'; S.authErr = ''; renderAuth(); break;
+    case 'auth-go': authGo(); break;
+    case 'auth-out': signOut(); break;
+    case 'sync-now': sync(); toast('Gleiche ab …'); break;
     case 'a-close': closeModal(); break;
     case 'a-next': aNext(); break;
     case 'a-back': commitInputs(); A.i = Math.max(0, A.i - 1); renderModal(); break;
@@ -1471,7 +1655,7 @@ document.addEventListener('click', e => {
   }
 });
 $('#scrim').addEventListener('click', () => { document.body.classList.remove('sb-open'); if (innerWidth <= 1100) S.sel = null; render(); });
-$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal'){ S.authOpen ? closeAuth() : closeModal(); } });
 $('#modal').addEventListener('input', e => {
   const f = e.target.dataset.f; if (!A || !f) return;
   if (['title', 'desc', 'ctx'].includes(f)) A.draft[f] = e.target.value;
@@ -1498,10 +1682,11 @@ document.addEventListener('submit', e => { if (e.target.id === 'qaf'){ e.prevent
 document.addEventListener('keydown', e => {
   const tag = e.target.tagName;
   if (e.key === 'Escape'){
-    if (A) closeModal(); else if (document.body.classList.contains('sb-open')){ document.body.classList.remove('sb-open'); syncScrim(); } else if (S.sel) closeDetail();
+    if (S.authOpen) closeAuth(); else if (A) closeModal(); else if (document.body.classList.contains('sb-open')){ document.body.classList.remove('sb-open'); syncScrim(); } else if (S.sel) closeDetail();
     return;
   }
   if (e.isComposing) return;
+  if (S.authOpen && e.key === 'Enter'){ e.preventDefault(); authGo(); return; }
   if (e.target.id === 'qa' && e.key === 'Enter'){ e.preventDefault(); quickSubmit(e.target.value); return; }
   if (A && e.key === 'Enter' && !e.shiftKey && e.target.dataset?.f === 'capture'){ e.preventDefault(); aNext(); return; }
   const addE = e.target.dataset?.addE;
@@ -1614,17 +1799,18 @@ window.visualViewport?.addEventListener('resize', syncVV);
 window.visualViewport?.addEventListener('scroll', syncVV);
 syncVV();
 addEventListener('pagehide', flushSaves);
-addEventListener('online', () => { S.online = true; renderSidebar(); });
+addEventListener('online', () => { S.online = true; renderSidebar(); sync(); });
 addEventListener('offline', () => { S.online = false; renderSidebar(); });
 function onNewDay(){
   const before = iso(TODAY); refreshToday();
   if (iso(TODAY) !== before){ autoArchive(); render(); }
 }
-document.addEventListener('visibilitychange', () => { if (document.hidden) flushSaves(); else onNewDay(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushSaves(); else { onNewDay(); sync(); } });
 setInterval(onNewDay, 60000);
 
 /* ============ Start ============ */
 async function boot(){
+  loadSess();
   try { S.theme = localStorage.getItem('brain-theme') || localStorage.getItem('klar-theme') || 'auto'; } catch (e) {}
   try { Object.assign(S.openArea, JSON.parse(localStorage.getItem('brain-areas') || '{}')); } catch (e) {}
   applyTheme();
@@ -1633,8 +1819,10 @@ async function boot(){
     const [t, c, p, pr] = await Promise.all(['todos', 'cats', 'people', 'projects'].map(getAll));
     const live = a => a.filter(x => !x.deleted);
     T = live(t); CATS = live(c); PEOPLE = live(p); PROJECTS = live(pr);
+    [t, c, p, pr].forEach(rows => rows.forEach(x => { if (x.deleted) TOMB.set(x.id, x.updatedAt || 0); }));
+    S.lastSync = (await getMeta('lastSync')) || 0;
     T.forEach(x => { x.persons ||= []; x.desc ||= ''; x.ctx ||= ''; });
-    if (!(await getMeta('seeded'))) seed();
+    if (!(await getMeta('seeded'))){ if (sess) pendingSeed = true; else seed(); }
     navigator.storage?.persist?.().catch(() => {});
   } catch (e) {
     idb = null; S.memOnly = true; seed();
@@ -1643,6 +1831,8 @@ async function boot(){
   autoArchive();
   render();
   registerSW();
+  sync();
+  setInterval(sync, 60000);
 }
 function registerSW(){
   if (!('serviceWorker' in navigator)) return;
