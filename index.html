@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Klar</title>
+<title>Brain</title>
 <meta name="description" content="To-dos – schnell diktiert, klar sortiert.">
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#18191C" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Klar">
+<meta name="apple-mobile-web-app-title" content="Brain">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
@@ -339,10 +339,10 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .field input,.field textarea{flex:1;min-width:0;border:0;background:none;outline:none;font-size:18px;line-height:1.4;resize:none;padding:4px 0}
 .field textarea{font-size:16px;min-height:74px}
 .field input::placeholder,.field textarea::placeholder{color:var(--text-3)}
-.mic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);flex:none;position:relative}
-.mic:hover{background:color-mix(in srgb,var(--accent) 18%,transparent)}
-.mic.listening::before{content:"";position:absolute;inset:-5px;border-radius:50%;box-shadow:0 0 0 2px var(--accent);animation:ring 1.2s ease-out infinite}
-@keyframes ring{from{opacity:.8;transform:scale(.9)}to{opacity:0;transform:scale(1.25)}}
+.cap-in{width:100%;border:1.5px solid var(--line-2);border-radius:14px;background:var(--surface);padding:15px 16px;font-size:17px;line-height:1.45;resize:none;outline:none;min-height:104px;transition:border-color .15s,box-shadow .15s}
+.cap-in:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.cap-in::placeholder{color:var(--text-3)}
+.btn-wide{width:100%;justify-content:center;height:42px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .opt{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 13px;border-radius:10px;font-size:14px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);transition:background .12s}
 .opt:hover{background:var(--surface-3)}
@@ -375,7 +375,6 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .rv .v.none{color:var(--text-3)}
 .sh-foot{display:flex;align-items:center;gap:8px;padding:16px 18px 18px;margin-top:8px}
 .sh-foot .sp{flex:1}
-.wispr-tip{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-3)}
 
 /* Toast, tabbar, scrim */
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:80;background:var(--text);color:var(--surface);padding:10px 16px;border-radius:12px;font-size:13.5px;box-shadow:var(--shadow-lg);display:flex;gap:14px;align-items:center;max-width:calc(100vw - 32px)}
@@ -508,7 +507,7 @@ const ARCHIVE_DAYS = 21;
 let idb = null;
 function openDB(){
   return new Promise((res, rej) => {
-    const r = indexedDB.open('klar', 1);
+    const r = indexedDB.open('klar', 1);   // interner Name bleibt – Umbenennen würde die gespeicherten Daten verlieren
     r.onupgradeneeded = () => {
       const d = r.result;
       ['todos', 'cats', 'people', 'projects'].forEach(s => { if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath:'id' }); });
@@ -661,7 +660,7 @@ function renderSidebar(){
   const syncTxt = S.memOnly ? 'Speichern nicht möglich (privates Fenster?)' : S.online ? 'Auf diesem Gerät gespeichert' : 'Offline · alles lokal gespeichert';
   const syncCol = S.memOnly ? 'var(--danger)' : S.online ? 'var(--ok)' : 'var(--warn)';
   $('#sidebar').innerHTML = `
-    <div class="brand"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span>Klar</span></div>
+    <div class="brand"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span>Brain</span></div>
     <label class="search">${ic('search')}<input id="sbq" placeholder="Suchen" value="${esc(S.q)}" aria-label="To-dos durchsuchen"></label>
     <div class="tiles">${tile('today', 'today', 'Heute', cnt.today)}${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('calendar', 'cal', 'Kalender', cnt.cal)}${tile('all', 'list', 'Alle', cnt.all)}<button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button></div>
     <div class="sb-group">${item('people', 'Personen', PEOPLE.length, ic('person'))}${item('projects', 'Projekte', PROJECTS.length, ic('folder'))}</div>
@@ -698,7 +697,7 @@ function viewToday(){
     const hasAny = groups.some(g => g.items.length);
     const rest = mob ? 0 : open.filter(t => ['later', 'none'].includes(bucket(t))).length;
     const empty = !T.length
-      ? `<div class="empty-big"><strong>Willkommen bei Klar.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Sprich oder tipp oben dein erstes To-do – oder leg es geführt an.'}</div>`
+      ? `<div class="empty-big"><strong>Willkommen bei Brain.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Sprich oder tipp oben dein erstes To-do – oder leg es geführt an.'}</div>`
       : `<div class="empty-big"><strong>Heute ist nichts fällig.</strong>${mob ? 'Tipp auf einen Tag, um ihn anzusehen.' : 'Genieß es.'}</div>`;
     body = (weekItems.length ? `<div class="wweek"><span>${weekItems.length} ${weekItems.length === 1 ? 'To-do' : 'To-dos'} irgendwann diese Woche</span><span class="bar"></span><span class="tnum">KW ${kw(TODAY)}</span></div>` : '') +
       (hasAny ? groupsHTML(groups) : empty) +
@@ -819,7 +818,7 @@ function viewSettings(){
   const cnt = f => { const n = T.filter(f).length; return n ? `<span class="muted">${n} ${n === 1 ? 'To-do' : 'To-dos'}</span>` : ''; };
   const catRows = a => catsOf(a).map(c => `<div class="set-row"><input class="ren" data-rename="cats" data-id="${c.id}" value="${esc(c.name)}" aria-label="Unterkategorie umbenennen">${cnt(t => t.cat === c.id)}${delBtn('cats', c.id)}</div>`).join('');
   const total = T.length;
-  return header('Einstellungen', `Klar ${APP_VERSION} · ${total} ${total === 1 ? 'To-do' : 'To-dos'} gespeichert`) +
+  return header('Einstellungen', `Brain ${APP_VERSION} · ${total} ${total === 1 ? 'To-do' : 'To-dos'} gespeichert`) +
     `<div class="set-sec"><h3>Darstellung</h3><p>„Auto“ folgt der Einstellung deines Geräts.</p><div style="max-width:280px">${themeSeg()}</div></div>
     <div class="set-sec"><h3>Unterkategorien</h3><p>Umbenennen durch Antippen. Beim Löschen behalten To-dos ihren Bereich, verlieren nur die Unterkategorie.</p>
       ${['work', 'private'].map(a => `<div class="set-sub"><i class="dot" style="--c:${areaColor(a)}"></i>${AREAS[a].name}</div><div class="set-card">${catRows(a) || '<div class="empty" style="padding:10px 0">Keine Unterkategorien.</div>'}</div><div class="addbar" style="margin-top:8px"><input class="add-in" data-add="cat:${a}" placeholder="+ Unterkategorie für ${AREAS[a].name}" enterkeyhint="done"></div>`).join('')}
@@ -1121,19 +1120,17 @@ const DUE_OPTS = () => [
   ['nm', 'Nächster Monat', month(nextMonthKey())], ['none', 'Ohne Deadline', null]
 ];
 const sameDue = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
-const micBtn = () => `<button class="mic" data-act="a-mic" aria-label="Diktieren">${ic('mic')}</button>`;
 function stepHTML(k){
   const d = A.draft;
   switch (k){
-    case 'capture': return `<h2 class="q">Was gibt es zu tun?</h2><p class="q-help">Sprich einfach drauflos – Person, Projekt und Deadline dürfen im selben Satz stecken.</p>
-      <div class="field"><textarea data-f="capture" rows="3" enterkeyhint="send" placeholder="z. B. „Angebote vergleichen, privat, bis nächste Woche“">${esc(A.capture)}</textarea>${micBtn()}</div>
-      <div><button class="link" data-act="assist-full">Lieber Schritt für Schritt</button></div>`;
+    case 'capture': return `<textarea class="cap-in" data-f="capture" rows="3" enterkeyhint="send" placeholder="" aria-label="Neues To-do">${esc(A.capture)}</textarea>
+      <button class="btn btn-g btn-wide" data-act="assist-full">${ic('list')}Schritt für Schritt</button>`;
     case 'title': return `<h2 class="q">Was ist zu tun?</h2><p class="q-help">Kurz und aktiv formuliert.</p>
-      <div class="field"><input data-f="title" value="${esc(d.title)}" placeholder="z. B. Angebote vergleichen" enterkeyhint="next">${micBtn()}</div>`;
+      <div class="field"><input data-f="title" value="${esc(d.title)}" placeholder="z. B. Angebote vergleichen" enterkeyhint="next"></div>`;
     case 'desc': return `<h2 class="q">Beschreibung</h2><p class="q-help">Was genau gehört dazu? Optional.</p>
-      <div class="field"><textarea data-f="desc" placeholder="Details, Teilschritte …">${esc(d.desc)}</textarea>${micBtn()}</div>`;
+      <div class="field"><textarea data-f="desc" placeholder="Details, Teilschritte …">${esc(d.desc)}</textarea></div>`;
     case 'ctx': return `<h2 class="q">Gibt es Kontext?</h2><p class="q-help">Hintergrund, warum es wichtig ist, worauf zu achten ist. Optional.</p>
-      <div class="field"><textarea data-f="ctx" placeholder="Hintergrund, Links, Absprachen …">${esc(d.ctx)}</textarea>${micBtn()}</div>`;
+      <div class="field"><textarea data-f="ctx" placeholder="Hintergrund, Links, Absprachen …">${esc(d.ctx)}</textarea></div>`;
     case 'area': return `<h2 class="q">Arbeit oder privat?</h2>
       <div class="big-opts">${Object.entries(AREAS).map(([a, v]) => `<button class="big-opt ${d.area === a ? 'on' : ''}" style="--c:${v.color}" data-act="a-area" data-v="${a}"><i class="dot" style="--c:${v.color};width:12px;height:12px"></i><span class="l">${v.name}</span><span class="s">${esc(catsOf(a).map(c => c.name).join(' · ')) || '&nbsp;'}</span></button>`).join('')}</div>`;
     case 'cat': {
@@ -1185,15 +1182,14 @@ function renderModal(){
   let label, prog = '';
   if (A.mode === 'full' && !isReview){ const n = FULL_STEPS.indexOf(k) + 1; label = `Schritt ${n} von ${FULL_STEPS.length}`; prog = FULL_STEPS.map((_, j) => `<i class="${j < n ? 'on' : ''}"></i>`).join(''); }
   else if (A.mode === 'fill' && !isReview){ const left = A.steps.length - 1 - A.i; label = `Noch ${left} ${left === 1 ? 'Angabe' : 'Angaben'}`; prog = A.steps.slice(0, -1).map((_, j) => `<i class="${j <= A.i ? 'on' : ''}"></i>`).join(''); }
-  else label = isCapture ? 'Diktieren' : 'Übersicht';
+  else label = isCapture ? '' : 'Übersicht';
   const optional = ['desc', 'ctx', 'persons', 'projdue', 'cat'].includes(k);
   const editing = A.fromId && T.find(t => t.id === A.fromId)?.status !== 'inbox';
   $('#modal').innerHTML = `<div class="sheet">
-    <div class="sh-top"><span class="sh-step">${editing ? 'To-do bearbeiten' : 'Neues To-do'} · ${label}</span><button class="icon-btn" data-act="a-close" aria-label="Schließen">${ic('close')}</button></div>
+    <div class="sh-top"><span class="sh-step">${editing ? 'To-do bearbeiten' : 'Neues To-do'}${label ? ' · ' + label : ''}</span><button class="icon-btn" data-act="a-close" aria-label="Schließen">${ic('close')}</button></div>
     ${prog ? `<div class="progress">${prog}</div>` : ''}
     <div class="sh-body">${A.mode === 'fill' && A.i === 0 && !isReview && A.rec ? recogHTML() : ''}${stepHTML(k)}</div>
     <div class="sh-foot">
-      ${isCapture ? `<span class="wispr-tip">${ic('wave')}Wispr-Hotkey oder Mikrofon der Tastatur</span>` : ''}
       ${!isCapture && optional && !isReview ? `<button class="btn btn-t" data-act="a-skip">Überspringen</button>` : ''}
       <span class="sp"></span>
       ${A.i > 0 ? `<button class="btn btn-g" data-act="a-back">Zurück</button>` : ''}
@@ -1289,7 +1285,7 @@ function toggleDone(id){
 function applyTheme(){
   if (S.theme === 'auto') document.documentElement.removeAttribute('data-theme');
   else document.documentElement.setAttribute('data-theme', S.theme);
-  try { localStorage.setItem('klar-theme', S.theme); } catch (e) {}
+  try { localStorage.setItem('brain-theme', S.theme); } catch (e) {}
   requestAnimationFrame(() => {
     const c = getComputedStyle(document.body).backgroundColor;
     document.querySelectorAll('meta[name="theme-color"]').forEach(m => { if (S.theme === 'auto') m.content = m.media.includes('dark') ? '#18191C' : '#FFFFFF'; else m.content = c; });
@@ -1304,10 +1300,10 @@ function nav(v){
   render(); $('#main').scrollTop = 0;
 }
 function exportData(){
-  const data = { app:'klar', version:1, exported:new Date().toISOString(), todos:T, cats:CATS, people:PEOPLE, projects:PROJECTS };
+  const data = { app:'brain', version:1, exported:new Date().toISOString(), todos:T, cats:CATS, people:PEOPLE, projects:PROJECTS };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = `klar-backup-${iso(TODAY)}.json`;
+  a.href = URL.createObjectURL(blob); a.download = `brain-backup-${iso(TODAY)}.json`;
   document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
   toast('Backup erstellt');
@@ -1315,7 +1311,7 @@ function exportData(){
 async function importData(file){
   try {
     const data = JSON.parse(await file.text());
-    if (data.app !== 'klar' || !Array.isArray(data.todos)) throw new Error('format');
+    if (!['brain', 'klar'].includes(data.app) || !Array.isArray(data.todos)) throw new Error('format');
     let n = 0;
     ['cats', 'people', 'projects', 'todos'].forEach(store => {
       const arr = ARR[store]();
@@ -1331,7 +1327,7 @@ async function importData(file){
     autoArchive(); render();
     toast(n ? `Backup importiert · ${n} ${n === 1 ? 'To-do' : 'To-dos'} übernommen` : 'Backup geprüft · alles war schon aktuell');
   } catch (e) {
-    toast('Diese Datei ist kein Klar-Backup.');
+    toast('Diese Datei ist kein Brain-Backup.');
   }
 }
 
@@ -1426,12 +1422,6 @@ document.addEventListener('click', e => {
     case 'a-person': { const v = el.dataset.v, ps = A.draft.persons; A.draft.persons = ps.includes(v) ? ps.filter(x => x !== v) : [...ps, v]; renderModal(); break; }
     case 'a-proj': A.draft.project = el.dataset.v || null; if (A.draft.project && !A.draft.area) A.draft.area = projById(A.draft.project).area; renderModal(); break;
     case 'a-due': A.draft.due = DUE_OPTS().find(o => o[0] === el.dataset.v)[2]; renderModal(); break;
-    case 'a-mic': {
-      const f = el.parentElement.querySelector('input,textarea'); f?.focus();
-      el.classList.add('listening'); setTimeout(() => el.classList.remove('listening'), 2600);
-      toast(isMobile() ? 'Tipp auf das Mikrofon deiner Tastatur (Wispr- oder iPhone-Tastatur)' : 'Diktieren: Wispr-Hotkey drücken');
-      break;
-    }
   }
 });
 $('#scrim').addEventListener('click', () => { document.body.classList.remove('sb-open'); if (innerWidth <= 1100) S.sel = null; render(); });
@@ -1549,7 +1539,7 @@ setInterval(onNewDay, 60000);
 
 /* ============ Start ============ */
 async function boot(){
-  try { S.theme = localStorage.getItem('klar-theme') || 'auto'; } catch (e) {}
+  try { S.theme = localStorage.getItem('brain-theme') || localStorage.getItem('klar-theme') || 'auto'; } catch (e) {}
   applyTheme();
   try {
     idb = await openDB();

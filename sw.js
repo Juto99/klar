@@ -1,6 +1,6 @@
-// Klar – Service Worker: macht die App offline-fähig.
+// Brain – Service Worker: macht die App offline-fähig.
 // Bei jeder Veröffentlichung VERSION erhöhen, damit Geräte die neue Fassung laden.
-const VERSION = 'klar-v5';
+const VERSION = 'brain-v6';
 const ASSETS = [
   './',
   './index.html',
