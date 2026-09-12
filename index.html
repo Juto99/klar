@@ -169,8 +169,6 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .wk-head strong{font-size:13.5px;font-weight:650;color:var(--text)}
 .wdots{display:flex;gap:3px;height:6px}
 .wdots .dot{width:5px;height:5px}
-.wweek{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-2);padding:8px 12px;border-radius:10px;background:var(--surface-2);margin-bottom:8px}
-.wweek .bar{height:4px;flex:1;border-radius:4px;background:linear-gradient(90deg,var(--work),var(--private));opacity:.35}
 
 /* Sections & rows */
 .sec{display:flex;align-items:baseline;gap:8px;margin:28px 0 4px;padding:0 4px}
@@ -985,14 +983,13 @@ function viewToday(){
   const weekHead = `<div class="wk-head"><strong>KW ${kw(TODAY)}</strong><span>${THIS_MON.getDate()}. ${THIS_MON.getMonth() !== sun.getMonth() ? MON[THIS_MON.getMonth()] + ' ' : ''}– ${sun.getDate()}. ${MON[sun.getMonth()]}</span></div>`;
   let body;
   if (selIsToday){
-    const weekItems = open.filter(t => t.due?.type === 'week' && same(P(t.due.start), THIS_MON));
-    // Handy: nur Überfälliges und Heute. Desktop: zusätzlich diese und nächste Woche.
-    const groups = bucketGroups(open, mob ? ['overdue', 'today'] : ['overdue', 'today', 'week', 'next']);
+    // Überall gleich: nur Überfälliges und heute Fälliges – alles Weitere steht in den Empfehlungen.
+    const groups = bucketGroups(open, ['overdue', 'today']);
     const hasAny = groups.some(g => g.items.length);
-    const rest = mob ? 0 : open.filter(t => ['later', 'none'].includes(bucket(t))).length;
+    const rest = open.length - groups.reduce((n, g) => n + g.items.length, 0);
     const empty = !T.length
       ? `<div class="empty-big"><strong>Willkommen bei Brain.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Sprich oder tipp oben dein erstes To-do – oder leg es geführt an.'}</div>`
-      : `<div class="empty-big"><strong>Heute ist nichts fällig.</strong>${mob ? 'Tipp auf einen Tag, um ihn anzusehen.' : 'Genieß es.'}</div>`;
+      : `<div class="empty-big"><strong>Heute ist nichts fällig.</strong>Tipp auf einen Tag der Woche, um ihn anzusehen.</div>`;
     const oben = new Set(groups.flatMap(g => g.items.map(t => t.id)));
     const tipps = empfehlung(open, oben);
     const empf = tipps.length
@@ -1000,10 +997,9 @@ function viewToday(){
          <div class="rec-note">Sortiert nach Wichtigkeit und Dringlichkeit, mit Blick auf schnelle Erledigungen und Liegengebliebenes.</div>
          <ol class="rec">${tipps.map(({ t, grund }, i) => `<li><span class="rec-n">${i + 1}</span><div class="rec-row">${rowHTML(t, { extraMeta:`<span class="rec-why">${ic('spark')}${esc(grund)}</span>` })}</div></li>`).join('')}</ol>`
       : (T.filter(isOpen).length ? '' : '');
-    body = (weekItems.length ? `<div class="wweek"><span>${weekItems.length} ${weekItems.length === 1 ? 'To-do' : 'To-dos'} irgendwann diese Woche</span><span class="bar"></span><span class="tnum">KW ${kw(TODAY)}</span></div>` : '') +
-      (hasAny ? groupsHTML(groups) : empty) +
+    body = (hasAny ? groupsHTML(groups) : empty) +
       empf +
-      (rest ? `<button class="link more" data-act="nav" data-view="all">${rest} weitere für später oder ohne Datum</button>` : '');
+      (rest ? `<button class="link more" data-act="nav" data-view="all">Alle ${open.length} offenen To-dos ansehen</button>` : '');
   } else {
     const items = open.filter(t => t.due?.type === 'day' && same(P(t.due.date), sel)).sort(sortByDue);
     body = `<div class="sec"><h3>${esc(longDate(sel))}</h3><span class="n">${items.length}</span><button class="link" style="margin-left:auto;font-size:13px" data-act="today-day" data-d="${iso(TODAY)}">Zurück zu heute</button></div>` +
