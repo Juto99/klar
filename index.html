@@ -381,6 +381,8 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .date-in{height:36px;border-radius:10px;border:0;box-shadow:inset 0 0 0 1px var(--line-2);background:var(--surface);padding:0 10px;font-size:14px}
 .recog{border-radius:14px;background:var(--accent-soft);padding:13px 15px}
 .recog-h{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--accent);margin-bottom:8px}
+.ai-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 1s ease-in-out infinite}
+@keyframes blink{50%{opacity:.2}}
 .recog-t{font-size:15.5px;font-weight:550;margin-bottom:8px}
 .recog .chips{gap:6px}
 .recog .chip{background:var(--surface)}
@@ -1279,6 +1281,75 @@ function parse(text){
   return { draft:r, rec, sugg };
 }
 
+/* ============ KI-Parser (Server-Funktion, Modell Claude Opus 5) ============ */
+async function aiParse(text){
+  if (!sess || !navigator.onLine) return null;
+  const tok = await token(); if (!tok) return null;
+  const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 20000);
+  try {
+    const r = await fetch(`${SB.url}/functions/v1/parse`, {
+      method:'POST', signal:ctrl.signal,
+      headers:{ apikey:SB.key, Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' },
+      body:JSON.stringify({
+        text, today:iso(TODAY), weekday:WDL[TODAY.getDay()],
+        people:PEOPLE.map(p => p.name),
+        projects:PROJECTS.map(p => p.name),
+        cats:CATS.map(c => ({ name:c.name, bereich:AREAS[c.area].name, area:c.area }))
+      })
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j.ok ? j.felder : null;
+  } catch (e) { return null; } finally { clearTimeout(timer); }
+}
+function fromAI(f){
+  const draft = blank(), rec = [], sugg = [];
+  draft.title = String(f.title || '').trim();
+  draft.desc = String(f.description || '').trim();
+  draft.ctx = String(f.context || '').trim();
+  if (f.area === 'work' || f.area === 'private') draft.area = f.area;
+  if (f.category){
+    const c = CATS.find(c => c.name.toLowerCase() === String(f.category).toLowerCase() && (!draft.area || c.area === draft.area));
+    if (c){ draft.cat = c.id; draft.area = c.area; }
+  }
+  (f.persons || []).forEach(n => {
+    const name = String(n).trim(); if (!name) return;
+    const p = PEOPLE.find(p => p.name.toLowerCase() === name.toLowerCase());
+    if (p){ draft.persons.push(p.id); rec.push('Person: ' + p.name); }
+    else sugg.push({ type:'person', name });
+  });
+  if (f.project){
+    const name = String(f.project).trim();
+    const p = PROJECTS.find(p => p.name.toLowerCase() === name.toLowerCase());
+    if (p){ draft.project = p.id; if (!draft.area) draft.area = p.area; rec.push('Projekt: ' + p.name); }
+    else if (name) sugg.push({ type:'project', name });
+  }
+  const d = f.due_date;
+  if (f.due_type === 'day' && d) draft.due = day(d);
+  else if (f.due_type === 'week' && d) draft.due = week(iso(mondayOf(P(d))));
+  else if (f.due_type === 'month' && d) draft.due = month(String(d).slice(0, 7));
+  if (draft.due) rec.unshift('Deadline: ' + dueText(draft.due));
+  if (draft.area) rec.push('Bereich: ' + AREAS[draft.area].name + (draft.cat ? ' · ' + catById(draft.cat).name : ''));
+  return { draft, rec, sugg };
+}
+// Sofort mit der Regel-Erkennung starten, die KI ergänzt, sobald sie antwortet.
+function startAssistant(text){
+  const { draft, rec, sugg } = parse(text);
+  openAssistant('fill', draft, { rec, sugg, raw:text });
+  if (sess && navigator.onLine){
+    A.ai = 'busy'; renderModal();
+    aiParse(text).then(f => {
+      if (!A || A.raw !== text) return;
+      if (!f || A.touched){ A.ai = f ? 'ok' : 'off'; renderModal(); return; }
+      const r = fromAI(f);
+      if (!r.draft.title){ A.ai = 'off'; renderModal(); return; }
+      A.draft = { ...blank(), ...r.draft, desc:r.draft.desc || A.draft.desc, ctx:r.draft.ctx || A.draft.ctx };
+      A.rec = r.rec; A.sugg = r.sugg; A.ai = 'ok'; A.steps = fillSteps(); A.i = 0;
+      renderModal();
+    });
+  }
+}
+
 /* ============ Stammdaten anlegen ============ */
 function addEntity(kind, name){
   name = name.trim(); if (!name) return null;
@@ -1313,7 +1384,7 @@ function removeEntity(store, id){
 const FULL_STEPS = ['title', 'desc', 'ctx', 'area', 'cat', 'persons', 'projdue'];
 const blank = () => ({ title:'', desc:'', ctx:'', area:null, cat:null, persons:[], project:null, due:null });
 function openAssistant(mode, draft = {}, opts = {}){
-  A = { mode, draft:{ ...blank(), ...JSON.parse(JSON.stringify(draft)) }, i:0, rec:opts.rec || null, sugg:opts.sugg || [], raw:opts.raw || '', fromId:opts.fromId || null, capture:'' };
+  A = { mode, draft:{ ...blank(), ...JSON.parse(JSON.stringify(draft)) }, i:0, rec:opts.rec || null, sugg:opts.sugg || [], raw:opts.raw || '', fromId:opts.fromId || null, capture:'', ai:'', touched:false };
   A.steps = mode === 'full' ? [...FULL_STEPS, 'review'] : mode === 'capture' ? ['capture'] : fillSteps();
   document.body.classList.remove('sb-open'); syncScrim();
   $('#modal').hidden = false;
@@ -1423,7 +1494,8 @@ function stepHTML(k){
   }
 }
 function recogHTML(){
-  return `<div class="recog"><div class="recog-h">${ic('spark')}Aus deiner Eingabe erkannt</div>
+  const kopf = A.ai === 'busy' ? 'KI liest mit …' : A.ai === 'ok' ? 'Von der KI ausgewertet' : 'Aus deiner Eingabe erkannt';
+  return `<div class="recog"><div class="recog-h">${ic('spark')}${kopf}${A.ai === 'busy' ? '<i class="ai-dot"></i>' : ''}</div>
     <div class="recog-t">${esc(A.draft.title)}</div>
     <div class="chips">${A.rec.length ? A.rec.map(r => `<span class="chip">${esc(r)}</span>`).join('') : '<span class="muted">Nur der Titel – den Rest fragen wir kurz ab.</span>'}</div>
     ${A.sugg?.length ? `<div class="sugg-l">Neu erkannt – antippen zum Übernehmen</div><div class="chips">${A.sugg.map((g, i) => `<button class="chip sugg" data-act="a-sugg" data-i="${i}">${ic('plus')}${esc(g.name)} ${g.type === 'person' ? 'als Person' : 'als Projekt'}</button>`).join('')}</div>` : ''}
@@ -1467,9 +1539,7 @@ function aNext(){
   if (k === 'capture'){
     const txt = A.capture.trim();
     if (!txt){ toast('Sag oder tipp kurz, worum es geht.'); return; }
-    const { draft, rec, sugg } = parse(txt);
-    A.mode = 'fill'; A.draft = { ...blank(), ...draft }; A.rec = rec; A.sugg = sugg; A.raw = txt; A.i = 0; A.steps = fillSteps();
-    renderModal(); return;
+    startAssistant(txt); return;
   }
   if (k === 'title' && !A.draft.title.trim()){ toast('Wie heißt das To-do?'); return; }
   // Auch im Schritt-für-Schritt-Modus: Deadline, Personen, Projekt direkt aus dem Titel übernehmen
@@ -1675,7 +1745,7 @@ document.addEventListener('click', e => {
     case 'a-back': commitInputs(); A.i = Math.max(0, A.i - 1); renderModal(); break;
     case 'a-skip': commitInputs(); A.i = Math.min(A.steps.length - 1, A.i + 1); renderModal(); break;
     case 'a-jump': aJump(el.dataset.step); break;
-    case 'a-sugg': {
+    case 'a-sugg': if (A) A.touched = true; {
       const i = +el.dataset.i, g = A.sugg?.[i]; if (!g) break;
       A.rec ||= [];
       if (g.type === 'person'){
@@ -1694,16 +1764,16 @@ document.addEventListener('click', e => {
       renderModal(); break;
     }
     case 'a-save': commitInputs(); aSave(); break;
-    case 'a-area':
+    case 'a-area': if (A) A.touched = true;
       A.draft.area = el.dataset.v;
       if (A.draft.cat && catById(A.draft.cat)?.area !== A.draft.area) A.draft.cat = null;
       if (A.draft.project && projById(A.draft.project)?.area !== A.draft.area) A.draft.project = null;
       renderModal(); setTimeout(() => { if (A && A.steps[A.i] === 'area') aNext(); }, 160);
       break;
-    case 'a-cat': A.draft.cat = A.draft.cat === el.dataset.v ? null : el.dataset.v; if (A.draft.cat) A.draft.area = catById(A.draft.cat).area; renderModal(); break;
-    case 'a-person': { const v = el.dataset.v, ps = A.draft.persons; A.draft.persons = ps.includes(v) ? ps.filter(x => x !== v) : [...ps, v]; renderModal(); break; }
-    case 'a-proj': A.draft.project = el.dataset.v || null; if (A.draft.project && !A.draft.area) A.draft.area = projById(A.draft.project).area; renderModal(); break;
-    case 'a-due': A.draft.due = DUE_OPTS().find(o => o[0] === el.dataset.v)[2]; renderModal(); break;
+    case 'a-cat': if (A) A.touched = true; A.draft.cat = A.draft.cat === el.dataset.v ? null : el.dataset.v; if (A.draft.cat) A.draft.area = catById(A.draft.cat).area; renderModal(); break;
+    case 'a-person': if (A) A.touched = true; { const v = el.dataset.v, ps = A.draft.persons; A.draft.persons = ps.includes(v) ? ps.filter(x => x !== v) : [...ps, v]; renderModal(); break; }
+    case 'a-proj': if (A) A.touched = true; A.draft.project = el.dataset.v || null; if (A.draft.project && !A.draft.area) A.draft.area = projById(A.draft.project).area; renderModal(); break;
+    case 'a-due': if (A) A.touched = true; A.draft.due = DUE_OPTS().find(o => o[0] === el.dataset.v)[2]; renderModal(); break;
   }
 });
 $('#scrim').addEventListener('click', () => { document.body.classList.remove('sb-open'); if (innerWidth <= 1100) S.sel = null; render(); });
@@ -1725,10 +1795,9 @@ document.addEventListener('change', e => {
 
 function quickSubmit(v){
   if (!v.trim()) return;
-  const { draft, rec, sugg } = parse(v);
   $('#qa').value = '';
   $('#qa').blur();
-  openAssistant('fill', draft, { rec, sugg, raw:v.trim() });
+  startAssistant(v.trim());
 }
 document.addEventListener('submit', e => { if (e.target.id === 'qaf'){ e.preventDefault(); quickSubmit($('#qa').value); } });
 document.addEventListener('keydown', e => {

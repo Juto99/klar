@@ -2,11 +2,14 @@
 // Läuft auf Supabase (Deno). Der Anthropic-Schlüssel liegt nur hier als Secret, nie in der App.
 import Anthropic from 'npm:@anthropic-ai/sdk@0.125.0';
 
-const APP_ORIGIN = 'https://juto99.github.io';
-const cors = {
-  'Access-Control-Allow-Origin': APP_ORIGIN,
-  'Access-Control-Allow-Headers': 'authorization, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+const ERLAUBT = ['https://juto99.github.io', 'http://localhost:8778', 'http://127.0.0.1:8778'];
+const corsFor = (req: Request) => {
+  const o = req.headers.get('origin') || '';
+  return {
+    'Access-Control-Allow-Origin': ERLAUBT.includes(o) ? o : ERLAUBT[0],
+    'Access-Control-Allow-Headers': 'authorization, content-type, apikey',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
 };
 
 const client = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') });
@@ -15,7 +18,6 @@ const client = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') });
 const TOOL = {
   name: 'todo_erfassen',
   description: 'Gibt die erkannten Bestandteile eines diktierten To-dos zurück.',
-  strict: true,
   input_schema: {
     type: 'object',
     additionalProperties: false,
@@ -23,12 +25,12 @@ const TOOL = {
       title: { type: 'string', description: 'Kurzer, aktiver Titel ohne Datums-, Personen- oder Projektangaben.' },
       description: { type: 'string', description: 'Zusätzliche Details, sonst leer.' },
       context: { type: 'string', description: 'Hintergrund/Begründung, sonst leer.' },
-      area: { type: ['string', 'null'], enum: ['work', 'private', null], description: 'Arbeit oder Privat, sonst null.' },
-      category: { type: ['string', 'null'], description: 'Name einer vorhandenen Unterkategorie oder null.' },
+      area: { type: 'string', enum: ['work', 'private', ''], description: 'work = Arbeit, private = Privat, leer wenn unklar.' },
+      category: { type: 'string', description: 'Name einer vorhandenen Unterkategorie, sonst leer.' },
       persons: { type: 'array', items: { type: 'string' }, description: 'Vornamen der genannten Personen.' },
-      project: { type: ['string', 'null'], description: 'Name des Projekts oder null.' },
+      project: { type: 'string', description: 'Name des Projekts, sonst leer.' },
       due_type: { type: 'string', enum: ['day', 'week', 'month', 'none'], description: 'Art der Deadline.' },
-      due_date: { type: ['string', 'null'], description: 'Bei day: YYYY-MM-DD. Bei week: Montag der Woche als YYYY-MM-DD. Bei month: YYYY-MM. Sonst null.' },
+      due_date: { type: 'string', description: 'Bei day: YYYY-MM-DD. Bei week: Montag der Woche als YYYY-MM-DD. Bei month: YYYY-MM. Sonst leer.' },
       unsicher: { type: 'array', items: { type: 'string' }, description: 'Felder, bei denen die Zuordnung unsicher ist.' },
     },
     required: ['title', 'description', 'context', 'area', 'category', 'persons', 'project', 'due_type', 'due_date', 'unsicher'],
@@ -36,6 +38,7 @@ const TOOL = {
 } as const;
 
 Deno.serve(async (req) => {
+  const cors = corsFor(req);
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
     const { text, today, weekday, people = [], projects = [], cats = [] } = await req.json();
@@ -50,20 +53,18 @@ Deno.serve(async (req) => {
       'Der Titel ist kurz und aktiv und enthält KEINE Datumsangabe mehr. Personennamen dürfen im Titel stehen bleiben.',
       people.length ? `Bekannte Personen: ${people.join(', ')}. Nutze exakt diese Schreibweise, wenn gemeint.` : 'Es sind noch keine Personen angelegt.',
       projects.length ? `Bekannte Projekte: ${projects.join(', ')}.` : 'Es sind noch keine Projekte angelegt.',
-      cats.length ? `Bekannte Unterkategorien: ${cats.join(', ')}. Wähle nur daraus oder null.` : 'Es sind noch keine Unterkategorien angelegt.',
+      cats.length ? `Bekannte Unterkategorien (JSON): ${JSON.stringify(cats)}. Gib bei "category" ausschließlich einen dieser Namen zurück, exakt geschrieben und ohne Zusatz in Klammern; wenn keiner passt, leer lassen.` : 'Es sind noch keine Unterkategorien angelegt.',
       'Neue Personen- oder Projektnamen darfst du zurückgeben, auch wenn sie noch nicht angelegt sind.',
-      'Erfinde nichts. Was nicht gesagt wurde, bleibt leer bzw. null. Bei Zweifeln nenne das Feld in "unsicher".',
+      'Erfinde nichts. Was nicht gesagt wurde, bleibt leer. Bei Zweifeln nenne das Feld in "unsicher".',
     ].join('\n');
 
-    const res = await client.beta.messages.create({
+    const res = await client.messages.create({
       model: 'claude-opus-5',
       max_tokens: 2000,
       output_config: { effort: 'low' },
       system,
       tools: [TOOL],
       tool_choice: { type: 'tool', name: 'todo_erfassen' },
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
       messages: [{ role: 'user', content: text }],
     });
 
