@@ -3,14 +3,19 @@
 -- Jede Zeile gehört genau einem Konto; niemand sieht fremde Zeilen (Row Level Security).
 
 create table if not exists public.items (
-  id          uuid        primary key,
+  id          uuid        not null,
   user_id     uuid        not null default auth.uid() references auth.users (id) on delete cascade,
   kind        text        not null check (kind in ('todos', 'cats', 'people', 'projects')),
   data        jsonb       not null default '{}'::jsonb,
   updated_at  bigint      not null,                      -- Zeitstempel des Geräts (ms)
   deleted     boolean     not null default false,        -- Löschmarke statt echtem Löschen
-  synced_at   timestamptz not null default now()         -- Servermarke: was ist neu für andere Geräte
+  synced_at   timestamptz not null default now(),        -- Servermarke: was ist neu für andere Geräte
+  primary key (user_id, id)                             -- je Konto ein eigener Nummernkreis
 );
+
+-- Nachtrag für bestehende Projekte: Primärschlüssel auf (user_id, id) umstellen
+alter table public.items drop constraint if exists items_pkey;
+alter table public.items add primary key (user_id, id);
 
 alter table public.items enable row level security;
 

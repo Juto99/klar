@@ -317,7 +317,9 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .d-title .check{width:24px;height:24px;margin-top:3px}
 .d-back{display:none;align-items:center;gap:1px;color:var(--accent);font-size:16px;margin-left:-8px;padding:4px 6px}
 .d-back svg.i{width:20px;height:20px}
-.d-title-in{flex:1;min-width:0;border:0;background:none;outline:none;resize:none;padding:0;font-size:21px;font-weight:650;letter-spacing:-.015em;line-height:1.3;overflow:hidden}
+.d-title-in{flex:1;min-width:0;border:0;background:var(--surface-2);outline:none;resize:none;padding:6px 9px;margin:-6px -4px;border-radius:9px;font-size:21px;font-weight:650;letter-spacing:-.015em;line-height:1.3;overflow:hidden;transition:box-shadow .15s}
+.d-title-in:hover{box-shadow:inset 0 0 0 1px var(--line-2)}
+.d-title-in:focus{background:var(--surface);box-shadow:inset 0 0 0 1px var(--accent),0 0 0 4px var(--accent-soft)}
 .d-title-in::placeholder{color:var(--text-3)}
 .d-in{display:block;width:100%;border:0;background:var(--surface-2);border-radius:10px;padding:10px 12px;font-size:14.5px;line-height:1.5;resize:none;outline:none;overflow:hidden;min-height:44px}
 .d-in:focus{box-shadow:inset 0 0 0 1px var(--accent)}
@@ -680,7 +682,7 @@ async function authPost(path, body){
   if (!r.ok) throw new Error(j.msg || j.error_description || j.message || `Fehler ${r.status}`);
   return j;
 }
-function setSession(j){ saveSess({ access_token:j.access_token, refresh_token:j.refresh_token, expires_at:Date.now() + (j.expires_in || 3600) * 1000, email:j.user?.email || sess?.email }); }
+function setSession(j){ saveSess({ access_token:j.access_token, refresh_token:j.refresh_token, expires_at:Date.now() + (j.expires_in || 3600) * 1000, email:j.user?.email || sess?.email, user_id:j.user?.id || sess?.user_id }); }
 async function signIn(email, password){ setSession(await authPost('/auth/v1/token?grant_type=password', { email, password })); }
 async function signUp(email, password){
   const j = await authPost('/auth/v1/signup', { email, password });
@@ -702,13 +704,18 @@ async function markSynced(kind, id, ts){
   if (local) local._srv = ts;
 }
 async function pushChanges(tok){
+  if (!sess.user_id){   // Anmeldung aus einer älteren Fassung: Konto-ID nachholen
+    const r = await fetch(`${SB.url}/auth/v1/user`, { headers:{ apikey:SB.key, Authorization:`Bearer ${tok}` } });
+    if (r.ok){ const u = await r.json(); saveSess({ ...sess, user_id:u.id, email:u.email || sess.email }); }
+    if (!sess.user_id) throw new Error('Konto-Kennung fehlt – bitte einmal abmelden und neu anmelden.');
+  }
   const rows = [];
   for (const kind of KINDS)
     for (const o of await getAll(kind))
-      if (o.updatedAt && o._srv !== o.updatedAt) rows.push({ id:o.id, kind, data:stripMeta(o), updated_at:o.updatedAt, deleted:!!o.deleted });
+      if (o.updatedAt && o._srv !== o.updatedAt) rows.push({ id:o.id, user_id:sess.user_id, kind, data:stripMeta(o), updated_at:o.updatedAt, deleted:!!o.deleted });
   for (let i = 0; i < rows.length; i += 200){
     const chunk = rows.slice(i, i + 200);
-    const r = await fetch(`${SB.url}/rest/v1/items?on_conflict=id`, {
+    const r = await fetch(`${SB.url}/rest/v1/items?on_conflict=user_id,id`, {
       method:'POST',
       headers:{ apikey:SB.key, Authorization:`Bearer ${tok}`, 'Content-Type':'application/json', Prefer:'resolution=merge-duplicates,return=minimal' },
       body:JSON.stringify(chunk)
@@ -1082,7 +1089,8 @@ function detailHTML(t){
   const dueInfo = d.txt ? ` · <span class="${d.cls === 'over' ? 'over-t' : ''}">${esc(d.txt)}${t.due.type !== 'day' ? ` (${esc(fmtRange(t))})` : ''}</span>` : '';
   return `<div class="d-inner">
     <div class="d-top"><button class="d-back" data-act="close-detail">${ic('chevL')}<span>Zurück</span></button><span class="muted">${status}</span><button class="icon-btn d-x" data-act="close-detail" aria-label="Schließen">${ic('close')}</button></div>
-    <div class="d-title"><button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="Erledigt umschalten"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button><textarea class="d-title-in grow" data-ef="title" data-id="${t.id}" data-orig="${esc(t.title)}" rows="1" placeholder="Was ist zu tun?" aria-label="Titel">${esc(t.title)}</textarea></div>
+    <div class="d-lab" style="margin:0 0 6px 36px">To-do · antippen zum Ändern</div>
+    <div class="d-title"><button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="Erledigt umschalten"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button><textarea class="d-title-in grow" data-ef="title" data-id="${t.id}" data-orig="${esc(t.title)}" rows="1" placeholder="Was ist zu tun?" aria-label="To-do-Titel" title="Antippen zum Ändern">${esc(t.title)}</textarea></div>
     ${t.raw && t.raw !== t.title ? `<div class="quote" style="margin-top:14px"><div class="src">${ic('wave')}Diktiert</div>„${esc(t.raw)}“</div>` : ''}
     <div class="d-sec" style="margin-top:16px"><div class="d-lab">Beschreibung</div><textarea class="d-in grow" data-ef="desc" data-id="${t.id}" rows="2" placeholder="Details, Teilschritte …">${esc(t.desc)}</textarea></div>
     <div class="d-sec"><div class="d-lab">Kontext</div><textarea class="d-in grow" data-ef="ctx" data-id="${t.id}" rows="2" placeholder="Hintergrund, Absprachen …">${esc(t.ctx)}</textarea></div>
@@ -1832,6 +1840,11 @@ document.addEventListener('touchend', () => {
     row.style.transform = '';
   }
 }, { passive:true });
+// Auf dem Handy das angetippte Feld über die Tastatur schieben
+$('#detail').addEventListener('focusin', e => {
+  if (!isMobile() || !/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  setTimeout(() => e.target.scrollIntoView({ block:'center', behavior:'smooth' }), 300);
+});
 addEventListener('resize', syncScrim);
 matchMedia('(max-width:760px)').addEventListener?.('change', () => render());
 // Sichtbarer Bereich über der iPhone-Tastatur → Eingabefenster bleibt darüber.
