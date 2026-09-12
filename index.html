@@ -576,6 +576,29 @@ function maybeSeed(){
   seed(); render();
 }
 
+/* Doppelte Kategorien, Personen oder Projekte zusammenlegen.
+   Entsteht, wenn zwei Geräte unabhängig dieselbe Bezeichnung angelegt haben und dann abgeglichen wurden. */
+function dedupe(){
+  let merged = 0;
+  const fix = (store, arr, keyOf, relink) => {
+    const keep = new Map();
+    // Feste Start-IDs (00000000-…) zuerst: sie bleiben erhalten, damit weitere Geräte daran andocken.
+    const gross = o => /^[A-ZÄÖÜ]/.test((o.name || '').trim()) ? 1 : 0;
+    [...arr].sort((a, b) => (b.id.startsWith('00000000') - a.id.startsWith('00000000')) || (gross(b) - gross(a)) || String(a.id).localeCompare(String(b.id)))
+      .forEach(o => {
+        const k = keyOf(o), winner = keep.get(k);
+        if (!winner){ keep.set(k, o); return; }
+        T.forEach(t => { if (relink(t, o.id, winner.id)) save('todos', t); });
+        tomb(store, o);
+        merged++;
+      });
+  };
+  fix('cats', CATS, c => `${c.area}\n${c.name.trim().toLowerCase()}`, (t, from, to) => { if (t.cat === from){ t.cat = to; return true; } });
+  fix('people', PEOPLE, p => p.name.trim().toLowerCase(), (t, from, to) => { if (t.persons.includes(from)){ t.persons = [...new Set(t.persons.map(x => x === from ? to : x))]; return true; } });
+  fix('projects', PROJECTS, p => p.name.trim().toLowerCase(), (t, from, to) => { if (t.project === from){ t.project = to; return true; } });
+  return merged;
+}
+
 /* ============ Ableitungen ============ */
 const catById = id => CATS.find(c => c.id === id);
 const projById = id => PROJECTS.find(p => p.id === id);
@@ -731,6 +754,7 @@ async function sync(){
     S.lastSync = Date.now(); put('meta', { key:'lastSync', value:S.lastSync });
     S.syncState = 'ok'; S.syncError = '';
     autoArchive();
+    if (dedupe()) toast('Doppelte Einträge zusammengelegt');
     down ? render() : renderSidebar();
   } catch (e){
     S.syncState = 'error'; S.syncError = String(e.message || e); renderSidebar();
@@ -1829,6 +1853,7 @@ async function boot(){
     toast('Dieser Browser erlaubt kein dauerhaftes Speichern (privates Fenster?).', null, true);
   }
   autoArchive();
+  dedupe();
   render();
   registerSW();
   sync();
