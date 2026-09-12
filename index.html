@@ -813,7 +813,7 @@ function quickAdd(){
 // Bereich ist offen, wenn aufgeklappt – oder wenn gerade etwas daraus angezeigt wird
 function areaOpen(a){
   if (S.openArea[a]) return true;
-  if (S.view === 'area:' + a || S.addingCat === a) return true;
+  if (S.addingCat === a) return true;
   return S.view.startsWith('cat:') && catById(S.view.slice(4))?.area === a;
 }
 function renderSidebar(){
@@ -830,13 +830,12 @@ function renderSidebar(){
     const op = areaOpen(a), n = open.filter(t => areaOf(t) === a).length;
     const lead = `<span class="lead" style="color:${areaColor(a)}">${ic(a === 'work' ? 'work' : 'home')}</span>`;
     const sub = op
-      ? item('area:' + a, 'Alle anzeigen', '', `<i class="dot" style="--c:${areaColor(a)};opacity:.35"></i>`, 'sb-sub')
-        + catsOf(a).map(c => item('cat:' + c.id, c.name, open.filter(t => t.cat === c.id).length || '', `<i class="dot" style="--c:${areaColor(a)}"></i>`, 'sb-sub')).join('')
+      ? catsOf(a).map(c => item('cat:' + c.id, c.name, open.filter(t => t.cat === c.id).length || '', `<i class="dot" style="--c:${areaColor(a)}"></i>`, 'sb-sub')).join('')
         + (S.addingCat === a
             ? `<div class="sb-new sb-sub"><input id="newcat" data-add="cat:${a}" placeholder="Neue Unterkategorie" enterkeyhint="done"></div>`
             : `<button class="sb-item sb-sub sb-more" data-act="add-cat" data-area="${a}">${ic('plus')}<span>Unterkategorie</span></button>`)
       : '';
-    return `<button class="sb-item ${op ? 'is-open' : ''}" data-act="toggle-area" data-area="${a}" aria-expanded="${op}">${lead}<span>${AREAS[a].name}</span><span class="cnt">${n || ''}</span>${ic('chevR', 'i chev')}</button>${sub}`;
+    return `<button class="sb-item ${op ? 'is-open' : ''} ${S.view === 'area:' + a ? 'on' : ''}" data-act="area-open" data-area="${a}" aria-expanded="${op}">${lead}<span>${AREAS[a].name}</span><span class="cnt">${n || ''}</span>${ic('chevR', 'i chev')}</button>${sub}`;
   };
   let syncTxt, syncCol, syncBtn = '';
   if (S.memOnly){ syncTxt = 'Speichern nicht möglich (privates Fenster?)'; syncCol = 'var(--danger)'; }
@@ -1602,7 +1601,12 @@ document.addEventListener('click', e => {
     case 'e-sort': { const t = T.find(x => x.id === id); if (t){ editTodo(t, t => { t.status = 'open'; }); toast('Einsortiert'); } break; }
     case 'set': S[el.dataset.k] = el.dataset.v; render(); break;
     case 'theme': S.theme = el.dataset.v; applyTheme(); render(); break;
-    case 'toggle-area': S.openArea[el.dataset.area] = !areaOpen(el.dataset.area); saveAreas(); renderSidebar(); break;
+    case 'area-open': {
+      const a = el.dataset.area;
+      if (S.view === 'area:' + a && areaOpen(a)){ S.openArea[a] = false; saveAreas(); renderSidebar(); }
+      else { S.openArea[a] = true; saveAreas(); nav('area:' + a); }
+      break;
+    }
     case 'add-cat': S.addingCat = S.addingCat === el.dataset.area ? null : el.dataset.area; S.openArea[el.dataset.area] = true; saveAreas(); renderSidebar(); break;
     case 'new-proj-area': S.newProjArea = el.dataset.v; renderMain(); break;
     case 'proj-area': { const p = projById(id); if (p){ p.area = el.dataset.v; save('projects', p); render(); } break; }
