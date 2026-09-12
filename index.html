@@ -269,6 +269,10 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .cal-head h2{margin:0 auto 0 0;font-size:20px;font-weight:650;letter-spacing:-.015em}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--text-2);margin-bottom:12px}
 .legend span{display:inline-flex;align-items:center;gap:6px}
+.fchip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:5px 11px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line);color:var(--text-3)}
+.fchip.on{background:var(--surface-2);color:var(--text);font-weight:550;box-shadow:inset 0 0 0 1px var(--line-2)}
+.fchip:not(.on) .dot{opacity:.25}
+.fchip:hover{background:var(--surface-2)}
 .lg-bar{width:22px;height:8px;border-radius:3px;background:color-mix(in srgb,var(--work) 22%,transparent)}
 .lg-band{width:22px;height:8px;border-radius:3px;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--private) 25%,transparent) 0 3px,transparent 3px 6px)}
 .mstrip{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:9px 10px;margin-bottom:10px;border-radius:10px;background:repeating-linear-gradient(135deg,var(--surface-2) 0 6px,transparent 6px 12px);box-shadow:inset 0 0 0 1px var(--line)}
@@ -772,7 +776,8 @@ const S = {
   view:'today', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
   sort:'due', area:'all', q:'', online:navigator.onLine, memOnly:false,
   addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
-  syncState:'', syncError:'', lastSync:0, authOpen:false, authMode:'in', authBusy:false, authErr:''
+  syncState:'', syncError:'', lastSync:0, authOpen:false, authMode:'in', authBusy:false, authErr:'',
+  calAreas:{ work:true, private:true }
 };
 let A = null;
 let undo = null;
@@ -920,7 +925,9 @@ function viewCalendar(){
   const mob = isMobile();
   const m = S.calMonth, y = m.getFullYear(), mo = m.getMonth();
   const first = new Date(y, mo, 1), last = new Date(y, mo + 1, 0);
-  const vis = T.filter(t => t.due && (isOpen(t) || t.status === 'done'));
+  const anyArea = S.calAreas.work || S.calAreas.private;
+  const sichtbar = t => { const a = areaOf(t); return a ? S.calAreas[a] : anyArea; };   // ohne Bereich: mitlaufen lassen
+  const vis = T.filter(t => t.due && (isOpen(t) || t.status === 'done') && sichtbar(t));
   let weeks = '';
   for (let ws = mondayOf(first); ws <= last; ws = addD(ws, 7)){
     const allBars = vis.filter(t => t.due.type === 'week' && same(P(t.due.start), ws));
@@ -946,7 +953,11 @@ function viewCalendar(){
   const dayList = vis.filter(t => { const [s, e] = range(t); return s <= sd && e >= sd; }).sort((a, b) => order[a.due.type] - order[b.due.type]);
   return header('Kalender', 'Feste Termine als Punkt, „nächste Woche“ als Balken, „nächster Monat“ als Band.', '', addBtn()) +
     `<div class="cal-head"><h2>${MON[mo]} ${y}</h2><button class="icon-btn" data-act="cal-prev" aria-label="Vorheriger Monat">${ic('chevL')}</button><button class="btn btn-g btn-s" data-act="cal-today">Heute</button><button class="icon-btn" data-act="cal-next" aria-label="Nächster Monat">${ic('chevR')}</button></div>
-    <div class="legend"><span><i class="dot" style="--c:var(--work)"></i>Arbeit</span><span><i class="dot" style="--c:var(--private)"></i>Privat</span><span><i class="lg-bar"></i>Wochen-Deadline</span><span><i class="lg-band"></i>Monats-Deadline</span></div>
+    <div class="legend">
+      <button class="fchip ${S.calAreas.work ? 'on' : ''}" data-act="cal-area" data-v="work" aria-pressed="${S.calAreas.work}"><i class="dot" style="--c:var(--work)"></i>Arbeit</button>
+      <button class="fchip ${S.calAreas.private ? 'on' : ''}" data-act="cal-area" data-v="private" aria-pressed="${S.calAreas.private}"><i class="dot" style="--c:var(--private)"></i>Privat</button>
+      <span><i class="lg-bar"></i>Wochen-Deadline</span><span><i class="lg-band"></i>Monats-Deadline</span></div>
+    ${anyArea ? '' : '<div class="empty" style="padding:10px 4px">Beide Filter sind aus – deshalb ist der Kalender leer.</div>'}
     ${monthItems.length ? `<div class="mstrip"><span class="lab">Im Laufe des ${MON[mo]}s</span>${monthItems.map(t => `<button class="mchip" data-act="open" data-id="${t.id}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i>${esc(t.title)}</button>`).join('')}</div>` : ''}
     <div class="cal-dow">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(d => `<span>${d}</span>`).join('')}</div>
     <div class="cal">${weeks}</div>
@@ -1611,6 +1622,12 @@ document.addEventListener('click', e => {
     case 'new-proj-area': S.newProjArea = el.dataset.v; renderMain(); break;
     case 'proj-area': { const p = projById(id); if (p){ p.area = el.dataset.v; save('projects', p); render(); } break; }
     case 'goto-day': S.calDay = el.dataset.d; S.calMonth = new Date(P(el.dataset.d).getFullYear(), P(el.dataset.d).getMonth(), 1); nav('calendar'); break;
+    case 'cal-area': {
+      const v = el.dataset.v;
+      S.calAreas[v] = !S.calAreas[v];
+      try { localStorage.setItem('brain-calareas', JSON.stringify(S.calAreas)); } catch (e) {}
+      renderMain(); break;
+    }
     case 'cal-day': S.calDay = el.dataset.d; renderMain(); break;
     case 'cal-prev': S.calMonth = new Date(S.calMonth.getFullYear(), S.calMonth.getMonth() - 1, 1); renderMain(); break;
     case 'cal-next': S.calMonth = new Date(S.calMonth.getFullYear(), S.calMonth.getMonth() + 1, 1); renderMain(); break;
@@ -1841,6 +1858,7 @@ async function boot(){
   loadSess();
   try { S.theme = localStorage.getItem('brain-theme') || localStorage.getItem('klar-theme') || 'auto'; } catch (e) {}
   try { Object.assign(S.openArea, JSON.parse(localStorage.getItem('brain-areas') || '{}')); } catch (e) {}
+  try { Object.assign(S.calAreas, JSON.parse(localStorage.getItem('brain-calareas') || '{}')); } catch (e) {}
   applyTheme();
   try {
     idb = await openDB();
