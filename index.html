@@ -1091,7 +1091,6 @@ function detailHTML(t){
     <div class="d-top"><button class="d-back" data-act="close-detail">${ic('chevL')}<span>Zurück</span></button><span class="muted">${status}</span><button class="icon-btn d-x" data-act="close-detail" aria-label="Schließen">${ic('close')}</button></div>
     <div class="d-lab" style="margin:0 0 6px 36px">To-do · antippen zum Ändern</div>
     <div class="d-title"><button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="Erledigt umschalten"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button><textarea class="d-title-in grow" data-ef="title" data-id="${t.id}" data-orig="${esc(t.title)}" rows="1" placeholder="Was ist zu tun?" aria-label="To-do-Titel" title="Antippen zum Ändern">${esc(t.title)}</textarea></div>
-    ${t.raw && t.raw !== t.title ? `<div class="quote" style="margin-top:14px"><div class="src">${ic('wave')}Diktiert</div>„${esc(t.raw)}“</div>` : ''}
     <div class="d-sec" style="margin-top:16px"><div class="d-lab">Beschreibung</div><textarea class="d-in grow" data-ef="desc" data-id="${t.id}" rows="2" placeholder="Details, Teilschritte …">${esc(t.desc)}</textarea></div>
     <div class="d-sec"><div class="d-lab">Kontext</div><textarea class="d-in grow" data-ef="ctx" data-id="${t.id}" rows="2" placeholder="Hintergrund, Absprachen …">${esc(t.ctx)}</textarea></div>
     <div class="d-sec"><div class="d-lab">Bereich</div>
