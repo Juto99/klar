@@ -924,29 +924,41 @@ const isMobile = () => matchMedia('(max-width:760px)').matches;
    Quick Wins aus der 2-Minuten-Regel und ein Blick auf Liegengebliebenes. Bewusst kurz gehalten (WIP-Limit). */
 function empfehlung(open, schonOben){
   const heute = TODAY.getTime();
+  const restTage = t => { const r = range(t); return r ? Math.round((r[1] - TODAY) / DAY) : null; };   // bis zum Ende der Frist
   const bewerten = t => {
-    const r = range(t), b = bucket(t);
+    const d = restTage(t), fuzzy = t.due && t.due.type !== 'day';
     let s = 0;
-    if (b === 'overdue') s += 50; else if (b === 'today') s += 40;
-    else if (b === 'week') s += 26; else if (b === 'next') s += 14;
-    else if (b === 'later') s += 6;
+    // Dringlichkeit nach tatsächlichen Resttagen – ein Montagstermin zählt am Samstag, nicht erst am Montag
+    if (d === null) s += 0;
+    else if (d < 0) s += 50 + Math.min(10, -d);
+    else if (d === 0) s += 44;
+    else if (d === 1) s += 38;
+    else if (d === 2) s += 32;
+    else if (d === 3) s += 26;
+    else if (d <= 6) s += 20;
+    else if (d <= 13) s += 12;
+    else s += 5;
     s += t.prio === 'high' ? 30 : t.prio === 'med' ? 16 : t.prio === 'low' ? 4 : 9;
     s += t.load === 'low' ? 12 : t.load === 'med' ? 5 : t.load === 'high' ? 0 : 5;
-    if (b === 'overdue' && t.prio === 'high') s += 10;                       // eskaliert
-    if (t.created && (heute - P(t.created)) / DAY > 14) s += 8;              // Altlast
-    if (t.prio === 'high' && t.load === 'high' && r && r[1] <= addD(TODAY, 14)) s += 6;  // Frosch: früh anfangen
+    if (d !== null && d < 0 && t.prio === 'high') s += 10;                    // eskaliert
+    if (t.load === 'high' && d !== null && d >= 0) s += d <= 3 ? 12 : d <= 7 ? 6 : 0;   // Vorlauf: Großes früh anfangen
+    if (fuzzy && d !== null && d <= 2) s += 4;                                // Zeitraum läuft aus
+    if (t.created && (heute - P(t.created)) / DAY > 14) s += 8;               // Altlast
     return s;
   };
   const grund = t => {
-    const b = bucket(t);
-    if (b === 'overdue' && t.prio === 'high') return 'Überfällig und wichtig';
-    if (b === 'overdue') return 'Überfällig';
+    const d = restTage(t), fuzzy = t.due && t.due.type !== 'day';
+    if (d !== null && d < 0) return t.prio === 'high' ? 'Überfällig und wichtig' : 'Überfällig';
+    if (t.load === 'high' && d !== null && d <= 3) return 'Abgabe naht – heute anfangen';
+    if (fuzzy && d !== null && d <= 2) return 'Zeitraum endet bald';
+    if (d === 0) return 'Heute fällig';
+    if (d === 1) return 'Morgen fällig';
+    if (d === 2) return 'Übermorgen fällig';
+    if (d !== null && d <= 6) return fuzzy ? 'Zeitraum läuft' : `In ${d} Tagen fällig`;
     if (t.prio === 'high' && t.load === 'high') return 'Wichtig · Block einplanen';
     if (t.prio === 'high') return 'Wichtig';
-    if (t.load === 'low' && ['today', 'week'].includes(b)) return 'Schnell erledigt';
     if (t.load === 'low') return 'Quick Win';
-    if (b === 'week') return 'Diese Woche fällig';
-    if (b === 'next') return 'Nächste Woche fällig';
+    if (d !== null && d <= 13) return 'Nächste Woche fällig';
     if (t.prio === 'low' && t.load === 'high') return 'Kann warten';
     if (t.created && (heute - P(t.created)) / DAY > 14) return 'Liegt schon lange';
     return 'Sinnvoller nächster Schritt';
