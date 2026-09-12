@@ -203,7 +203,20 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .row-right{flex:none;text-align:right;font-size:13px;color:var(--text-2);display:flex;flex-direction:column;align-items:flex-end;gap:1px;padding-top:1px}
 .row-right .k{font-size:11.5px;color:var(--text-3)}
 .row-right .over{color:var(--danger);font-weight:550}
+.flags{display:inline-flex;align-items:center;gap:6px;margin-bottom:2px}
+.pb{width:19px;height:19px;border-radius:6px;font-size:11px;font-weight:700;display:grid;place-items:center;letter-spacing:.01em}
+.pb-high{background:color-mix(in srgb,var(--danger) 16%,transparent);color:var(--danger)}
+.pb-med{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
+.pb-low{background:var(--surface-3);color:var(--text-3)}
+.lb{display:inline-flex;align-items:flex-end;gap:1.5px;height:14px}
+.lb i{width:3px;background:var(--text-3);border-radius:1px;opacity:.35}
+.lb i:nth-child(1){height:6px}.lb i:nth-child(2){height:10px}.lb i:nth-child(3){height:14px}
+.lb-low i:nth-child(1),.lb-med i:nth-child(1),.lb-med i:nth-child(2),.lb-high i{opacity:1;background:var(--text-2)}
 .row-right .fuzzy{color:var(--text)}
+.mv{display:flex;flex-direction:column;gap:2px;margin-left:8px;flex:none}
+.mv button{width:30px;height:22px;border-radius:6px;display:grid;place-items:center;color:var(--text-2);background:var(--surface-2)}
+.mv button:hover{background:var(--surface-3);color:var(--text)}
+.mv svg.i{width:16px;height:16px}
 .muted{color:var(--text-3);font-size:12.5px}
 .swipe{position:relative;overflow:hidden;border-radius:10px}
 .swipe>.row{background:var(--surface);transition:transform .18s ease}
@@ -265,6 +278,17 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .set-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 
 /* Calendar */
+.mx-wrap{overflow-x:auto;padding-bottom:4px}
+.mx{display:grid;grid-template-columns:96px repeat(3,minmax(150px,1fr));gap:8px;min-width:560px}
+.mx-col{font-size:11.5px;font-weight:600;color:var(--text-3);letter-spacing:.03em;text-transform:uppercase;padding:0 4px 2px;align-self:end}
+.mx-row{font-size:11.5px;font-weight:600;color:var(--text-3);letter-spacing:.03em;text-transform:uppercase;display:flex;align-items:center}
+.mx-cell{min-height:104px;border-radius:12px;background:var(--surface-2);padding:8px;display:flex;flex-direction:column;gap:5px;position:relative}
+.mx-cell.leer{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
+.mx-tag{position:absolute;right:8px;bottom:6px;font-size:10.5px;color:var(--text-3);letter-spacing:.02em}
+.mx-item{display:flex;align-items:center;gap:6px;background:var(--surface);border-radius:8px;padding:6px 8px;font-size:12.5px;text-align:left;box-shadow:0 0 0 1px var(--line);min-width:0}
+.mx-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mx-item em{margin-left:auto;font-style:normal;color:var(--text-3);font-size:11px;white-space:nowrap}
+.mx-item:hover{background:var(--surface-2)}
 .cal-head{display:flex;align-items:center;gap:6px;margin-bottom:14px}
 .cal-head h2{margin:0 auto 0 0;font-size:20px;font-weight:650;letter-spacing:-.015em}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--text-2);margin-bottom:12px}
@@ -524,12 +548,20 @@ const ICONS = {
   gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4L6 18M18 18l-1.6-1.6M7.6 7.6L6 6"/>',
   down:'<path d="M12 4.5v11M7.5 11l4.5 4.5 4.5-4.5M5 19.5h14"/>',
   up:'<path d="M12 15.5v-11M7.5 9L12 4.5 16.5 9M5 19.5h14"/>',
+  up2:'<path d="M6 14l6-6 6 6"/>',
+  down2:'<path d="M6 10l6 6 6-6"/>',
   check:'<path d="M6 12.5l4 4 8-9"/>'
 };
 const ic = (n, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]}</svg>`;
 
 /* ============ Daten ============ */
 const AREAS = { work:{ name:'Arbeit', color:'var(--work)' }, private:{ name:'Privat', color:'var(--private)' } };
+const PRIOS = [['high', 'Hoch'], ['med', 'Mittel'], ['low', 'Niedrig']];
+const LOADS = [['high', 'Hoch'], ['med', 'Mittel'], ['low', 'Gering']];
+const prioName = v => (PRIOS.find(p => p[0] === v) || [])[1] || '';
+const loadName = v => (LOADS.find(p => p[0] === v) || [])[1] || '';
+const prioBadge = v => v ? `<span class="pb pb-${v}" title="Priorität ${prioName(v)}">${prioName(v)[0]}</span>` : '';
+const loadBadge = v => v ? `<span class="lb lb-${v}" title="Aufwand ${loadName(v)}"><i></i><i></i><i></i></span>` : '';
 let T = [], CATS = [], PEOPLE = [], PROJECTS = [];
 const ARR = { todos:() => T, cats:() => CATS, people:() => PEOPLE, projects:() => PROJECTS };
 const ARCHIVE_DAYS = 21;
@@ -567,21 +599,19 @@ function tomb(store, obj){
   put(store, { id:obj.id, deleted:true, updatedAt:ts });
   syncSoon();
 }
-// Feste IDs: legt ein zweites Gerät dieselben Startkategorien an, verschmelzen sie beim Abgleich.
+// Unterkategorien sind freiwillig: Arbeit und Privat stehen für sich.
 let pendingSeed = false;
-function seed(){
-  [['work', '00000000-0000-4000-8000-000000000001'], ['private', '00000000-0000-4000-8000-000000000002']].forEach(([area, id]) => {
-    if (CATS.some(c => c.id === id)) return;
-    const c = { id, area, name:'Allgemein' }; CATS.push(c); save('cats', c);
+function seed(){ put('meta', { key:'seeded', value:true }); }
+function maybeSeed(){ pendingSeed = false; }
+// Einmalige Umstellung: die alte Sammelkategorie „Allgemein“ auflösen.
+function dropAllgemein(){
+  const alt = CATS.filter(c => c.name.trim().toLowerCase() === 'allgemein');
+  if (!alt.length) return 0;
+  alt.forEach(c => {
+    T.forEach(t => { if (t.cat === c.id){ t.area = c.area; t.cat = null; save('todos', t); } });
+    tomb('cats', c);
   });
-  put('meta', { key:'seeded', value:true });
-}
-// Mit Konto erst nach dem ersten Abgleich anlegen – sonst entstehen Doppelte.
-function maybeSeed(){
-  if (!pendingSeed) return;
-  pendingSeed = false;
-  if (CATS.length){ put('meta', { key:'seeded', value:true }); return; }
-  seed(); render();
+  return alt.length;
 }
 
 /* Doppelte Kategorien, Personen oder Projekte zusammenlegen.
@@ -618,7 +648,7 @@ const areaColor = a => a ? AREAS[a].color : 'var(--text-3)';
 const initials = n => n.trim().slice(0, 2).toUpperCase();
 const isOpen = t => t.status === 'open';
 const byName = (a, b) => a.name.localeCompare(b.name, 'de');
-const catsOf = a => CATS.filter(c => c.area === a).sort((x, y) => (x.name === 'Allgemein') - (y.name === 'Allgemein') || byName(x, y));
+const catsOf = a => CATS.filter(c => c.area === a).sort(byName);
 function range(t){
   if (!t.due) return null;
   if (t.due.type === 'day'){ const d = P(t.due.date); return [d, d]; }
@@ -655,7 +685,8 @@ function dueLabel(t){
   }
   return { txt, k, cls: over ? 'over' : (t.due.type !== 'day' ? 'fuzzy' : '') };
 }
-const sortByDue = (a, b) => endKey(a) - endKey(b) || a.title.localeCompare(b.title, 'de');
+const byRank = (a, b) => (a.rank ?? 1e15) - (b.rank ?? 1e15);
+const sortByDue = (a, b) => byRank(a, b) || endKey(a) - endKey(b) || a.title.localeCompare(b.title, 'de');
 const buckets = () => [
   ['overdue', 'Überfällig', 'danger'], ['today', 'Heute'],
   ['week', `Diese Woche · KW ${kw(TODAY)}`], ['next', `Nächste Woche · KW ${kw(NEXT_MON)}`],
@@ -767,6 +798,7 @@ async function sync(){
     S.lastSync = Date.now(); put('meta', { key:'lastSync', value:S.lastSync });
     S.syncState = 'ok'; S.syncError = '';
     autoArchive();
+    dropAllgemein();
     if (dedupe()) toast('Doppelte Einträge zusammengelegt');
     down ? render() : renderSidebar();
   } catch (e){
@@ -783,7 +815,7 @@ function relTime(ts){
 /* ============ Zustand ============ */
 const S = {
   view:'today', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
-  sort:'due', area:'all', q:'', online:navigator.onLine, memOnly:false,
+  sort:'due', area:'all', q:'', allView:'list', reorder:false, online:navigator.onLine, memOnly:false,
   addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
   syncState:'', syncError:'', lastSync:0, authOpen:false, authMode:'in', authBusy:false, authErr:'',
   calAreas:{ work:true, private:true }
@@ -800,15 +832,19 @@ function rowHTML(t, o = {}){
   if (t.project && projById(t.project)) meta.push(`<span>${ic('diamond')}${esc(projById(t.project).name)}</span>`);
   if (names.length) meta.push(`<span><span class="avs">${names.map(n => `<span class="av">${esc(initials(n))}</span>`).join('')}</span>${esc(names.join(', '))}</span>`);
   if (t.status === 'inbox') meta.push(`<span>${ic('wave')}Per Sprache erfasst</span>`);
+  const flags = (t.prio || t.load) ? `<span class="flags">${prioBadge(t.prio)}${loadBadge(t.load)}</span>` : '';
+  const move = S.reorder ? `<span class="mv"><button data-act="move" data-id="${t.id}" data-dir="-1" aria-label="Nach oben">${ic('up2')}</button><button data-act="move" data-id="${t.id}" data-dir="1" aria-label="Nach unten">${ic('down2')}</button></span>` : '';
   let right = o.right;
-  if (right === undefined) right = d.txt ? `<span class="${d.cls}">${esc(d.txt)}</span>${d.k ? `<span class="k">${esc(d.k)}</span>` : ''}` : '';
+  if (right === undefined) right = `${flags}${d.txt ? `<span class="${d.cls}">${esc(d.txt)}</span>${d.k ? `<span class="k">${esc(d.k)}</span>` : ''}` : ''}`;
   return `<div class="swipe" data-swipe="${t.id}"><div class="swipe-act"><button data-act="swipe-del" data-id="${t.id}">${ic('trash')}Löschen</button></div><div class="row ${done ? 'is-done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}">
     <button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="${done ? 'Wieder öffnen' : 'Als erledigt markieren'}"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>
     <div class="row-main"><div class="row-title">${esc(t.title)}</div>${meta.length ? `<div class="row-meta">${meta.join('')}</div>` : ''}</div>
-    <div class="row-right">${right}</div>
+    <div class="row-right">${right}</div>${move}
   </div></div>`;
 }
+let LAST_GROUPS = [];
 function groupsHTML(groups, o = {}){
+  LAST_GROUPS = groups.filter(g => g.items.length).map(g => g.items.map(t => t.id));
   const html = groups.filter(g => g.items.length).map(g => `
     <div class="sec ${g.cls || ''}"><h3>${esc(g.title)}</h3><span class="n">${g.items.length}</span></div>
     <div>${g.items.map(t => rowHTML(t, o.rowOpts ? o.rowOpts(t) : {})).join('')}</div>`).join('');
@@ -924,11 +960,37 @@ function viewAll(){
   else if (S.sort === 'person') groups = [...[...PEOPLE].sort(byName).map(p => ({ title:p.name, items:list.filter(t => t.persons.includes(p.id)).sort(sortByDue) })), { title:'Ohne Person', items:list.filter(t => !namesOf(t.persons).length).sort(sortByDue) }];
   else groups = [...[...PROJECTS].sort(byName).map(p => ({ title:p.name, items:list.filter(t => t.project === p.id).sort(sortByDue) })), { title:'Ohne Projekt', items:list.filter(t => !projById(t.project)).sort(sortByDue) }];
   const seg = (key, opts) => `<div class="seg">${opts.map(([k, l]) => `<button class="${S[key] === k ? 'on' : ''}" data-act="set" data-k="${key}" data-v="${k}">${l}</button>`).join('')}</div>`;
+  if (S.allView === 'grid') return header('Alle To-dos', `${list.length} offen · Raster aus Priorität und Aufwand`, '', addBtn()) +
+    `<div class="toolbar"><label class="search">${ic('search')}<input id="allq" placeholder="Titel, Kontext, Person, Projekt …" value="${esc(S.q)}" aria-label="Suchen"></label>
+     ${seg('area', [['all', 'Alle'], ['work', 'Arbeit'], ['private', 'Privat']])}</div>
+     <div class="toolbar">${seg('allView', [['list', 'Liste'], ['grid', 'Raster']])}</div>` + gridHTML(list);
   return header('Alle To-dos', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`, '', addBtn()) +
     `<div class="toolbar"><label class="search">${ic('search')}<input id="allq" placeholder="Titel, Kontext, Person, Projekt …" value="${esc(S.q)}" aria-label="Suchen"></label>
      ${seg('area', [['all', 'Alle'], ['work', 'Arbeit'], ['private', 'Privat']])}</div>
-    <div class="toolbar"><span class="tb-label">Gruppieren nach</span>${seg('sort', [['due', 'Deadline'], ['cat', 'Kategorie'], ['person', 'Person'], ['project', 'Projekt']])}</div>` +
+    <div class="toolbar">${seg('allView', [['list', 'Liste'], ['grid', 'Raster']])}<span class="tb-label">Gruppieren nach</span>${seg('sort', [['due', 'Deadline'], ['cat', 'Kategorie'], ['person', 'Person'], ['project', 'Projekt']])}
+      <button class="btn ${S.reorder ? 'btn-p' : 'btn-g'} btn-s" data-act="reorder">${ic('list')}Reihenfolge</button></div>` +
     groupsHTML(groups, { empty: S.q ? 'Keine Treffer.' : 'Keine offenen To-dos.' });
+}
+// Raster: Spalten = Aufwand, Zeilen = Priorität. Die vier Ecken sind die klassischen Quadranten.
+const ECKE = { 'high|low':'Sofort erledigen', 'high|high':'Fest einplanen', 'low|low':'Nebenbei', 'low|high':'Lohnt das?' };
+function gridHTML(list){
+  const spalten = [['low', 'Aufwand gering'], ['med', 'Aufwand mittel'], ['high', 'Aufwand hoch']];
+  const zeilen = [['high', 'Priorität hoch'], ['med', 'Priorität mittel'], ['low', 'Priorität niedrig']];
+  const karte = t => `<button class="mx-item" data-act="open" data-id="${t.id}" title="${esc(t.title)}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span>${esc(t.title)}</span>${dueLabel(t).txt ? `<em>${esc(dueLabel(t).txt)}</em>` : ''}</button>`;
+  let html = `<div class="mx-wrap"><div class="mx"><div></div>${spalten.map(([, l]) => `<div class="mx-col">${l}</div>`).join('')}`;
+  zeilen.forEach(([p, pl]) => {
+    html += `<div class="mx-row">${pl}</div>`;
+    spalten.forEach(([l]) => {
+      const items = list.filter(t => t.prio === p && t.load === l).sort(sortByDue);
+      const ecke = ECKE[`${p}|${l}`];
+      html += `<div class="mx-cell${items.length ? '' : ' leer'}">${ecke ? `<span class="mx-tag">${ecke}</span>` : ''}${items.map(karte).join('')}</div>`;
+    });
+  });
+  html += '</div></div>';
+  const offen = list.filter(t => !t.prio || !t.load);
+  html += `<div class="sec"><h3>Noch nicht eingestuft</h3><span class="n">${offen.length}</span></div>` +
+    (offen.length ? `<div>${offen.sort(sortByDue).map(t => rowHTML(t)).join('')}</div>` : '<div class="empty">Alles eingestuft.</div>');
+  return html;
 }
 function viewCalendar(){
   const mob = isMobile();
@@ -1000,6 +1062,20 @@ function viewFiltered(kind, id){
   const open = list.filter(isOpen), done = list.filter(t => t.status === 'done').sort((a, b) => b.doneAt.localeCompare(a.doneAt));
   return header(title, `${open.length} offen · ${done.length} kürzlich erledigt`, eyebrow, addBtn()) + groupsHTML(bucketGroups(open), { empty:'Nichts offen.' }) +
     (done.length ? `<div class="sec"><h3>Zuletzt erledigt</h3><span class="n">${done.length}</span></div><div>${done.map(t => rowHTML(t, { right:`<span class="muted">${relDay(t.doneAt)}</span>` })).join('')}</div>` : '');
+}
+// Reihenfolge innerhalb der angezeigten Gruppe ändern
+function moveTodo(id, dir){
+  const grp = LAST_GROUPS.find(ids => ids.includes(id));
+  if (!grp) return;
+  const i = grp.indexOf(id), j = i + dir;
+  if (j < 0 || j >= grp.length) return;
+  const items = grp.map(x => T.find(t => t.id === x)).filter(Boolean);
+  items.forEach((t, k) => { if (t.rank == null) t.rank = (k + 1) * 10; });   // Gruppe einmalig durchnummerieren
+  const a = T.find(t => t.id === grp[i]), b = T.find(t => t.id === grp[j]);
+  const tmp = a.rank; a.rank = b.rank; b.rank = tmp;
+  [a, b].forEach(t => save('todos', t));
+  items.forEach(t => save('todos', t));
+  render();
 }
 function relDay(s){ if (!s) return ''; const n = daysSince(s); return n === 0 ? 'heute' : n === 1 ? 'gestern' : n > 0 ? `vor ${n} Tagen` : 'heute'; }
 function viewDone(){
@@ -1098,6 +1174,11 @@ function detailHTML(t){
     <div class="d-sec"><div class="d-lab">Bereich</div>
       <div class="chips">${Object.entries(AREAS).map(([k, v]) => chip('e-area', k, a === k, `<i class="dot" style="--c:${v.color}"></i>${v.name}`)).join('')}</div>
       ${a ? `<div class="d-lab" style="margin-top:14px">Unterkategorie</div><div class="chips">${catsOf(a).map(c => chip('e-cat', c.id, t.cat === c.id, esc(c.name))).join('')}${newIn('cat', 'Neue')}</div>` : ''}
+    </div>
+    <div class="d-sec"><div class="d-lab">Priorität</div>
+      <div class="chips">${PRIOS.map(([v, l]) => chip('e-prio', v, t.prio === v, prioBadge(v) + l)).join('')}${chip('e-prio', '', !t.prio, 'Ohne')}</div>
+      <div class="d-lab" style="margin-top:14px">Aufwand</div>
+      <div class="chips">${LOADS.map(([v, l]) => chip('e-load', v, t.load === v, loadBadge(v) + l)).join('')}${chip('e-load', '', !t.load, 'Ohne')}</div>
     </div>
     <div class="d-sec"><div class="d-lab">Deadline${dueInfo}</div>
       <div class="chips">${DUE_OPTS().map(([k, l, v]) => chip('e-due', k, sameDue(t.due, v), l)).join('')}<input type="date" class="date-in sm" data-ef="date" data-id="${t.id}" value="${t.due?.type === 'day' ? t.due.date : ''}" aria-label="Bestimmtes Datum"></div>
@@ -1265,7 +1346,7 @@ function parse(text){
   const wm = s.match(/(,\s*|\s(?:für\s+die|auf\s+der|in\s+der)\s+|\s)(arbeit|büro|beruflich)(?=\s*[,.]?\s*$|\s*,)/i) || s.match(/(,?\s*)(beruflich)(?![a-zäöüß])/i);
   if (pm2){ r.area = 'private'; s = s.replace(pm2[0], pm2[1] + ' '); }
   else if (wm){ r.area = 'work'; s = s.replace(wm[0], ' '); }
-  const cm = CATS.filter(c => c.name !== 'Allgemein').find(c => (!r.area || c.area === r.area) && wordRe(c.name).test(s));
+  const cm = CATS.find(c => (!r.area || c.area === r.area) && wordRe(c.name).test(s));
   if (cm){ r.cat = cm.id; r.area = cm.area; }
   if (r.area) rec.push('Bereich: ' + AREAS[r.area].name + (r.cat ? ' · ' + catById(r.cat).name : ''));
   // Unbekannte Personen nach „mit / für / an / bei / von …“ vorschlagen
@@ -1328,6 +1409,10 @@ function fromAI(f){
   if (f.due_type === 'day' && d) draft.due = day(d);
   else if (f.due_type === 'week' && d) draft.due = week(iso(mondayOf(P(d))));
   else if (f.due_type === 'month' && d) draft.due = month(String(d).slice(0, 7));
+  if (['high', 'med', 'low'].includes(f.priority)) draft.prio = f.priority;
+  if (['high', 'med', 'low'].includes(f.workload)) draft.load = f.workload;
+  if (draft.prio) rec.push('Priorität: ' + prioName(draft.prio));
+  if (draft.load) rec.push('Aufwand: ' + loadName(draft.load));
   if (draft.due) rec.unshift('Deadline: ' + dueText(draft.due));
   if (draft.area) rec.push('Bereich: ' + AREAS[draft.area].name + (draft.cat ? ' · ' + catById(draft.cat).name : ''));
   return { draft, rec, sugg };
@@ -1381,8 +1466,8 @@ function removeEntity(store, id){
 }
 
 /* ============ Assistent ============ */
-const FULL_STEPS = ['title', 'desc', 'ctx', 'area', 'cat', 'persons', 'projdue'];
-const blank = () => ({ title:'', desc:'', ctx:'', area:null, cat:null, persons:[], project:null, due:null });
+const FULL_STEPS = ['title', 'desc', 'ctx', 'area', 'cat', 'persons', 'projdue', 'prioload'];
+const blank = () => ({ title:'', desc:'', ctx:'', area:null, cat:null, persons:[], project:null, due:null, prio:null, load:null });
 function openAssistant(mode, draft = {}, opts = {}){
   A = { mode, draft:{ ...blank(), ...JSON.parse(JSON.stringify(draft)) }, i:0, rec:opts.rec || null, sugg:opts.sugg || [], raw:opts.raw || '', fromId:opts.fromId || null, capture:'', ai:'', touched:false };
   A.steps = mode === 'full' ? [...FULL_STEPS, 'review'] : mode === 'capture' ? ['capture'] : fillSteps();
@@ -1396,6 +1481,7 @@ function fillSteps(){
   if (!d.area) st.push('area');
   if (!d.cat) st.push('cat');
   if (!d.due) st.push('projdue');
+  if (!d.prio && !d.load) st.push('prioload');
   st.push('review');
   return st;
 }
@@ -1477,6 +1563,11 @@ function stepHTML(k){
       <div class="chips">${DUE_OPTS().map(([k, l, v]) => `<button class="opt ${sameDue(d.due, v) ? 'on' : ''}" data-act="a-due" data-v="${k}">${l}</button>`).join('')}
       <input type="date" class="date-in" data-f="date" value="${dateVal}" aria-label="Bestimmtes Datum"></div>`;
     }
+    case 'prioload': return `<h2 class="q">Wie wichtig, wie aufwendig?</h2><p class="q-help">Damit landet die Aufgabe später im richtigen Feld des Rasters. Optional.</p>
+      <div class="grp-l">Priorität</div>
+      <div class="chips">${PRIOS.map(([v, l]) => `<button class="opt ${d.prio === v ? 'on' : ''}" data-act="a-prio" data-v="${v}">${prioBadge(v)}${l}</button>`).join('')}<button class="opt ${!d.prio ? 'on' : ''}" data-act="a-prio" data-v="">Ohne</button></div>
+      <div class="grp-l">Aufwand</div>
+      <div class="chips">${LOADS.map(([v, l]) => `<button class="opt ${d.load === v ? 'on' : ''}" data-act="a-load" data-v="${v}">${loadBadge(v)}${l}</button>`).join('')}<button class="opt ${!d.load ? 'on' : ''}" data-act="a-load" data-v="">Ohne</button></div>`;
     case 'review': {
       const dl = d.due ? dueLabel({ due:d.due, status:'open' }) : null;
       const rv = (label, val, step) => `<div class="rv"><span class="k">${label}</span><span class="v ${val ? '' : 'none'}">${val || '—'}</span><button class="link" data-act="a-jump" data-step="${step}">Ändern</button></div>`;
@@ -1487,6 +1578,8 @@ function stepHTML(k){
         ${rv('Personen', esc(namesOf(d.persons).join(', ')), 'persons')}
         ${rv('Projekt', projById(d.project) ? esc(projById(d.project).name) : '', 'projdue')}
         ${rv('Deadline', dl ? esc(dl.txt + (dl.k ? ' · ' + dl.k : '')) : '', 'projdue')}
+        ${rv('Priorität', d.prio ? prioBadge(d.prio) + ' ' + prioName(d.prio) : '', 'prioload')}
+        ${rv('Aufwand', d.load ? loadBadge(d.load) + ' ' + loadName(d.load) : '', 'prioload')}
         ${rv('Beschreibung', esc(d.desc), 'desc')}
         ${rv('Kontext', esc(d.ctx), 'ctx')}
       </div>`;
@@ -1508,7 +1601,7 @@ function renderModal(){
   if (A.mode === 'full' && !isReview){ const n = FULL_STEPS.indexOf(k) + 1; label = `Schritt ${n} von ${FULL_STEPS.length}`; prog = FULL_STEPS.map((_, j) => `<i class="${j < n ? 'on' : ''}"></i>`).join(''); }
   else if (A.mode === 'fill' && !isReview){ const left = A.steps.length - 1 - A.i; label = `Noch ${left} ${left === 1 ? 'Angabe' : 'Angaben'}`; prog = A.steps.slice(0, -1).map((_, j) => `<i class="${j <= A.i ? 'on' : ''}"></i>`).join(''); }
   else label = isCapture ? '' : 'Übersicht';
-  const optional = ['desc', 'ctx', 'persons', 'projdue', 'cat'].includes(k);
+  const optional = ['desc', 'ctx', 'persons', 'projdue', 'cat', 'prioload'].includes(k);
   const editing = A.fromId && T.find(t => t.id === A.fromId)?.status !== 'inbox';
   $('#modal').innerHTML = `<div class="sheet">
     <div class="sh-top"><span class="sh-step">${editing ? 'To-do bearbeiten' : 'Neues To-do'}${label ? ' · ' + label : ''}</span><button class="icon-btn" data-act="a-close" aria-label="Schließen">${ic('close')}</button></div>
@@ -1565,7 +1658,7 @@ function aJump(step){
 function aSave(){
   const d = A.draft;
   if (!d.title.trim()){ aJump('title'); return; }
-  const fields = { title:d.title.trim(), desc:d.desc.trim(), ctx:d.ctx.trim(), cat:catById(d.cat) ? d.cat : null, area:d.area, persons:d.persons.filter(personById), project:projById(d.project) ? d.project : null, due:d.due };
+  const fields = { title:d.title.trim(), desc:d.desc.trim(), ctx:d.ctx.trim(), cat:catById(d.cat) ? d.cat : null, area:d.area, persons:d.persons.filter(personById), project:projById(d.project) ? d.project : null, due:d.due, prio:d.prio || null, load:d.load || null };
   let msg, t;
   if (A.fromId){
     t = T.find(x => x.id === A.fromId);
@@ -1686,8 +1779,12 @@ document.addEventListener('click', e => {
     case 'e-person': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { const v = el.dataset.v; t.persons = t.persons.includes(v) ? t.persons.filter(x => x !== v) : [...t.persons, v]; }); break; }
     case 'e-proj': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.project = el.dataset.v || null; if (t.project && !t.cat) t.area = projById(t.project).area; }); break; }
     case 'e-due': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.due = DUE_OPTS().find(o => o[0] === el.dataset.v)[2]; }); break; }
+    case 'e-prio': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.prio = el.dataset.v || null; }); break; }
+    case 'e-load': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.load = el.dataset.v || null; }); break; }
     case 'e-sort': { const t = T.find(x => x.id === id); if (t){ editTodo(t, t => { t.status = 'open'; }); toast('Einsortiert'); } break; }
     case 'set': S[el.dataset.k] = el.dataset.v; render(); break;
+    case 'reorder': S.reorder = !S.reorder; render(); toast(S.reorder ? 'Reihenfolge ändern: Pfeile nutzen' : 'Reihenfolge gespeichert'); break;
+    case 'move': e.stopPropagation(); moveTodo(id, +el.dataset.dir); break;
     case 'theme': S.theme = el.dataset.v; applyTheme(); render(); break;
     case 'area-open': {
       const a = el.dataset.area;
@@ -1774,6 +1871,8 @@ document.addEventListener('click', e => {
     case 'a-person': if (A) A.touched = true; { const v = el.dataset.v, ps = A.draft.persons; A.draft.persons = ps.includes(v) ? ps.filter(x => x !== v) : [...ps, v]; renderModal(); break; }
     case 'a-proj': if (A) A.touched = true; A.draft.project = el.dataset.v || null; if (A.draft.project && !A.draft.area) A.draft.area = projById(A.draft.project).area; renderModal(); break;
     case 'a-due': if (A) A.touched = true; A.draft.due = DUE_OPTS().find(o => o[0] === el.dataset.v)[2]; renderModal(); break;
+    case 'a-prio': A.touched = true; A.draft.prio = el.dataset.v || null; renderModal(); break;
+    case 'a-load': A.touched = true; A.draft.load = el.dataset.v || null; renderModal(); break;
   }
 });
 $('#scrim').addEventListener('click', () => { document.body.classList.remove('sb-open'); if (innerWidth <= 1100) S.sel = null; render(); });
@@ -1949,7 +2048,7 @@ async function boot(){
     [t, c, p, pr].forEach(rows => rows.forEach(x => { if (x.deleted) TOMB.set(x.id, x.updatedAt || 0); }));
     S.lastSync = (await getMeta('lastSync')) || 0;
     T.forEach(x => { x.persons ||= []; x.desc ||= ''; x.ctx ||= ''; });
-    if (!(await getMeta('seeded'))){ if (sess) pendingSeed = true; else seed(); }
+    put('meta', { key:'seeded', value:true });
     navigator.storage?.persist?.().catch(() => {});
   } catch (e) {
     idb = null; S.memOnly = true; seed();
@@ -1957,6 +2056,7 @@ async function boot(){
   }
   autoArchive();
   dedupe();
+  dropAllgemein();
   render();
   registerSW();
   sync();
