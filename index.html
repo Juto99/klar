@@ -229,6 +229,14 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .empty-big{padding:40px 8px;text-align:center;color:var(--text-3)}
 .empty-big strong{display:block;color:var(--text-2);font-size:16px;font-weight:600;margin-bottom:4px}
 .more{display:inline-flex;margin:18px 4px 0;font-size:13.5px}
+.rec-note{font-size:12.5px;color:var(--text-3);padding:0 4px 6px;max-width:62ch}
+.rec{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.rec li{display:flex;align-items:flex-start;gap:8px}
+.rec-n{flex:none;width:22px;height:22px;margin-top:11px;border-radius:50%;background:var(--surface-3);color:var(--text-2);font-size:12px;font-weight:650;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.rec li:first-child .rec-n{background:var(--text);color:var(--surface)}
+.rec-row{flex:1;min-width:0}
+.rec-why{color:var(--accent)}
+.rec-why svg.i{width:13px;height:13px}
 
 /* Toolbars */
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:6px}
@@ -832,6 +840,7 @@ function rowHTML(t, o = {}){
   if (t.project && projById(t.project)) meta.push(`<span>${ic('diamond')}${esc(projById(t.project).name)}</span>`);
   if (names.length) meta.push(`<span><span class="avs">${names.map(n => `<span class="av">${esc(initials(n))}</span>`).join('')}</span>${esc(names.join(', '))}</span>`);
   if (t.status === 'inbox') meta.push(`<span>${ic('wave')}Per Sprache erfasst</span>`);
+  if (o.extraMeta) meta.push(o.extraMeta);
   const flags = (t.prio || t.load) ? `<span class="flags">${prioBadge(t.prio)}${loadBadge(t.load)}</span>` : '';
   const move = S.reorder ? `<span class="mv"><button data-act="move" data-id="${t.id}" data-dir="-1" aria-label="Nach oben">${ic('up2')}</button><button data-act="move" data-id="${t.id}" data-dir="1" aria-label="Nach unten">${ic('down2')}</button></span>` : '';
   let right = o.right;
@@ -910,6 +919,45 @@ const themeSeg = () => `<div class="seg" role="group" aria-label="Darstellung">$
 
 /* ============ Ansichten ============ */
 const isMobile = () => matchMedia('(max-width:760px)').matches;
+/* Empfehlung fürs Heute-Bild.
+   Grundlage: Eisenhower (Wichtigkeit × Dringlichkeit), „Eat the frog“ (Wichtiges zuerst, auch wenn aufwendig),
+   Quick Wins aus der 2-Minuten-Regel und ein Blick auf Liegengebliebenes. Bewusst kurz gehalten (WIP-Limit). */
+function empfehlung(open, schonOben){
+  const heute = TODAY.getTime();
+  const bewerten = t => {
+    const r = range(t), b = bucket(t);
+    let s = 0;
+    if (b === 'overdue') s += 50; else if (b === 'today') s += 40;
+    else if (b === 'week') s += 26; else if (b === 'next') s += 14;
+    else if (b === 'later') s += 6;
+    s += t.prio === 'high' ? 30 : t.prio === 'med' ? 16 : t.prio === 'low' ? 4 : 9;
+    s += t.load === 'low' ? 12 : t.load === 'med' ? 5 : t.load === 'high' ? 0 : 5;
+    if (b === 'overdue' && t.prio === 'high') s += 10;                       // eskaliert
+    if (t.created && (heute - P(t.created)) / DAY > 14) s += 8;              // Altlast
+    if (t.prio === 'high' && t.load === 'high' && r && r[1] <= addD(TODAY, 14)) s += 6;  // Frosch: früh anfangen
+    return s;
+  };
+  const grund = t => {
+    const b = bucket(t);
+    if (b === 'overdue' && t.prio === 'high') return 'Überfällig und wichtig';
+    if (b === 'overdue') return 'Überfällig';
+    if (t.prio === 'high' && t.load === 'high') return 'Wichtig · Block einplanen';
+    if (t.prio === 'high') return 'Wichtig';
+    if (t.load === 'low' && ['today', 'week'].includes(b)) return 'Schnell erledigt';
+    if (t.load === 'low') return 'Quick Win';
+    if (b === 'week') return 'Diese Woche fällig';
+    if (b === 'next') return 'Nächste Woche fällig';
+    if (t.prio === 'low' && t.load === 'high') return 'Kann warten';
+    if (t.created && (heute - P(t.created)) / DAY > 14) return 'Liegt schon lange';
+    return 'Sinnvoller nächster Schritt';
+  };
+  return open
+    .filter(t => !schonOben.has(t.id))
+    .map(t => ({ t, s:bewerten(t), grund:grund(t) }))
+    .filter(x => x.s >= 20)                       // alles darunter lohnt heute keinen Hinweis
+    .sort((a, b) => b.s - a.s || sortByDue(a.t, b.t))
+    .slice(0, 5);
+}
 function viewToday(){
   const mob = isMobile();
   const open = T.filter(isOpen);
@@ -933,8 +981,16 @@ function viewToday(){
     const empty = !T.length
       ? `<div class="empty-big"><strong>Willkommen bei Brain.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Sprich oder tipp oben dein erstes To-do – oder leg es geführt an.'}</div>`
       : `<div class="empty-big"><strong>Heute ist nichts fällig.</strong>${mob ? 'Tipp auf einen Tag, um ihn anzusehen.' : 'Genieß es.'}</div>`;
+    const oben = new Set(groups.flatMap(g => g.items.map(t => t.id)));
+    const tipps = empfehlung(open, oben);
+    const empf = tipps.length
+      ? `<div class="sec"><h3>Empfohlene nächste Schritte</h3><span class="n">${tipps.length}</span></div>
+         <div class="rec-note">Sortiert nach Wichtigkeit und Dringlichkeit, mit Blick auf schnelle Erledigungen und Liegengebliebenes.</div>
+         <ol class="rec">${tipps.map(({ t, grund }, i) => `<li><span class="rec-n">${i + 1}</span><div class="rec-row">${rowHTML(t, { extraMeta:`<span class="rec-why">${ic('spark')}${esc(grund)}</span>` })}</div></li>`).join('')}</ol>`
+      : (T.filter(isOpen).length ? '' : '');
     body = (weekItems.length ? `<div class="wweek"><span>${weekItems.length} ${weekItems.length === 1 ? 'To-do' : 'To-dos'} irgendwann diese Woche</span><span class="bar"></span><span class="tnum">KW ${kw(TODAY)}</span></div>` : '') +
       (hasAny ? groupsHTML(groups) : empty) +
+      empf +
       (rest ? `<button class="link more" data-act="nav" data-view="all">${rest} weitere für später oder ohne Datum</button>` : '');
   } else {
     const items = open.filter(t => t.due?.type === 'day' && same(P(t.due.date), sel)).sort(sortByDue);
