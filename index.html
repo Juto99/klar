@@ -292,6 +292,7 @@ body.reorder-on .row::after{display:none}
 .set-row .muted{flex:none}
 .set-row .seg{flex:none}
 .set-card{border-radius:14px;box-shadow:inset 0 0 0 1px var(--line);padding:4px 12px}
+.tok{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;background:var(--surface-2);padding:3px 7px;border-radius:6px;word-break:break-all}
 .set-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 
 /* Calendar */
@@ -833,7 +834,7 @@ const S = {
   view:'today', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
   sort:'due', area:'all', q:'', allView:'list', reorder:false, online:navigator.onLine, memOnly:false,
   addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
-  syncState:'', syncError:'', lastSync:0, authOpen:false, authMode:'in', authBusy:false, authErr:'',
+  syncState:'', syncError:'', lastSync:0, authOpen:false, authMode:'in', authBusy:false, authErr:'', inboxTokens:null,
   calAreas:{ work:true, private:true }
 };
 let A = null;
@@ -1218,6 +1219,25 @@ function viewSettings(){
         : `<p>Ohne Anmeldung bleiben deine To-dos nur auf diesem Gerät. Mit Konto gleicht Brain72 iPhone, iPad und Rechner ab. Die Daten liegen bei Supabase in der EU.</p>
            <div class="set-actions"><button class="btn btn-p" data-act="auth-open">Anmelden oder Konto anlegen</button></div>`}
     </div>
+    <div class="set-sec"><h3>iPhone-Kurzbefehl</h3>
+      <p>Action-Button drücken, sprechen, fertig: Das To-do landet im Eingang, ohne dass du Brain72 öffnest. Dafür braucht der Kurzbefehl ein persönliches Token.</p>
+      ${!sess ? '<p class="auth-err">Dafür musst du angemeldet sein.</p>'
+        : S.inboxTokens === null ? '<p class="muted">Wird geladen …</p>'
+        : S.inboxTokens.length
+          ? `${S.inboxTokens.map(t => `<div class="set-row"><code class="tok">${esc(t.token)}</code><button class="btn btn-g btn-s" data-act="tok-copy" data-v="${esc(t.token)}">Kopieren</button><button class="icon-btn" data-act="tok-del" data-v="${esc(t.token)}" aria-label="Token löschen">${ic('trash')}</button></div>
+             <div class="muted" style="padding:2px 0 10px">${t.last_used ? 'Zuletzt benutzt: ' + new Date(t.last_used).toLocaleString('de-DE') : 'Noch nicht benutzt'}</div>`).join('')}
+             <div class="note" style="margin-top:6px">${ic('wave')}<div><h4>Kurzbefehl einrichten (einmalig)</h4>
+               <p>1. App <strong>Kurzbefehle</strong> öffnen, <strong>+</strong> tippen.<br>
+               2. Aktion <strong>„Text diktieren“</strong> hinzufügen – oder Wispr Flow: <strong>„Quick Dictation to Clipboard“</strong>.<br>
+               3. Aktion <strong>„Inhalt von URL abrufen“</strong> hinzufügen.<br>
+               &nbsp;&nbsp;&nbsp;URL: <code class="tok">${SB.url}/functions/v1/inbox</code><br>
+               &nbsp;&nbsp;&nbsp;Methode <strong>POST</strong>, Anfragetext <strong>JSON</strong> mit zwei Feldern:<br>
+               &nbsp;&nbsp;&nbsp;<code class="tok">token</code> = dein Token oben, <code class="tok">text</code> = Ergebnis der Diktat-Aktion.<br>
+               4. Kurzbefehl <strong>Brain72</strong> nennen und sichern.<br>
+               5. Einstellungen → <strong>Action-Button</strong> → Kurzbefehl → Brain72 auswählen. Ohne Action-Button: Einstellungen → Bedienungshilfen → Tippen → <strong>Auf Rückseite tippen</strong>.</p>
+               <div class="flow"><span>Action-Button</span><i>→</i><span>Sprechen</span><i>→</i><span>KI erkennt Felder</span><i>→</i><span>Eingang</span></div></div></div>`
+          : `<div class="set-actions"><button class="btn btn-p" data-act="tok-new">Token erzeugen</button></div>`}
+    </div>
     <div class="set-sec"><h3>Daten & Backup</h3>
       <p>Ein Backup enthält alle To-dos, Kategorien, Personen und Projekte dieses Geräts – praktisch als Sicherung oder zum Umziehen ohne Konto.</p>
       <p>Auf dem iPhone die App immer über das Symbol auf dem Home-Bildschirm öffnen: Safari-Tab und Home-Bildschirm-App haben getrennte Speicher.</p>
@@ -1454,6 +1474,29 @@ function parse(text){
   }
   r.title = tidy(s);
   return { draft:r, rec, sugg };
+}
+
+/* ============ iPhone-Kurzbefehl: persönliche Tokens ============ */
+async function tokenLaden(){
+  const tok = await token(); if (!tok){ S.inboxTokens = []; return; }
+  const r = await fetch(`${SB.url}/rest/v1/inbox_tokens?select=token,created_at,last_used&order=created_at.desc`, { headers:{ apikey:SB.key, Authorization:`Bearer ${tok}` } });
+  S.inboxTokens = r.ok ? await r.json() : [];
+  if (S.view === 'settings') renderMain();
+}
+async function tokenNeu(){
+  const tok = await token(); if (!tok){ toast('Bitte zuerst anmelden.'); return; }
+  const wert = [...crypto.getRandomValues(new Uint8Array(24))].map(b => b.toString(36).padStart(2, '0')).join('').slice(0, 32);
+  const r = await fetch(`${SB.url}/rest/v1/inbox_tokens`, {
+    method:'POST', headers:{ apikey:SB.key, Authorization:`Bearer ${tok}`, 'Content-Type':'application/json', Prefer:'return=minimal' },
+    body:JSON.stringify([{ token:wert, user_id:sess.user_id }])
+  });
+  if (!r.ok){ toast('Token konnte nicht angelegt werden.'); return; }
+  await tokenLaden(); toast('Token erzeugt');
+}
+async function tokenWeg(wert){
+  const tok = await token(); if (!tok) return;
+  await fetch(`${SB.url}/rest/v1/inbox_tokens?token=eq.${encodeURIComponent(wert)}`, { method:'DELETE', headers:{ apikey:SB.key, Authorization:`Bearer ${tok}` } });
+  await tokenLaden(); toast('Token gelöscht – der Kurzbefehl funktioniert damit nicht mehr');
 }
 
 /* ============ KI-Parser (Server-Funktion, Modell Claude Opus 5) ============ */
@@ -1812,6 +1855,7 @@ function applyTheme(){
 }
 function nav(v){
   flushSaves();
+  if (v === 'settings' && sess && S.inboxTokens === null) tokenLaden();
   S.view = v; S.confirmDel = null; S.confirmM = null;
   if (v === 'today') S.todaySel = null;
   document.body.classList.remove('sb-open');
@@ -1906,6 +1950,9 @@ document.addEventListener('click', e => {
     case 'mdel': S.confirmM = id; renderMain(); break;
     case 'mdel-no': S.confirmM = null; renderMain(); break;
     case 'mdel-yes': removeEntity(el.dataset.store, id); S.confirmM = null; render(); toast('Gelöscht'); break;
+    case 'tok-new': tokenNeu(); break;
+    case 'tok-del': tokenWeg(el.dataset.v); break;
+    case 'tok-copy': navigator.clipboard?.writeText(el.dataset.v).then(() => toast('Token kopiert'), () => toast('Kopieren nicht möglich – Token markieren und kopieren')); break;
     case 'export': exportData(); break;
     case 'import': $('#importfile').click(); break;
     case 'menu': document.body.classList.toggle('sb-open'); syncScrim(); break;

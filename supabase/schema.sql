@@ -42,3 +42,18 @@ end $$;
 drop trigger if exists items_lww_trg on public.items;
 create trigger items_lww_trg before insert or update on public.items
   for each row execute function public.items_lww();
+
+-- Persönliche Tokens für den iPhone-Kurzbefehl (Action-Button → Diktat → Eingang)
+create table if not exists public.inbox_tokens (
+  token      text        primary key,
+  user_id    uuid        not null default auth.uid() references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  last_used  timestamptz
+);
+alter table public.inbox_tokens enable row level security;
+drop policy if exists tok_select on public.inbox_tokens;
+drop policy if exists tok_insert on public.inbox_tokens;
+drop policy if exists tok_delete on public.inbox_tokens;
+create policy tok_select on public.inbox_tokens for select using (auth.uid() = user_id);
+create policy tok_insert on public.inbox_tokens for insert with check (auth.uid() = user_id);
+create policy tok_delete on public.inbox_tokens for delete using (auth.uid() = user_id);
