@@ -83,15 +83,14 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stro
 .search{display:flex;align-items:center;gap:7px;background:var(--surface-3);border-radius:9px;padding:6px 9px;color:var(--text-3)}
 .search input{border:0;background:none;outline:none;width:100%;font-size:13.5px;color:var(--text)}
 .search input::placeholder{color:var(--text-3)}
-.tiles{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:8px}
-.tile{background:var(--surface);border-radius:12px;padding:10px 11px 9px;display:flex;flex-direction:column;gap:10px;text-align:left;box-shadow:0 0 0 1px var(--line);transition:background .15s}
+.tiles{display:flex;flex-direction:column;gap:6px}
+.tile{background:var(--surface);border-radius:12px;padding:0 12px;height:46px;display:flex;flex-direction:row;align-items:center;gap:10px;text-align:left;box-shadow:0 0 0 1px var(--line);transition:background .15s;font-size:14px;font-weight:550;color:var(--text-2)}
 .tile:hover{background:var(--surface-2)}
-.tile-top{display:flex;justify-content:space-between;align-items:center;color:var(--text-2)}
-.tile-n{font-size:20px;font-weight:650;color:var(--text);font-variant-numeric:tabular-nums;line-height:1}
-.tile-l{font-size:13px;font-weight:600;color:var(--text-2)}
+.tile-n{margin-left:auto;font-size:13px;font-weight:650;color:var(--text-3);font-variant-numeric:tabular-nums}
+.tile-l{font-size:14px;font-weight:550;color:var(--text)}
 .tile.on{background:var(--accent);box-shadow:none}
-.tile.on .tile-top,.tile.on .tile-n,.tile.on .tile-l{color:var(--on-accent)}
-.tile-new{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:center;gap:9px;padding:11px 12px;background:var(--text);box-shadow:none}
+.tile.on svg.i,.tile.on .tile-n,.tile.on .tile-l{color:var(--on-accent)}
+.tile-new{justify-content:center;background:var(--text);box-shadow:none;height:44px}
 .tile-new:hover{background:var(--text);opacity:.88}
 .tile-new .tile-l,.tile-new svg.i{color:var(--surface)}
 .sb-group{display:flex;flex-direction:column;gap:1px}
@@ -219,6 +218,9 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .lb-low i:nth-child(1),.lb-med i:nth-child(1),.lb-med i:nth-child(2),.lb-high i{opacity:1;background:var(--text-2)}
 .row-right .fuzzy{color:var(--text)}
 .rec .grip{display:none}
+.parkbtn{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--text-3);flex:none;margin-left:6px}
+.parkbtn:hover{background:var(--surface-2);color:var(--text)}
+.parkbtn svg.i{width:17px;height:17px}
 .grip{display:flex;align-items:center;color:var(--text-3);margin-left:6px;flex:none}
 .grip svg.i{width:20px;height:20px;stroke-width:2.6;stroke-linecap:round}
 body.reorder-on .swipe{touch-action:none;cursor:grab}
@@ -547,6 +549,9 @@ const uid = () => crypto.randomUUID ? crypto.randomUUID()
 const ICONS = {
   today:'<circle cx="12" cy="12" r="3.6"/><path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.4 1.4M16.6 16.6L18 18M6 18l1.4-1.4M16.6 7.4L18 6"/>',
   inbox:'<path d="M4 13.5l2.4-7.2a1 1 0 0 1 .95-.8h9.3a1 1 0 0 1 .95.8L20 13.5V18a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18z"/><path d="M4 13.5h4.3l1.2 2.2h5l1.2-2.2H20"/>',
+  clock:'<circle cx="12" cy="12" r="8"/><path d="M12 7.3V12l3.2 1.9"/>',
+  pause:'<path d="M10 6.5v11M14 6.5v11"/>',
+  play:'<path d="M9.5 6.4l8.5 5.6-8.5 5.6z"/>',
   cal:'<rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v3.5M15.5 3.5v3.5"/>',
   list:'<path d="M9.5 7h10M9.5 12h10M9.5 17h10"/><circle cx="5.2" cy="7" r=".9"/><circle cx="5.2" cy="12" r=".9"/><circle cx="5.2" cy="17" r=".9"/>',
   person:'<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c1.2-3.6 4-5.2 7-5.2s5.8 1.6 7 5.2"/>',
@@ -835,8 +840,8 @@ function relTime(ts){
 
 /* ============ Zustand ============ */
 const S = {
-  view:'today', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
-  sort:'due', area:'all', q:'', allView:'list', reorder:false, online:navigator.onLine, memOnly:false,
+  view:'deadlines', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
+  sort:'due', area:'all', q:'', allView:'list', reorder:false, weekOff:0, online:navigator.onLine, memOnly:false,
   addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
   syncState:'', syncError:'', lastSync:0, authOpen:false, authMode:'in', authBusy:false, authErr:'', inboxTokens:null,
   calAreas:{ work:true, private:true }
@@ -856,12 +861,13 @@ function rowHTML(t, o = {}){
   if (o.extraMeta) meta.push(o.extraMeta);
   const flags = (t.prio || t.load) ? `<span class="flags">${prioBadge(t.prio)}${loadBadge(t.load)}</span>` : '';
   const move = S.reorder ? `<span class="grip" aria-hidden="true">${ic('grip')}</span>` : '';
+  const park = (S.reorder || o.noPark) ? '' : `<button class="parkbtn" data-act="park" data-id="${t.id}" title="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}" aria-label="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}">${ic(t.status === 'parked' ? 'play' : 'pause')}</button>`;
   let right = o.right;
   if (right === undefined) right = `${flags}${d.txt ? `<span class="${d.cls}">${esc(d.txt)}</span>${d.k ? `<span class="k">${esc(d.k)}</span>` : ''}` : ''}`;
   return `<div class="swipe" data-swipe="${t.id}"><div class="swipe-act"><button data-act="swipe-del" data-id="${t.id}">${ic('trash')}Löschen</button></div><div class="row ${done ? 'is-done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}">
     <button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="${done ? 'Wieder öffnen' : 'Als erledigt markieren'}"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>
     <div class="row-main"><div class="row-title">${esc(t.title)}</div>${meta.length ? `<div class="row-meta">${meta.join('')}</div>` : ''}</div>
-    <div class="row-right">${right}</div>${move}
+    <div class="row-right">${right}</div>${park}${move}
   </div></div>`;
 }
 let LAST_GROUPS = [];
@@ -893,10 +899,10 @@ function renderSidebar(){
   const cnt = {
     inbox: T.filter(t => t.status === 'inbox').length,
     today: open.filter(t => ['overdue', 'today'].includes(bucket(t))).length,
-    cal: open.filter(t => t.due && range(t)[0] <= addD(THIS_MON, 6) && range(t)[1] >= THIS_MON).length,
+    mitFrist: open.filter(t => t.due).length,
     all: open.length
   };
-  const tile = (v, icon, label, n) => `<button class="tile ${S.view === v ? 'on' : ''}" data-act="nav" data-view="${v}"><span class="tile-top">${ic(icon)}<span class="tile-n">${n}</span></span><span class="tile-l">${label}</span></button>`;
+  const tile = (v, icon, label, n) => `<button class="tile ${S.view === v ? 'on' : ''}" data-act="nav" data-view="${v}">${ic(icon)}<span class="tile-l">${label}</span>${n === '' ? '' : `<span class="tile-n">${n}</span>`}</button>`;
   const item = (v, label, n, lead, cls = '') => `<button class="sb-item ${cls} ${S.view === v ? 'on' : ''}" data-act="nav" data-view="${v}">${lead}<span>${esc(label)}</span>${n !== '' ? `<span class="cnt">${n}</span>` : ''}</button>`;
   const areaRow = a => {
     const op = areaOpen(a), n = open.filter(t => areaOf(t) === a).length;
@@ -919,9 +925,9 @@ function renderSidebar(){
   $('#sidebar').innerHTML = `
     <div class="brand"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span>Brain72</span></div>
     <label class="search">${ic('search')}<input id="sbq" placeholder="Suchen" value="${esc(S.q)}" aria-label="To-dos durchsuchen"></label>
-    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('today', 'today', 'Heute', cnt.today)}${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('calendar', 'cal', 'Kalender', cnt.cal)}${tile('all', 'list', 'Alle', cnt.all)}</div>
+    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('deadlines', 'clock', 'Deadlines', cnt.mitFrist)}${tile('calendar', 'cal', 'Kalender', '')}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}</div>
     <div class="sb-group">${areaRow('work')}${areaRow('private')}${item('people', 'Personen', PEOPLE.length, ic('person'))}${item('projects', 'Projekte', PROJECTS.length, ic('folder'))}</div>
-    <div class="sb-group">${item('done', 'Erledigt', T.filter(t => t.status === 'done').length, ic('done'))}${item('archive', 'Archiv', T.filter(t => t.status === 'archived').length, ic('archive'))}${item('settings', 'Einstellungen', '', ic('gear'))}</div>
+    <div class="sb-group">${item('done', 'Erledigt', T.filter(t => t.status === 'done').length, ic('done'))}${item('archive', 'Archiv', T.filter(t => t.status === 'archived').length, ic('archive'))}${item('parked', 'Parkliste', T.filter(t => t.status === 'parked').length, ic('pause'))}${item('settings', 'Einstellungen', '', ic('gear'))}</div>
     <div class="sb-foot">
       <div class="sync"><i class="dot" style="--c:${syncCol}"></i><span>${syncTxt}</span>${syncBtn}</div>
       ${themeSeg()}
@@ -932,106 +938,48 @@ const themeSeg = () => `<div class="seg" role="group" aria-label="Darstellung">$
 
 /* ============ Ansichten ============ */
 const isMobile = () => matchMedia('(max-width:760px)').matches;
-/* Empfehlung fürs Heute-Bild.
-   Grundlage: Eisenhower (Wichtigkeit × Dringlichkeit), „Eat the frog“ (Wichtiges zuerst, auch wenn aufwendig),
-   Quick Wins aus der 2-Minuten-Regel und ein Blick auf Liegengebliebenes. Bewusst kurz gehalten (WIP-Limit). */
-function empfehlung(open, schonOben, opts = {}){
-  const heute = TODAY.getTime();
-  const restTage = t => { const r = range(t); return r ? Math.round((r[1] - TODAY) / DAY) : null; };   // bis zum Ende der Frist
-  const bewerten = t => {
-    const d = restTage(t), fuzzy = t.due && t.due.type !== 'day';
-    let s = 0;
-    // Dringlichkeit nach tatsächlichen Resttagen – ein Montagstermin zählt am Samstag, nicht erst am Montag
-    if (d === null) s += 0;
-    else if (d < 0) s += 50 + Math.min(10, -d);
-    else if (d === 0) s += 44;
-    else if (d === 1) s += 38;
-    else if (d === 2) s += 32;
-    else if (d === 3) s += 26;
-    else if (d <= 6) s += 20;
-    else if (d <= 13) s += 12;
-    else s += 5;
-    s += t.prio === 'high' ? 30 : t.prio === 'med' ? 16 : t.prio === 'low' ? 4 : 9;
-    s += t.load === 'low' ? 12 : t.load === 'med' ? 5 : t.load === 'high' ? 0 : 5;
-    if (d !== null && d < 0 && t.prio === 'high') s += 10;                    // eskaliert
-    if (t.load === 'high' && d !== null && d >= 0) s += d <= 3 ? 12 : d <= 7 ? 6 : 0;   // Vorlauf: Großes früh anfangen
-    if (fuzzy && d !== null && d <= 2) s += 4;                                // Zeitraum läuft aus
-    if (t.created && (heute - P(t.created)) / DAY > 14) s += 8;               // Altlast
-    return s;
-  };
-  const grund = t => {
-    const d = restTage(t), fuzzy = t.due && t.due.type !== 'day';
-    if (d !== null && d < 0) return t.prio === 'high' ? 'Überfällig und wichtig' : 'Überfällig';
-    if (t.load === 'high' && d !== null && d <= 3) return 'Abgabe naht – heute anfangen';
-    if (fuzzy && d !== null && d <= 2) return 'Zeitraum endet bald';
-    if (d === 0) return 'Heute fällig';
-    if (d === 1) return 'Morgen fällig';
-    if (d === 2) return 'Übermorgen fällig';
-    if (d !== null && d <= 6) return fuzzy ? 'Zeitraum läuft' : `In ${d} Tagen fällig`;
-    if (t.prio === 'high' && t.load === 'high') return 'Wichtig · Block einplanen';
-    if (t.prio === 'high') return 'Wichtig';
-    if (t.load === 'low') return 'Quick Win';
-    if (d !== null && d <= 13) return 'Nächste Woche fällig';
-    if (t.prio === 'low' && t.load === 'high') return 'Kann warten';
-    if (t.created && (heute - P(t.created)) / DAY > 14) return 'Liegt schon lange';
-    return 'Sinnvoller nächster Schritt';
-  };
-  return open
-    .filter(t => !schonOben.has(t.id))
-    .map(t => ({ t, s:bewerten(t), grund:grund(t) }))
-    .filter(x => x.s >= (opts.min ?? 20))         // im Heute-Bild nur, was heute zählt
-    .sort((a, b) => b.s - a.s || sortByDue(a.t, b.t))
-    .slice(0, opts.max ?? 5);
-}
-function viewToday(){
+function viewDeadlines(){
   const mob = isMobile();
   const alle = T.filter(isOpen);
   const open = S.area === 'all' ? alle : alle.filter(t => areaOf(t) === S.area);
-  const sel = S.todaySel ? P(S.todaySel) : TODAY;
-  const selIsToday = same(sel, TODAY);
-  const sun = addD(THIS_MON, 6);
+  const wStart = addD(THIS_MON, 7 * S.weekOff), wEnd = addD(wStart, 6);
+  const sel = S.todaySel ? P(S.todaySel) : null;
   const strip = Array.from({ length:7 }, (_, i) => {
-    const d = addD(THIS_MON, i);
+    const d = addD(wStart, i);
     const items = open.filter(t => t.due?.type === 'day' && same(P(t.due.date), d));
-    const cls = `${same(d, TODAY) ? 'today' : d < TODAY ? 'past' : ''} ${same(d, sel) && !same(d, TODAY) ? 'sel' : ''}`;
+    const cls = `${same(d, TODAY) ? 'today' : d < TODAY ? 'past' : ''} ${sel && same(d, sel) && !same(d, TODAY) ? 'sel' : ''}`;
     return `<button class="wday ${cls}" data-act="today-day" data-d="${iso(d)}" aria-label="${esc(longDate(d))}"><span class="wd">${WD[d.getDay()]}</span><span class="dn">${d.getDate()}</span><span class="wdots">${items.slice(0, 4).map(t => `<i class="dot" style="--c:${areaColor(areaOf(t))}"></i>`).join('')}</span></button>`;
   }).join('');
-  const weekHead = `<div class="wk-head"><strong>KW ${kw(TODAY)}</strong><span>${THIS_MON.getDate()}. ${THIS_MON.getMonth() !== sun.getMonth() ? MON[THIS_MON.getMonth()] + ' ' : ''}– ${sun.getDate()}. ${MON[sun.getMonth()]}</span></div>`;
+  const spanne = `${wStart.getDate()}. ${wStart.getMonth() !== wEnd.getMonth() ? MON[wStart.getMonth()] + ' ' : ''}– ${wEnd.getDate()}. ${MON[wEnd.getMonth()]}`;
+  const weekHead = `<div class="wk-head"><button class="icon-btn" data-act="week" data-v="-1" aria-label="Vorherige Woche">${ic('chevL')}</button>
+    <strong>KW ${kw(wStart)}</strong><span>${spanne}</span>
+    ${S.weekOff ? `<button class="link" data-act="week" data-v="0">Heute</button>` : ''}
+    <button class="icon-btn" style="margin-left:auto" data-act="week" data-v="1" aria-label="Nächste Woche">${ic('chevR')}</button></div>`;
   let body;
   if (S.allView === 'grid'){
     body = gridHTML(open);
-  } else if (selIsToday){
-    // Überall gleich: nur Überfälliges und heute Fälliges – alles Weitere steht in den Empfehlungen.
-    const faellig = open.filter(t => ['overdue', 'today'].includes(bucket(t)));
-    const groups = S.sort === 'due' ? bucketGroups(open, ['overdue', 'today']) : groupList(faellig, S.sort);
-    const hasAny = groups.some(g => g.items.length);
-    const rest = open.length - groups.reduce((n, g) => n + g.items.length, 0);
-    const empty = !T.length
-      ? `<div class="empty-big"><strong>Willkommen bei Brain72.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Sprich oder tipp oben dein erstes To-do – oder leg es geführt an.'}</div>`
-      : `<div class="empty-big"><strong>Heute ist nichts fällig.</strong>Tipp auf einen Tag der Woche, um ihn anzusehen.</div>`;
-    const oben = new Set(groups.flatMap(g => g.items.map(t => t.id)));
-    const empf = empfehlungsHTML(empfehlung(open, oben), 'Empfohlene nächste Schritte',
-      'Sortiert nach Wichtigkeit und Dringlichkeit, mit Blick auf schnelle Erledigungen und Liegengebliebenes.');
-    body = (hasAny ? groupsHTML(groups) : empty) +
-      empf +
-      (rest ? `<button class="link more" data-act="nav" data-view="all">Alle ${open.length} offenen To-dos ansehen</button>` : '');
-  } else {
-    const items = open.filter(t => t.due?.type === 'day' && same(P(t.due.date), sel)).sort(sortByDue);
-    body = `<div class="sec"><h3>${esc(longDate(sel))}</h3><span class="n">${items.length}</span><button class="link" style="margin-left:auto;font-size:13px" data-act="today-day" data-d="${iso(TODAY)}">Zurück zu heute</button></div>` +
+  } else if (sel){
+    const items = open.filter(t => { const r = range(t); return r && r[0] <= sel && r[1] >= sel; }).sort(sortByDue);
+    body = `<div class="sec"><h3>${esc(longDate(sel))}</h3><span class="n">${items.length}</span><button class="link" style="margin-left:auto;font-size:13px" data-act="today-day" data-d="">Alle Fristen</button></div>` +
       (items.length ? `<div>${items.map(t => rowHTML(t)).join('')}</div>` : `<div class="empty">An diesem Tag ist nichts fällig.</div>`);
+  } else {
+    const groups = S.sort === 'due' ? bucketGroups(open) : groupList(open, S.sort);
+    const leer = !T.length
+      ? `<div class="empty-big"><strong>Willkommen bei Brain72.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Sprich oder tipp oben dein erstes To-do – oder leg es geführt an.'}</div>`
+      : `<div class="empty-big"><strong>Keine offenen To-dos.</strong>Schön aufgeräumt.</div>`;
+    body = groups.some(g => g.items.length) ? groupsHTML(groups) : leer;
   }
   const leisten = `<div class="toolbar tb-split">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div>
     ${S.allView === 'grid' ? '' : `<div class="tb-group"><span class="tb-label">Gruppieren nach</span>${seg('sort', SORT_SEG)}</div>
     <div class="toolbar">${reorderSwitch()}</div>`}`;
-  return header('Heute', esc(longDate(TODAY)), '', mob ? '' : addBtn()) + (mob ? '' : quickAdd()) + leisten +
+  return header('Deadlines', esc(longDate(TODAY)), '', mob ? '' : addBtn()) + (mob ? '' : quickAdd()) + leisten +
     (S.allView === 'grid' ? '' : weekHead + `<div class="wstrip">${strip}</div>`) + body;
 }
-function viewInbox(){
-  const items = T.filter(t => t.status === 'inbox').sort((a, b) => (b.createdTs || 0) - (a.createdTs || 0));
-  return header('Eingang', 'Per Sprache erfasst. Kurz prüfen, ergänzen, einsortieren.') +
-    (items.length ? `<div>${items.map(t => rowHTML(t, { right:`<button class="btn btn-g btn-s" data-act="review" data-id="${t.id}">Prüfen</button>` })).join('')}</div>` : `<div class="empty">Eingang leer.</div>`) +
-    `<div class="note">${ic('wave')}<div><h4>Kommt mit Etappe 4</h4><p>Auf dem iPhone startet der Action-Button (oder zweimal auf die Rückseite tippen) einen Kurzbefehl mit Wispr Flow. Du sprichst, die KI erkennt die Felder, und das To-do landet hier – ohne die App zu öffnen.</p>
-    <div class="flow"><span>Action-Button</span><i>→</i><span>Sprechen</span><i>→</i><span>KI erkennt Felder</span><i>→</i><span>Eingang</span></div></div></div>`;
+function viewParked(){
+  const geparkt = T.filter(t => t.status === 'parked').sort(sortByDue);
+  return header('Parkliste', 'Hier ruhen To-dos, die gerade nicht dran sind. Der Pfeil in der Zeile holt sie zurück.') +
+    (geparkt.length ? `<div>${geparkt.map(t => rowHTML(t)).join('')}</div>`
+      : `<div class="empty">Nichts geparkt. Über die Pause-Taste in jeder Zeile legst du To-dos hierher.</div>`);
 }
 const seg = (key, opts) => `<div class="seg">${opts.map(([k, l]) => `<button class="${S[key] === k ? 'on' : ''}" data-act="set" data-k="${key}" data-v="${k}">${l}</button>`).join('')}</div>`;
 const AREA_SEG = [['all', 'Alle'], ['work', 'Arbeit'], ['private', 'Privat']];
@@ -1046,14 +994,51 @@ function groupList(list, sortKey){
   if (sortKey === 'project') return [...[...PROJECTS].sort(byName).map(p => ({ title:p.name, items:list.filter(t => t.project === p.id).sort(sortByDue) })), { title:'Ohne Projekt', items:list.filter(t => !projById(t.project)).sort(sortByDue) }];
   return bucketGroups(list);
 }
-// Empfehlungsblock (Heute: nur das Dringliche, Alle: die ganze Reihenfolge)
-function empfehlungsHTML(tipps, titel, hinweis){
-  if (!tipps.length) return '';
-  return `<div class="sec"><h3>${titel}</h3><span class="n">${tipps.length}</span></div>
-    <div class="rec-note">${hinweis}</div>
-    <ol class="rec">${tipps.map(({ t, grund }, i) => `<li><span class="rec-n">${i + 1}</span><div class="rec-row">${rowHTML(t, { extraMeta:`<span class="rec-why">${ic('spark')}${esc(grund)}</span>` })}</div></li>`).join('')}</ol>`;
+/* Planung: Wann muss eine Aufgabe spätestens starten?
+   Aufwand ergibt die geschätzte Dauer, Priorität den Puffer. Daraus folgt der späteste Start;
+   je weniger Luft bis dahin, desto weiter oben steht die Aufgabe. */
+const DAUER = { low:0.5, med:1.5, high:4 };          // grobe Arbeitstage
+const kurzDatum = d => `${WD[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1}.`;
+function plan(t){
+  const r = range(t);
+  const prioBonus = t.prio === 'high' ? 26 : t.prio === 'med' ? 12 : t.prio === 'low' ? 2 : 8;
+  const dauer = DAUER[t.load] ?? 1;
+  if (!r){
+    return { s: 18 + prioBonus + (t.load === 'low' ? 8 : 0), start:null,
+      grund: t.prio === 'high' ? 'Wichtig, ohne Frist' : t.load === 'low' ? 'Schnell erledigt, ohne Frist' : 'Ohne Frist' };
+  }
+  const frist = r[1];
+  const tageBis = Math.round((frist - TODAY) / DAY);
+  const puffer = t.prio === 'high' ? 1 : 0.5;
+  const start = addD(frist, -Math.ceil(dauer + puffer));       // spätester sinnvoller Start
+  const luft = Math.round((start - TODAY) / DAY);              // Tage, die noch bleiben
+  let s;
+  if (tageBis < 0) s = 100 + Math.min(12, -tageBis);
+  else if (luft <= 0) s = 90 - Math.min(6, tageBis);
+  else s = Math.max(22, 82 - luft * 7);
+  s += prioBonus;
+  if (t.load === 'low' && tageBis <= 7) s += 6;
+  if (t.created && (TODAY - P(t.created)) / DAY > 21) s += 5;
+  const dauerTxt = t.load ? `≈ ${String(dauer).replace('.', ',')} Tage` : '';
+  const grund = tageBis < 0 ? 'Überfällig – sofort erledigen'
+    : luft < 0 ? `Puffer weg – jetzt starten${dauerTxt ? ' (' + dauerTxt + ')' : ''}`
+    : luft === 0 ? `Heute starten${dauerTxt ? ', ' + dauerTxt : ''}`
+    : luft <= 2 ? `Spätester Start: ${kurzDatum(start)}`
+    : t.prio === 'high' ? `Wichtig – ab ${kurzDatum(start)} einplanen`
+    : t.load === 'low' && tageBis <= 7 ? 'Quick Win – schnell wegräumen'
+    : `Zeit bis ${kurzDatum(start)}`;
+  return { s, start, grund };
 }
-function viewAll(){
+function viewInbox(){
+  const items = T.filter(t => t.status === 'inbox').sort((a, b) => (b.createdTs || 0) - (a.createdTs || 0));
+  return header('Eingang', 'Per Sprache erfasst. Kurz prüfen, ergänzen, einsortieren.') +
+    (items.length ? `<div>${items.map(t => rowHTML(t, { noPark:true, right:`<button class="btn btn-g btn-s" data-act="review" data-id="${t.id}">Prüfen</button>` })).join('')}</div>`
+      : `<div class="empty">Eingang leer.</div>`) +
+    `<div class="note">${ic('wave')}<div><h4>So kommen To-dos hierher</h4>
+      <p>Action-Button am iPhone drücken, sprechen, fertig: Der Kurzbefehl schickt das Diktat an Brain72, die KI erkennt Titel, Frist, Person, Projekt, Priorität und Aufwand. Einrichtung unter Einstellungen → iPhone-Kurzbefehl.</p>
+      <div class="flow"><span>Action-Button</span><i>→</i><span>Sprechen</span><i>→</i><span>KI erkennt Felder</span><i>→</i><span>Eingang</span></div></div></div>`;
+}
+function viewRecs(){
   let list = T.filter(isOpen);
   if (S.area !== 'all') list = list.filter(t => areaOf(t) === S.area);
   if (S.q){ const q = S.q.toLowerCase(); list = list.filter(t => [t.title, t.desc, t.ctx, namesOf(t.persons).join(' '), t.project ? projById(t.project)?.name : '', t.cat ? catById(t.cat)?.name : ''].join(' ').toLowerCase().includes(q)); }
@@ -1061,11 +1046,17 @@ function viewAll(){
     <div class="toolbar tb-split">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div>
     ${S.allView === 'grid' ? '' : `<div class="tb-group"><span class="tb-label">Gruppieren nach</span>${seg('sort', SORT_SEG)}</div>
     <div class="toolbar">${reorderSwitch()}</div>`}`;
-  if (S.allView === 'grid') return header('Alle To-dos', `${list.length} offen · Raster aus Priorität und Aufwand`, '', addBtn()) + leisten + gridHTML(list);
-  const tipps = empfehlung(list, new Set(), { min:0, max:20 });
-  return header('Alle To-dos', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`, '', addBtn()) + leisten +
-    groupsHTML(groupList(list, S.sort), { empty: S.q ? 'Keine Treffer.' : 'Keine offenen To-dos.' }) +
-    empfehlungsHTML(tipps, 'Empfohlene Reihenfolge', `Alle ${S.area === 'all' ? '' : S.area === 'work' ? 'beruflichen ' : 'privaten '}To-dos in sinnvoller Abarbeitungsreihenfolge – nach Frist, Wichtigkeit und Aufwand.${tipps.length === 20 ? ' Die ersten 20.' : ''}`);
+  if (S.allView === 'grid') return header('Empfehlungen', `${list.length} offen · Raster aus Priorität und Aufwand`, '', addBtn()) + leisten + gridHTML(list);
+  const bewertet = new Map(list.map(t => [t.id, plan(t)]));
+  const nachPlan = (a, b) => byRank(a, b) || bewertet.get(b.id).s - bewertet.get(a.id).s || sortByDue(a, b);
+  const groups = (S.sort === 'due'
+      ? bucketGroups(list)
+      : groupList(list, S.sort)
+    ).map(g => ({ ...g, items:[...g.items].sort(nachPlan) }));
+  const zeile = t => ({ extraMeta:`<span class="rec-why">${ic('spark')}${esc(bewertet.get(t.id).grund)}</span>` });
+  return header('Empfehlungen', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`, '', addBtn()) + leisten +
+    `<div class="rec-note">Reihenfolge aus Frist, Priorität und Aufwand: Für jede Aufgabe wird der späteste sinnvolle Starttermin berechnet (Frist minus geschätzte Dauer minus Puffer). Was am wenigsten Luft hat, steht oben.</div>` +
+    groupsHTML(groups, { empty: S.q ? 'Keine Treffer.' : 'Keine offenen To-dos.', rowOpts: zeile });
 }
 
 // Raster: Spalten = Aufwand, Zeilen = Priorität. Die vier Ecken sind die klassischen Quadranten.
@@ -1249,7 +1240,7 @@ function viewSettings(){
 
 function renderMain(){
   const [kind, id] = S.view.includes(':') ? S.view.split(/:(.+)/) : [S.view];
-  const views = { today:viewToday, inbox:viewInbox, all:viewAll, calendar:viewCalendar, people:viewPeople, projects:viewProjects, done:viewDone, archive:viewArchive, settings:viewSettings };
+  const views = { deadlines:viewDeadlines, inbox:viewInbox, recs:viewRecs, calendar:viewCalendar, people:viewPeople, projects:viewProjects, done:viewDone, archive:viewArchive, parked:viewParked, settings:viewSettings };
   const html = views[kind] ? views[kind]() : viewFiltered(kind, id);
   const scroll = $('#main').scrollTop;
   $('#main').innerHTML = `<div class="main-inner">${html}</div>`;
@@ -1338,9 +1329,9 @@ function fmtRange(t){ const [s, e] = range(t); return `${s.getDate()}. ${MONS[s.
 /* ============ Tabbar (mobil) ============ */
 function renderTabbar(){
   const tab = (v, icon, l) => `<button class="tab ${S.view === v ? 'on' : ''}" data-act="nav" data-view="${v}">${ic(icon)}${l}</button>`;
-  $('#tabbar').innerHTML = `<button class="tab" data-act="menu">${ic('menu')}Menü</button>` + tab('today', 'today', 'Heute') +
+  $('#tabbar').innerHTML = `<button class="tab" data-act="menu">${ic('menu')}Menü</button>` + tab('deadlines', 'clock', 'Deadlines') +
     `<button class="fab" data-act="assist-capture" aria-label="To-do diktieren">${ic('mic')}</button>` +
-    tab('calendar', 'cal', 'Kalender') + tab('all', 'list', 'Alle');
+    tab('calendar', 'cal', 'Kalender') + tab('recs', 'spark', 'Empfehlungen');
 }
 function syncScrim(){
   const narrowDetail = S.sel && innerWidth <= 1100;
@@ -1859,7 +1850,7 @@ function nav(v){
   flushSaves();
   if (v === 'settings' && sess && S.inboxTokens === null) tokenLaden();
   S.view = v; S.confirmDel = null; S.confirmM = null;
-  if (v === 'today') S.todaySel = null;
+  if (v === 'deadlines'){ S.todaySel = null; S.weekOff = 0; }
   document.body.classList.remove('sb-open');
   if (innerWidth <= 1100) S.sel = null;
   render(); $('#main').scrollTop = 0;
@@ -1908,7 +1899,8 @@ document.addEventListener('click', e => {
     case 'undo': if (undo){ undo(); undo = null; render(); $('#toast').hidden = true; } break;
     case 'reload': location.reload(); break;
     case 'close-detail': closeDetail(); break;
-    case 'today-day': S.todaySel = el.dataset.d === iso(TODAY) ? null : el.dataset.d; renderMain(); break;
+    case 'today-day': S.todaySel = (!el.dataset.d || el.dataset.d === S.todaySel) ? null : el.dataset.d; renderMain(); break;
+    case 'week': S.todaySel = null; S.weekOff = el.dataset.v === '0' ? 0 : S.weekOff + Number(el.dataset.v); renderMain(); break;
     // Bearbeiten in der Detailansicht
     case 'e-area': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => {
       t.area = el.dataset.v;
@@ -1945,6 +1937,14 @@ document.addEventListener('click', e => {
     case 'cal-prev': S.calMonth = new Date(S.calMonth.getFullYear(), S.calMonth.getMonth() - 1, 1); renderMain(); break;
     case 'cal-next': S.calMonth = new Date(S.calMonth.getFullYear(), S.calMonth.getMonth() + 1, 1); renderMain(); break;
     case 'cal-today': S.calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); S.calDay = iso(TODAY); renderMain(); break;
+    case 'park': { e.stopPropagation(); const t = T.find(x => x.id === id); if (!t) break;
+      const vorher = t.status;
+      t.status = t.status === 'parked' ? 'open' : 'parked';
+      save('todos', t);
+      undo = () => { t.status = vorher; save('todos', t); };
+      render();
+      toast(t.status === 'parked' ? 'Geparkt – liegt in der Parkliste' : 'Wieder aufgenommen', { act:'undo', label:'Rückgängig' });
+      break; }
     case 'del': S.confirmDel = id; render(); break;
     case 'del-no': S.confirmDel = null; render(); break;
     case 'swipe-del': { const t = T.find(x => x.id === id); if (t) deleteTodo(t); break; }
@@ -2088,7 +2088,7 @@ document.addEventListener('input', e => {
   if (e.target.id === 'allq' || e.target.id === 'sbq'){
     S.q = e.target.value;
     const id = e.target.id, pos = e.target.selectionStart;
-    if (S.view !== 'all') S.view = 'all';
+    if (S.view !== 'recs') S.view = 'recs';
     render();
     const f = document.getElementById(id); f.focus(); f.setSelectionRange(pos, pos);
   }
