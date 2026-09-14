@@ -30,9 +30,10 @@ const TOOL = {
       due_type: { type: 'string', enum: ['day', 'week', 'month', 'none'] },
       due_date: { type: 'string' },
       priority: { type: 'string', enum: ['high', 'med', 'low', ''] },
+      importance: { type: 'string', enum: ['high', 'med', 'low', ''] },
       workload: { type: 'string', enum: ['high', 'med', 'low', ''] },
     },
-    required: ['title', 'description', 'area', 'category', 'persons', 'project', 'due_type', 'due_date', 'priority', 'workload'],
+    required: ['title', 'description', 'area', 'category', 'persons', 'project', 'due_type', 'due_date', 'priority', 'importance', 'workload'],
   },
 } as const;
 
@@ -104,6 +105,7 @@ Deno.serve(async (req) => {
       ctx: '',
       area, cat: cat?.id ?? null, persons, project: proj?.id ?? null, due,
       prio: ['high', 'med', 'low'].includes(f.priority) ? f.priority : null,
+      imp: ['high', 'med', 'low'].includes(f.importance) ? f.importance : null,
       load: ['high', 'med', 'low'].includes(f.workload) ? f.workload : null,
       status: 'inbox',
       created: isoTag(jetzt), createdTs: now, doneAt: null,

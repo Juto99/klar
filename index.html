@@ -71,7 +71,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stro
 .app.has-detail{grid-template-columns:260px minmax(0,1fr) 372px}
 .sidebar{background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:18px;padding:calc(16px + env(safe-area-inset-top)) 12px calc(14px + env(safe-area-inset-bottom));overflow-y:auto;min-height:0}
 .main{overflow-y:auto;min-height:0;background:var(--surface)}
-.main-inner{max-width:780px;margin:0 auto;padding:34px 40px 120px}
+.main-inner{max-width:1180px;margin:0 auto;padding:34px 40px 120px}
 .detail{display:none;border-left:1px solid var(--line);background:var(--surface);overflow-y:auto;min-height:0}
 .app.has-detail .detail{display:block}
 
@@ -220,7 +220,9 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .rec .grip{display:none}
 .parkbtn{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--text-3);flex:none;margin-left:6px}
 .parkbtn:hover{background:var(--surface-2);color:var(--text)}
-.parkbtn svg.i{width:17px;height:17px}
+.parkbtn .pbox{width:21px;height:21px;border-radius:6px;box-shadow:inset 0 0 0 1.4px currentColor;display:grid;place-items:center;font-size:11.5px;font-weight:700}
+.parkbtn.on{color:var(--accent)}
+.parkbtn.on .pbox{background:var(--accent);color:var(--on-accent);box-shadow:none}
 .grip{display:flex;align-items:center;color:var(--text-3);margin-left:6px;flex:none}
 .grip svg.i{width:20px;height:20px;stroke-width:2.6;stroke-linecap:round}
 body.reorder-on .swipe{touch-action:none;cursor:grab}
@@ -582,12 +584,15 @@ const ic = (n, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidde
 
 /* ============ Daten ============ */
 const AREAS = { work:{ name:'Arbeit', color:'var(--work)' }, private:{ name:'Privat', color:'var(--private)' } };
-const PRIOS = [['high', 'Hoch'], ['med', 'Mittel'], ['low', 'Niedrig']];
-const LOADS = [['high', 'Hoch'], ['med', 'Mittel'], ['low', 'Gering']];
+const PRIOS = [['high', 'Hoch'], ['med', 'Mittel'], ['low', 'Gering']];        // Dringlichkeit
+const IMPS  = [['high', 'Hoch'], ['med', 'Mittel'], ['low', 'Gering']];        // Wichtigkeit
+const LOADS = [['high', 'Wochen'], ['med', 'Tage'], ['low', 'Stunden']];       // Aufwand als Größenordnung
 const prioName = v => (PRIOS.find(p => p[0] === v) || [])[1] || '';
+const impName = v => (IMPS.find(p => p[0] === v) || [])[1] || '';
 const loadName = v => (LOADS.find(p => p[0] === v) || [])[1] || '';
-const prioBadge = v => v ? `<span class="pb pb-${v}" title="Priorität ${prioName(v)}">${prioName(v)[0]}</span>` : '';
-const loadBadge = v => v ? `<span class="lb lb-${v}" title="Aufwand ${loadName(v)}"><i></i><i></i><i></i></span>` : '';
+const prioBadge = v => v ? `<span class="pb pb-${v}" title="Dringlichkeit ${prioName(v)}">D</span>` : '';
+const impBadge = v => v ? `<span class="pb pb-${v}" title="Wichtigkeit ${impName(v)}">W</span>` : '';
+const loadBadge = v => v ? `<span class="lb lb-${v}" title="Aufwand: ${loadName(v)}"><i></i><i></i><i></i></span>` : '';
 let T = [], CATS = [], PEOPLE = [], PROJECTS = [];
 const ARR = { todos:() => T, cats:() => CATS, people:() => PEOPLE, projects:() => PROJECTS };
 const ARCHIVE_DAYS = 21;
@@ -859,9 +864,9 @@ function rowHTML(t, o = {}){
   if (names.length) meta.push(`<span><span class="avs">${names.map(n => `<span class="av">${esc(initials(n))}</span>`).join('')}</span>${esc(names.join(', '))}</span>`);
   if (t.status === 'inbox') meta.push(`<span>${ic('wave')}Per Sprache erfasst</span>`);
   if (o.extraMeta) meta.push(o.extraMeta);
-  const flags = (t.prio || t.load) ? `<span class="flags">${prioBadge(t.prio)}${loadBadge(t.load)}</span>` : '';
+  const flags = (t.prio || t.imp || t.load) ? `<span class="flags">${prioBadge(t.prio)}${impBadge(t.imp)}${loadBadge(t.load)}</span>` : '';
   const move = S.reorder ? `<span class="grip" aria-hidden="true">${ic('grip')}</span>` : '';
-  const park = (S.reorder || o.noPark) ? '' : `<button class="parkbtn" data-act="park" data-id="${t.id}" title="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}" aria-label="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}">${ic(t.status === 'parked' ? 'play' : 'pause')}</button>`;
+  const park = (S.reorder || o.noPark) ? '' : `<button class="parkbtn ${t.status === 'parked' ? 'on' : ''}" data-act="park" data-id="${t.id}" title="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}" aria-label="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}"><span class="pbox">P</span></button>`;
   let right = o.right;
   if (right === undefined) right = `${flags}${d.txt ? `<span class="${d.cls}">${esc(d.txt)}</span>${d.k ? `<span class="k">${esc(d.k)}</span>` : ''}` : ''}`;
   return `<div class="swipe" data-swipe="${t.id}"><div class="swipe-act"><button data-act="swipe-del" data-id="${t.id}">${ic('trash')}Löschen</button></div><div class="row ${done ? 'is-done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}">
@@ -975,6 +980,15 @@ function viewDeadlines(){
   return header('Deadlines', esc(longDate(TODAY)), '', mob ? '' : addBtn()) + (mob ? '' : quickAdd()) + leisten +
     (S.allView === 'grid' ? '' : weekHead + `<div class="wstrip">${strip}</div>`) + body;
 }
+function viewInbox(){
+  const items = T.filter(t => t.status === 'inbox').sort((a, b) => (b.createdTs || 0) - (a.createdTs || 0));
+  return header('Eingang', 'Per Sprache erfasst. Kurz prüfen, ergänzen, einsortieren.') +
+    (items.length ? `<div>${items.map(t => rowHTML(t, { noPark:true, right:`<button class="btn btn-g btn-s" data-act="review" data-id="${t.id}">Prüfen</button>` })).join('')}</div>`
+      : `<div class="empty">Eingang leer.</div>`) +
+    `<div class="note">${ic('wave')}<div><h4>So kommen To-dos hierher</h4>
+      <p>Action-Button am iPhone drücken, sprechen, fertig: Der Kurzbefehl schickt das Diktat an Brain72, die KI erkennt Titel, Frist, Dringlichkeit, Wichtigkeit und Aufwand. Einrichtung unter Einstellungen → iPhone-Kurzbefehl.</p>
+      <div class="flow"><span>Action-Button</span><i>→</i><span>Sprechen</span><i>→</i><span>KI erkennt Felder</span><i>→</i><span>Eingang</span></div></div></div>`;
+}
 function viewParked(){
   const geparkt = T.filter(t => t.status === 'parked').sort(sortByDue);
   return header('Parkliste', 'Hier ruhen To-dos, die gerade nicht dran sind. Der Pfeil in der Zeile holt sie zurück.') +
@@ -995,48 +1009,48 @@ function groupList(list, sortKey){
   return bucketGroups(list);
 }
 /* Planung: Wann muss eine Aufgabe spätestens starten?
-   Aufwand ergibt die geschätzte Dauer, Priorität den Puffer. Daraus folgt der späteste Start;
-   je weniger Luft bis dahin, desto weiter oben steht die Aufgabe. */
-const DAUER = { low:0.5, med:1.5, high:4 };          // grobe Arbeitstage
+   Aufwand gibt die Größenordnung der Dauer (Stunden / Tage / Wochen), Dringlichkeit und Wichtigkeit den Puffer.
+   Frist minus Dauer minus Puffer ergibt den spätesten Start. Wer am wenigsten Luft hat, steht oben.
+   Wichtigkeit zählt zusätzlich stärker als Dringlichkeit, damit Wichtiges nicht dauerhaft von Kleinkram verdrängt wird. */
+const DAUER = { low:1, med:3, high:14 };            // Kalendertage von Anfang bis fertig
+const DAUER_TXT = { low:'ein paar Stunden', med:'einige Tage', high:'mehrere Wochen' };
 const kurzDatum = d => `${WD[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1}.`;
 function plan(t){
   const r = range(t);
-  const prioBonus = t.prio === 'high' ? 26 : t.prio === 'med' ? 12 : t.prio === 'low' ? 2 : 8;
-  const dauer = DAUER[t.load] ?? 1;
+  const wichtig = t.imp === 'high' ? 30 : t.imp === 'med' ? 14 : t.imp === 'low' ? 2 : 8;
+  const dringend = t.prio === 'high' ? 20 : t.prio === 'med' ? 9 : t.prio === 'low' ? 1 : 6;
+  const dauer = DAUER[t.load] ?? 2;
+  const dauerTxt = t.load ? DAUER_TXT[t.load] : '';
+  let s, grund, start = null;
   if (!r){
-    return { s: 18 + prioBonus + (t.load === 'low' ? 8 : 0), start:null,
-      grund: t.prio === 'high' ? 'Wichtig, ohne Frist' : t.load === 'low' ? 'Schnell erledigt, ohne Frist' : 'Ohne Frist' };
+    s = 18 + wichtig + dringend + (t.load === 'low' ? 6 : 0);
+    grund = t.imp === 'high' ? 'Wichtig, ohne Frist – selbst einplanen'
+      : t.load === 'low' ? 'Kleinigkeit ohne Frist'
+      : 'Ohne Frist';
+  } else {
+    const frist = r[1];
+    const tageBis = Math.round((frist - TODAY) / DAY);
+    const puffer = 0.5 + (t.prio === 'high' ? 0.5 : 0) + (t.imp === 'high' ? 1 : 0);
+    start = addD(frist, -Math.ceil(dauer + puffer));
+    const luft = Math.round((start - TODAY) / DAY);
+    if (tageBis < 0) s = 100 + Math.min(12, -tageBis);
+    else if (luft <= 0) s = 90 - Math.min(6, tageBis);
+    else s = Math.max(22, 82 - luft * 7);
+    s += wichtig + dringend;
+    grund = tageBis < 0 ? 'Überfällig – sofort erledigen'
+      : luft < 0 ? `Puffer weg – jetzt starten${dauerTxt ? ', braucht ' + dauerTxt : ''}`
+      : luft === 0 ? `Heute starten${dauerTxt ? ', braucht ' + dauerTxt : ''}`
+      : luft <= 2 ? `Spätester Start: ${kurzDatum(start)}`
+      : t.imp === 'high' && t.prio !== 'high' ? `Wichtig, nicht dringend – ab ${kurzDatum(start)} einplanen`
+      : t.prio === 'high' ? `Dringend – ab ${kurzDatum(start)}`
+      : t.load === 'low' && tageBis <= 7 ? 'Kleinigkeit – zwischendurch erledigen'
+      : `Zeit bis ${kurzDatum(start)}`;
   }
-  const frist = r[1];
-  const tageBis = Math.round((frist - TODAY) / DAY);
-  const puffer = t.prio === 'high' ? 1 : 0.5;
-  const start = addD(frist, -Math.ceil(dauer + puffer));       // spätester sinnvoller Start
-  const luft = Math.round((start - TODAY) / DAY);              // Tage, die noch bleiben
-  let s;
-  if (tageBis < 0) s = 100 + Math.min(12, -tageBis);
-  else if (luft <= 0) s = 90 - Math.min(6, tageBis);
-  else s = Math.max(22, 82 - luft * 7);
-  s += prioBonus;
-  if (t.load === 'low' && tageBis <= 7) s += 6;
-  if (t.created && (TODAY - P(t.created)) / DAY > 21) s += 5;
-  const dauerTxt = t.load ? `≈ ${String(dauer).replace('.', ',')} Tage` : '';
-  const grund = tageBis < 0 ? 'Überfällig – sofort erledigen'
-    : luft < 0 ? `Puffer weg – jetzt starten${dauerTxt ? ' (' + dauerTxt + ')' : ''}`
-    : luft === 0 ? `Heute starten${dauerTxt ? ', ' + dauerTxt : ''}`
-    : luft <= 2 ? `Spätester Start: ${kurzDatum(start)}`
-    : t.prio === 'high' ? `Wichtig – ab ${kurzDatum(start)} einplanen`
-    : t.load === 'low' && tageBis <= 7 ? 'Quick Win – schnell wegräumen'
-    : `Zeit bis ${kurzDatum(start)}`;
+  if (t.load === 'low' && r && Math.round((r[1] - TODAY) / DAY) <= 7) s += 6;      // schnell weg damit
+  if (t.imp === 'high' && t.prio !== 'high') s += 4;                               // Wichtiges nicht verdrängen lassen
+  if (t.prio === 'high' && t.imp === 'low' && t.load === 'low') s += 3;            // dringend, klein, schnell abhaken
+  if (t.created && (TODAY - P(t.created)) / DAY > 21) s += 5;                      // Altlast
   return { s, start, grund };
-}
-function viewInbox(){
-  const items = T.filter(t => t.status === 'inbox').sort((a, b) => (b.createdTs || 0) - (a.createdTs || 0));
-  return header('Eingang', 'Per Sprache erfasst. Kurz prüfen, ergänzen, einsortieren.') +
-    (items.length ? `<div>${items.map(t => rowHTML(t, { noPark:true, right:`<button class="btn btn-g btn-s" data-act="review" data-id="${t.id}">Prüfen</button>` })).join('')}</div>`
-      : `<div class="empty">Eingang leer.</div>`) +
-    `<div class="note">${ic('wave')}<div><h4>So kommen To-dos hierher</h4>
-      <p>Action-Button am iPhone drücken, sprechen, fertig: Der Kurzbefehl schickt das Diktat an Brain72, die KI erkennt Titel, Frist, Person, Projekt, Priorität und Aufwand. Einrichtung unter Einstellungen → iPhone-Kurzbefehl.</p>
-      <div class="flow"><span>Action-Button</span><i>→</i><span>Sprechen</span><i>→</i><span>KI erkennt Felder</span><i>→</i><span>Eingang</span></div></div></div>`;
 }
 function viewRecs(){
   let list = T.filter(isOpen);
@@ -1055,15 +1069,15 @@ function viewRecs(){
     ).map(g => ({ ...g, items:[...g.items].sort(nachPlan) }));
   const zeile = t => ({ extraMeta:`<span class="rec-why">${ic('spark')}${esc(bewertet.get(t.id).grund)}</span>` });
   return header('Empfehlungen', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`, '', addBtn()) + leisten +
-    `<div class="rec-note">Reihenfolge aus Frist, Priorität und Aufwand: Für jede Aufgabe wird der späteste sinnvolle Starttermin berechnet (Frist minus geschätzte Dauer minus Puffer). Was am wenigsten Luft hat, steht oben.</div>` +
+    `<div class="rec-note">Reihenfolge aus Frist, Dringlichkeit, Wichtigkeit und Aufwand: Aus der Größenordnung des Aufwands (Stunden, Tage, Wochen) und einem Puffer ergibt sich der späteste sinnvolle Start. Was am wenigsten Luft hat, steht oben; Wichtiges bekommt zusätzlich Vorlauf.</div>` +
     groupsHTML(groups, { empty: S.q ? 'Keine Treffer.' : 'Keine offenen To-dos.', rowOpts: zeile });
 }
 
 // Raster: Spalten = Aufwand, Zeilen = Priorität. Die vier Ecken sind die klassischen Quadranten.
 const ECKE = { 'high|low':'Sofort erledigen', 'high|high':'Fest einplanen', 'low|low':'Nebenbei', 'low|high':'Lohnt das?' };
 function gridHTML(list){
-  const spalten = [['low', 'Aufwand gering'], ['med', 'Aufwand mittel'], ['high', 'Aufwand hoch']];
-  const zeilen = [['high', 'Priorität hoch'], ['med', 'Priorität mittel'], ['low', 'Priorität niedrig']];
+  const spalten = [['low', 'Aufwand Stunden'], ['med', 'Aufwand Tage'], ['high', 'Aufwand Wochen']];
+  const zeilen = [['high', 'Dringlichkeit hoch'], ['med', 'Dringlichkeit mittel'], ['low', 'Dringlichkeit gering']];
   const karte = t => `<button class="mx-item" data-act="open" data-id="${t.id}" title="${esc(t.title)}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span>${esc(t.title)}</span>${dueLabel(t).txt ? `<em>${esc(dueLabel(t).txt)}</em>` : ''}</button>`;
   let html = `<div class="mx-wrap"><div class="mx"><div></div>${spalten.map(([, l]) => `<div class="mx-col">${l}</div>`).join('')}`;
   zeilen.forEach(([p, pl]) => {
@@ -1282,8 +1296,10 @@ function detailHTML(t){
       <div class="chips">${Object.entries(AREAS).map(([k, v]) => chip('e-area', k, a === k, `<i class="dot" style="--c:${v.color}"></i>${v.name}`)).join('')}</div>
       ${a ? `<div class="d-lab" style="margin-top:14px">Unterkategorie</div><div class="chips">${catsOf(a).map(c => chip('e-cat', c.id, t.cat === c.id, esc(c.name))).join('')}${newIn('cat', 'Neue')}</div>` : ''}
     </div>
-    <div class="d-sec"><div class="d-lab">Priorität</div>
+    <div class="d-sec"><div class="d-lab">Dringlichkeit</div>
       <div class="chips">${PRIOS.map(([v, l]) => chip('e-prio', v, t.prio === v, prioBadge(v) + l)).join('')}${chip('e-prio', '', !t.prio, 'Ohne')}</div>
+      <div class="d-lab" style="margin-top:14px">Wichtigkeit</div>
+      <div class="chips">${IMPS.map(([v, l]) => chip('e-imp', v, t.imp === v, impBadge(v) + l)).join('')}${chip('e-imp', '', !t.imp, 'Ohne')}</div>
       <div class="d-lab" style="margin-top:14px">Aufwand</div>
       <div class="chips">${LOADS.map(([v, l]) => chip('e-load', v, t.load === v, loadBadge(v) + l)).join('')}${chip('e-load', '', !t.load, 'Ohne')}</div>
     </div>
@@ -1540,8 +1556,10 @@ function fromAI(f){
   else if (f.due_type === 'week' && d) draft.due = week(iso(mondayOf(P(d))));
   else if (f.due_type === 'month' && d) draft.due = month(String(d).slice(0, 7));
   if (['high', 'med', 'low'].includes(f.priority)) draft.prio = f.priority;
+  if (['high', 'med', 'low'].includes(f.importance)) draft.imp = f.importance;
   if (['high', 'med', 'low'].includes(f.workload)) draft.load = f.workload;
-  if (draft.prio) rec.push('Priorität: ' + prioName(draft.prio));
+  if (draft.prio) rec.push('Dringlichkeit: ' + prioName(draft.prio));
+  if (draft.imp) rec.push('Wichtigkeit: ' + impName(draft.imp));
   if (draft.load) rec.push('Aufwand: ' + loadName(draft.load));
   if (draft.due) rec.unshift('Deadline: ' + dueText(draft.due));
   if (draft.area) rec.push('Bereich: ' + AREAS[draft.area].name + (draft.cat ? ' · ' + catById(draft.cat).name : ''));
@@ -1597,7 +1615,7 @@ function removeEntity(store, id){
 
 /* ============ Assistent ============ */
 const FULL_STEPS = ['title', 'desc', 'ctx', 'area', 'cat', 'persons', 'projdue', 'prioload'];
-const blank = () => ({ title:'', desc:'', ctx:'', area:null, cat:null, persons:[], project:null, due:null, prio:null, load:null });
+const blank = () => ({ title:'', desc:'', ctx:'', area:null, cat:null, persons:[], project:null, due:null, prio:null, imp:null, load:null });
 function openAssistant(mode, draft = {}, opts = {}){
   A = { mode, draft:{ ...blank(), ...JSON.parse(JSON.stringify(draft)) }, i:0, rec:opts.rec || null, sugg:opts.sugg || [], raw:opts.raw || '', fromId:opts.fromId || null, capture:'', ai:'', touched:false };
   A.steps = mode === 'full' ? [...FULL_STEPS, 'review'] : mode === 'capture' ? ['capture'] : fillSteps();
@@ -1611,7 +1629,7 @@ function fillSteps(){
   if (!d.area) st.push('area');
   if (!d.cat) st.push('cat');
   if (!d.due) st.push('projdue');
-  if (!d.prio && !d.load) st.push('prioload');
+  if (!d.prio && !d.imp && !d.load) st.push('prioload');
   st.push('review');
   return st;
 }
@@ -1693,9 +1711,11 @@ function stepHTML(k){
       <div class="chips">${DUE_OPTS().map(([k, l, v]) => `<button class="opt ${sameDue(d.due, v) ? 'on' : ''}" data-act="a-due" data-v="${k}">${l}</button>`).join('')}
       <input type="date" class="date-in" data-f="date" value="${dateVal}" aria-label="Bestimmtes Datum"></div>`;
     }
-    case 'prioload': return `<h2 class="q">Wie wichtig, wie aufwendig?</h2><p class="q-help">Damit landet die Aufgabe später im richtigen Feld des Rasters. Optional.</p>
-      <div class="grp-l">Priorität</div>
+    case 'prioload': return `<h2 class="q">Dringlich, wichtig, wie groß?</h2><p class="q-help">Daraus berechnet Brain72 später, wann du anfangen solltest. Alles optional.</p>
+      <div class="grp-l">Dringlichkeit</div>
       <div class="chips">${PRIOS.map(([v, l]) => `<button class="opt ${d.prio === v ? 'on' : ''}" data-act="a-prio" data-v="${v}">${prioBadge(v)}${l}</button>`).join('')}<button class="opt ${!d.prio ? 'on' : ''}" data-act="a-prio" data-v="">Ohne</button></div>
+      <div class="grp-l">Wichtigkeit</div>
+      <div class="chips">${IMPS.map(([v, l]) => `<button class="opt ${d.imp === v ? 'on' : ''}" data-act="a-imp" data-v="${v}">${impBadge(v)}${l}</button>`).join('')}<button class="opt ${!d.imp ? 'on' : ''}" data-act="a-imp" data-v="">Ohne</button></div>
       <div class="grp-l">Aufwand</div>
       <div class="chips">${LOADS.map(([v, l]) => `<button class="opt ${d.load === v ? 'on' : ''}" data-act="a-load" data-v="${v}">${loadBadge(v)}${l}</button>`).join('')}<button class="opt ${!d.load ? 'on' : ''}" data-act="a-load" data-v="">Ohne</button></div>`;
     case 'review': {
@@ -1708,7 +1728,8 @@ function stepHTML(k){
         ${rv('Personen', esc(namesOf(d.persons).join(', ')), 'persons')}
         ${rv('Projekt', projById(d.project) ? esc(projById(d.project).name) : '', 'projdue')}
         ${rv('Deadline', dl ? esc(dl.txt + (dl.k ? ' · ' + dl.k : '')) : '', 'projdue')}
-        ${rv('Priorität', d.prio ? prioBadge(d.prio) + ' ' + prioName(d.prio) : '', 'prioload')}
+        ${rv('Dringlichkeit', d.prio ? prioBadge(d.prio) + ' ' + prioName(d.prio) : '', 'prioload')}
+        ${rv('Wichtigkeit', d.imp ? impBadge(d.imp) + ' ' + impName(d.imp) : '', 'prioload')}
         ${rv('Aufwand', d.load ? loadBadge(d.load) + ' ' + loadName(d.load) : '', 'prioload')}
         ${rv('Beschreibung', esc(d.desc), 'desc')}
         ${rv('Kontext', esc(d.ctx), 'ctx')}
@@ -1788,7 +1809,7 @@ function aJump(step){
 function aSave(){
   const d = A.draft;
   if (!d.title.trim()){ aJump('title'); return; }
-  const fields = { title:d.title.trim(), desc:d.desc.trim(), ctx:d.ctx.trim(), cat:catById(d.cat) ? d.cat : null, area:d.area, persons:d.persons.filter(personById), project:projById(d.project) ? d.project : null, due:d.due, prio:d.prio || null, load:d.load || null };
+  const fields = { title:d.title.trim(), desc:d.desc.trim(), ctx:d.ctx.trim(), cat:catById(d.cat) ? d.cat : null, area:d.area, persons:d.persons.filter(personById), project:projById(d.project) ? d.project : null, due:d.due, prio:d.prio || null, imp:d.imp || null, load:d.load || null };
   let msg, t;
   if (A.fromId){
     t = T.find(x => x.id === A.fromId);
@@ -1912,6 +1933,7 @@ document.addEventListener('click', e => {
     case 'e-proj': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.project = el.dataset.v || null; if (t.project && !t.cat) t.area = projById(t.project).area; }); break; }
     case 'e-due': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.due = DUE_OPTS().find(o => o[0] === el.dataset.v)[2]; }); break; }
     case 'e-prio': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.prio = el.dataset.v || null; }); break; }
+    case 'e-imp': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.imp = el.dataset.v || null; }); break; }
     case 'e-load': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.load = el.dataset.v || null; }); break; }
     case 'e-sort': { const t = T.find(x => x.id === id); if (t){ editTodo(t, t => { t.status = 'open'; }); toast('Einsortiert'); } break; }
     case 'set': S[el.dataset.k] = el.dataset.v; render(); break;
@@ -2014,6 +2036,7 @@ document.addEventListener('click', e => {
     case 'a-proj': if (A) A.touched = true; A.draft.project = el.dataset.v || null; if (A.draft.project && !A.draft.area) A.draft.area = projById(A.draft.project).area; renderModal(); break;
     case 'a-due': if (A) A.touched = true; A.draft.due = DUE_OPTS().find(o => o[0] === el.dataset.v)[2]; renderModal(); break;
     case 'a-prio': A.touched = true; A.draft.prio = el.dataset.v || null; renderModal(); break;
+    case 'a-imp': A.touched = true; A.draft.imp = el.dataset.v || null; renderModal(); break;
     case 'a-load': A.touched = true; A.draft.load = el.dataset.v || null; renderModal(); break;
   }
 });

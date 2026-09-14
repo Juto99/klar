@@ -31,11 +31,12 @@ const TOOL = {
       project: { type: 'string', description: 'Name des Projekts, sonst leer.' },
       due_type: { type: 'string', enum: ['day', 'week', 'month', 'none'], description: 'Art der Deadline.' },
       due_date: { type: 'string', description: 'Bei day: YYYY-MM-DD. Bei week: Montag der Woche als YYYY-MM-DD. Bei month: YYYY-MM. Sonst leer.' },
-      priority: { type: 'string', enum: ['high', 'med', 'low', ''], description: 'Priorität: high/med/low, leer wenn nichts darauf hindeutet.' },
-      workload: { type: 'string', enum: ['high', 'med', 'low', ''], description: 'Aufwand: high/med/low, leer wenn nichts darauf hindeutet.' },
+      priority: { type: 'string', enum: ['high', 'med', 'low', ''], description: 'Dringlichkeit (wie eilig): high/med/low, leer wenn nichts darauf hindeutet.' },
+      importance: { type: 'string', enum: ['high', 'med', 'low', ''], description: 'Wichtigkeit (wie viel hängt davon ab): high/med/low, leer wenn unklar.' },
+      workload: { type: 'string', enum: ['high', 'med', 'low', ''], description: 'Größenordnung des Aufwands: low = Stunden, med = Tage, high = Wochen. Leer wenn unklar.' },
       unsicher: { type: 'array', items: { type: 'string' }, description: 'Felder, bei denen die Zuordnung unsicher ist.' },
     },
-    required: ['title', 'description', 'context', 'area', 'category', 'persons', 'project', 'due_type', 'due_date', 'priority', 'workload', 'unsicher'],
+    required: ['title', 'description', 'context', 'area', 'category', 'persons', 'project', 'due_type', 'due_date', 'priority', 'importance', 'workload', 'unsicher'],
   },
 } as const;
 
@@ -57,7 +58,8 @@ Deno.serve(async (req) => {
       projects.length ? `Bekannte Projekte: ${projects.join(', ')}.` : 'Es sind noch keine Projekte angelegt.',
       cats.length ? `Bekannte Unterkategorien (JSON): ${JSON.stringify(cats)}. Gib bei "category" ausschließlich einen dieser Namen zurück, exakt geschrieben und ohne Zusatz in Klammern; wenn keiner passt, leer lassen.` : 'Es sind noch keine Unterkategorien angelegt.',
       'Neue Personen- oder Projektnamen darfst du zurückgeben, auch wenn sie noch nicht angelegt sind.',
-      'Priorität nur setzen, wenn der Satz das hergibt ("wichtig", "dringend", "eilt", "hat Zeit", "irgendwann"). Aufwand nur bei Hinweisen wie "kurz", "schnell", "kleinigkeit" (low) oder "größere Sache", "dauert", "Konzept schreiben" (high).',
+      'Dringlichkeit nur bei Zeitdruck-Hinweisen ("eilt", "dringend", "sofort", "hat Zeit"). Wichtigkeit nur bei Bedeutungs-Hinweisen ("wichtig", "entscheidend", "Chefsache", "nebensächlich"). Beides ist verschieden: Dringend heißt eilig, wichtig heißt folgenreich.',
+      'Aufwand als Größenordnung: low = in Stunden erledigt, med = mehrere Tage, high = Wochen. Nur setzen, wenn der Satz Hinweise gibt ("kurz anrufen" = low, "Konzept schreiben" = med/high).',
       'Erfinde nichts. Was nicht gesagt wurde, bleibt leer. Bei Zweifeln nenne das Feld in "unsicher".',
     ].join('\n');
 
