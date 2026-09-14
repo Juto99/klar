@@ -251,6 +251,10 @@ body.reorder-on .row::after{display:none}
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:6px}
 .toolbar .search{background:var(--surface-2);flex:1;min-width:180px;box-shadow:inset 0 0 0 1px var(--line)}
 .tb-label{font-size:12px;color:var(--text-3);margin-right:-4px}
+.tb-split{flex-wrap:wrap;gap:10px}
+.tb-split .seg:last-child{margin-left:auto}
+.tb-group{display:flex;flex-direction:column;align-items:flex-start;gap:5px;margin-bottom:6px}
+.tb-group .tb-label{margin:0 0 0 2px}
 
 /* Info block */
 .note{margin-top:34px;padding:16px 18px;border-radius:14px;background:var(--surface-2);display:flex;gap:14px;align-items:flex-start}
@@ -1016,9 +1020,8 @@ function viewToday(){
     body = `<div class="sec"><h3>${esc(longDate(sel))}</h3><span class="n">${items.length}</span><button class="link" style="margin-left:auto;font-size:13px" data-act="today-day" data-d="${iso(TODAY)}">Zurück zu heute</button></div>` +
       (items.length ? `<div>${items.map(t => rowHTML(t)).join('')}</div>` : `<div class="empty">An diesem Tag ist nichts fällig.</div>`);
   }
-  const leisten = `<div class="toolbar">${seg('area', AREA_SEG)}</div>
-    <div class="toolbar">${seg('allView', VIEW_SEG)}</div>
-    ${S.allView === 'grid' ? '' : `<div class="toolbar"><span class="tb-label">Gruppieren nach</span>${seg('sort', SORT_SEG)}</div>
+  const leisten = `<div class="toolbar tb-split">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div>
+    ${S.allView === 'grid' ? '' : `<div class="tb-group"><span class="tb-label">Gruppieren nach</span>${seg('sort', SORT_SEG)}</div>
     <div class="toolbar">${reorderSwitch()}</div>`}`;
   return header('Heute', esc(longDate(TODAY)), '', mob ? '' : addBtn()) + (mob ? '' : quickAdd()) + leisten +
     (S.allView === 'grid' ? '' : weekHead + `<div class="wstrip">${strip}</div>`) + body;
@@ -1055,9 +1058,8 @@ function viewAll(){
   if (S.area !== 'all') list = list.filter(t => areaOf(t) === S.area);
   if (S.q){ const q = S.q.toLowerCase(); list = list.filter(t => [t.title, t.desc, t.ctx, namesOf(t.persons).join(' '), t.project ? projById(t.project)?.name : '', t.cat ? catById(t.cat)?.name : ''].join(' ').toLowerCase().includes(q)); }
   const leisten = `<div class="toolbar"><label class="search">${ic('search')}<input id="allq" placeholder="Titel, Kontext, Person, Projekt …" value="${esc(S.q)}" aria-label="Suchen"></label></div>
-    <div class="toolbar">${seg('area', AREA_SEG)}</div>
-    <div class="toolbar">${seg('allView', VIEW_SEG)}</div>
-    ${S.allView === 'grid' ? '' : `<div class="toolbar"><span class="tb-label">Gruppieren nach</span>${seg('sort', SORT_SEG)}</div>
+    <div class="toolbar tb-split">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div>
+    ${S.allView === 'grid' ? '' : `<div class="tb-group"><span class="tb-label">Gruppieren nach</span>${seg('sort', SORT_SEG)}</div>
     <div class="toolbar">${reorderSwitch()}</div>`}`;
   if (S.allView === 'grid') return header('Alle To-dos', `${list.length} offen · Raster aus Priorität und Aufwand`, '', addBtn()) + leisten + gridHTML(list);
   const tipps = empfehlung(list, new Set(), { min:0, max:20 });
