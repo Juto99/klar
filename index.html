@@ -313,7 +313,8 @@ body.reorder-on .row::after{display:none}
 .mx-tag{position:absolute;right:8px;bottom:6px;font-size:10.5px;color:var(--text-3);letter-spacing:.02em}
 .mx-item{display:flex;align-items:center;gap:6px;background:var(--surface);border-radius:8px;padding:6px 8px;font-size:12.5px;text-align:left;box-shadow:0 0 0 1px var(--line);min-width:0}
 .mx-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mx-item em{margin-left:auto;font-style:normal;color:var(--text-3);font-size:11px;white-space:nowrap}
+.mx-item .lb{margin-left:auto}
+.mx-item em{margin-left:6px;font-style:normal;color:var(--text-3);font-size:11px;white-space:nowrap}
 .mx-item:hover{background:var(--surface-2)}
 .cal-head{display:flex;align-items:center;gap:6px;margin-bottom:14px}
 .cal-head h2{margin:0 auto 0 0;font-size:20px;font-weight:650;letter-spacing:-.015em}
@@ -1060,7 +1061,7 @@ function viewRecs(){
     <div class="toolbar tb-split">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div>
     ${S.allView === 'grid' ? '' : `<div class="tb-group"><span class="tb-label">Gruppieren nach</span>${seg('sort', SORT_SEG)}</div>
     <div class="toolbar">${reorderSwitch()}</div>`}`;
-  if (S.allView === 'grid') return header('Empfehlungen', `${list.length} offen · Raster aus Priorität und Aufwand`, '', addBtn()) + leisten + gridHTML(list);
+  if (S.allView === 'grid') return header('Empfehlungen', `${list.length} offen · Eisenhower-Raster`, '', addBtn()) + leisten + gridHTML(list);
   const bewertet = new Map(list.map(t => [t.id, plan(t)]));
   const nachPlan = (a, b) => byRank(a, b) || bewertet.get(b.id).s - bewertet.get(a.id).s || sortByDue(a, b);
   const groups = (S.sort === 'due'
@@ -1073,23 +1074,23 @@ function viewRecs(){
     groupsHTML(groups, { empty: S.q ? 'Keine Treffer.' : 'Keine offenen To-dos.', rowOpts: zeile });
 }
 
-// Raster: Spalten = Aufwand, Zeilen = Priorität. Die vier Ecken sind die klassischen Quadranten.
-const ECKE = { 'high|low':'Sofort erledigen', 'high|high':'Fest einplanen', 'low|low':'Nebenbei', 'low|high':'Lohnt das?' };
+// Raster nach Eisenhower: Spalten = Dringlichkeit, Zeilen = Wichtigkeit. Der Aufwand steht als Balken an der Karte.
+const ECKE = { 'high|high':'Sofort erledigen', 'high|low':'Fest einplanen', 'low|high':'Schnell abhaken', 'low|low':'Lohnt das?' };
 function gridHTML(list){
-  const spalten = [['low', 'Aufwand Stunden'], ['med', 'Aufwand Tage'], ['high', 'Aufwand Wochen']];
-  const zeilen = [['high', 'Dringlichkeit hoch'], ['med', 'Dringlichkeit mittel'], ['low', 'Dringlichkeit gering']];
-  const karte = t => `<button class="mx-item" data-act="open" data-id="${t.id}" title="${esc(t.title)}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span>${esc(t.title)}</span>${dueLabel(t).txt ? `<em>${esc(dueLabel(t).txt)}</em>` : ''}</button>`;
+  const spalten = [['low', 'Dringlichkeit gering'], ['med', 'Dringlichkeit mittel'], ['high', 'Dringlichkeit hoch']];
+  const zeilen = [['high', 'Wichtigkeit hoch'], ['med', 'Wichtigkeit mittel'], ['low', 'Wichtigkeit gering']];
+  const karte = t => `<button class="mx-item" data-act="open" data-id="${t.id}" title="${esc(t.title)}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span>${esc(t.title)}</span>${t.load ? loadBadge(t.load) : ''}${dueLabel(t).txt ? `<em>${esc(dueLabel(t).txt)}</em>` : ''}</button>`;
   let html = `<div class="mx-wrap"><div class="mx"><div></div>${spalten.map(([, l]) => `<div class="mx-col">${l}</div>`).join('')}`;
-  zeilen.forEach(([p, pl]) => {
-    html += `<div class="mx-row">${pl}</div>`;
-    spalten.forEach(([l]) => {
-      const items = list.filter(t => t.prio === p && t.load === l).sort(sortByDue);
-      const ecke = ECKE[`${p}|${l}`];
+  zeilen.forEach(([w, wl]) => {
+    html += `<div class="mx-row">${wl}</div>`;
+    spalten.forEach(([d]) => {
+      const items = list.filter(t => t.imp === w && t.prio === d).sort(sortByDue);
+      const ecke = ECKE[`${w}|${d}`];
       html += `<div class="mx-cell${items.length ? '' : ' leer'}">${ecke ? `<span class="mx-tag">${ecke}</span>` : ''}${items.map(karte).join('')}</div>`;
     });
   });
   html += '</div></div>';
-  const offen = list.filter(t => !t.prio || !t.load);
+  const offen = list.filter(t => !t.imp || !t.prio);
   html += `<div class="sec"><h3>Noch nicht eingestuft</h3><span class="n">${offen.length}</span></div>` +
     (offen.length ? `<div>${offen.sort(sortByDue).map(t => rowHTML(t)).join('')}</div>` : '<div class="empty">Alles eingestuft.</div>');
   return html;
