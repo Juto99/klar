@@ -1232,17 +1232,15 @@ function viewSettings(){
       ${!sess ? '<p class="auth-err">Dafür musst du angemeldet sein.</p>'
         : S.inboxTokens === null ? '<p class="muted">Wird geladen …</p>'
         : S.inboxTokens.length
-          ? `${S.inboxTokens.map(t => `<div class="set-row"><code class="tok">${esc(t.token)}</code><button class="btn btn-g btn-s" data-act="tok-copy" data-v="${esc(t.token)}">Kopieren</button><button class="icon-btn" data-act="tok-del" data-v="${esc(t.token)}" aria-label="Token löschen">${ic('trash')}</button></div>
-             <div class="muted" style="padding:2px 0 10px">${t.last_used ? 'Zuletzt benutzt: ' + new Date(t.last_used).toLocaleString('de-DE') : 'Noch nicht benutzt'}</div>`).join('')}
-             <div class="note" style="margin-top:6px">${ic('wave')}<div><h4>Kurzbefehl einrichten (einmalig)</h4>
-               <p>1. App <strong>Kurzbefehle</strong> öffnen, <strong>+</strong> tippen.<br>
-               2. Aktion <strong>„Text diktieren“</strong> hinzufügen – oder Wispr Flow: <strong>„Quick Dictation to Clipboard“</strong>.<br>
-               3. Aktion <strong>„Inhalt von URL abrufen“</strong> hinzufügen.<br>
-               &nbsp;&nbsp;&nbsp;URL: <code class="tok">${SB.url}/functions/v1/inbox</code><br>
-               &nbsp;&nbsp;&nbsp;Methode <strong>POST</strong>, Anfragetext <strong>JSON</strong> mit zwei Feldern:<br>
-               &nbsp;&nbsp;&nbsp;<code class="tok">token</code> = dein Token oben, <code class="tok">text</code> = Ergebnis der Diktat-Aktion.<br>
-               4. Kurzbefehl <strong>Brain72</strong> nennen und sichern.<br>
-               5. Einstellungen → <strong>Action-Button</strong> → Kurzbefehl → Brain72 auswählen. Ohne Action-Button: Einstellungen → Bedienungshilfen → Tippen → <strong>Auf Rückseite tippen</strong>.</p>
+          ? `${S.inboxTokens.map(t => { const adresse = `${SB.url}/functions/v1/inbox?token=${t.token}&text=`; return `
+             <div class="set-row"><code class="tok">${esc(adresse)}</code></div>
+             <div class="set-actions" style="margin-top:6px"><button class="btn btn-p btn-s" data-act="tok-copy" data-v="${esc(adresse)}">Adresse kopieren</button><button class="btn btn-t btn-s" data-act="tok-del" data-v="${esc(t.token)}">${ic('trash')}Token löschen</button></div>
+             <div class="muted" style="padding:6px 0 10px">${t.last_used ? 'Zuletzt benutzt: ' + new Date(t.last_used).toLocaleString('de-DE') : 'Noch nicht benutzt'}</div>`; }).join('')}
+             <div class="note" style="margin-top:6px">${ic('wave')}<div><h4>Kurzbefehl in drei Aktionen</h4>
+               <p>1. <strong>Text diktieren</strong><br>
+               2. <strong>URL codieren</strong> (bekommt automatisch den diktierten Text)<br>
+               3. <strong>Inhalt von URL abrufen</strong> – als URL die kopierte Adresse einfügen und direkt dahinter die Variable <strong>„URL-codierter Text“</strong> setzen<br>
+               Optional 4. <strong>Mitteilung anzeigen</strong> mit dem Ergebnis – dann siehst du „✓ Im Eingang: …“.</p>
                <div class="flow"><span>Action-Button</span><i>→</i><span>Sprechen</span><i>→</i><span>KI erkennt Felder</span><i>→</i><span>Eingang</span></div></div></div>`
           : `<div class="set-actions"><button class="btn btn-p" data-act="tok-new">Token erzeugen</button></div>`}
     </div>
@@ -1977,7 +1975,7 @@ document.addEventListener('click', e => {
     case 'mdel-yes': removeEntity(el.dataset.store, id); S.confirmM = null; render(); toast('Gelöscht'); break;
     case 'tok-new': tokenNeu(); break;
     case 'tok-del': tokenWeg(el.dataset.v); break;
-    case 'tok-copy': navigator.clipboard?.writeText(el.dataset.v).then(() => toast('Token kopiert'), () => toast('Kopieren nicht möglich – Token markieren und kopieren')); break;
+    case 'tok-copy': navigator.clipboard?.writeText(el.dataset.v).then(() => toast('Kopiert'), () => toast('Kopieren nicht möglich – Token markieren und kopieren')); break;
     case 'export': exportData(); break;
     case 'import': $('#importfile').click(); break;
     case 'menu': document.body.classList.toggle('sb-open'); syncScrim(); break;

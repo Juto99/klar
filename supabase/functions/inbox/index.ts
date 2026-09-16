@@ -44,15 +44,27 @@ const uuid = () => crypto.randomUUID();
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*' } });
-  if (req.method !== 'POST') return json({ error: 'nur POST' }, 405);
+  // Einfachster Weg für den Kurzbefehl: GET …/inbox?token=…&text=…  (JSON per POST geht weiterhin)
+  const url = new URL(req.url);
+  const perAdresse = req.method === 'GET';
+  const antwort = (ok: boolean, nachricht: string, extra: Record<string, unknown> = {}, status = 200) =>
+    perAdresse ? new Response(nachricht, { status, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }) : json({ ok, nachricht, ...extra }, status);
   try {
-    const { token, text } = await req.json().catch(() => ({}));
-    if (!token || !text) return json({ error: 'token und text nötig' }, 400);
+    let token = url.searchParams.get('token') || '';
+    let text = url.searchParams.get('text') || '';
+    if (req.method === 'POST'){
+      const roh = await req.text();
+      try { const j = JSON.parse(roh); token = token || j.token || ''; text = text || j.text || ''; }
+      catch { text = text || roh; }
+    } else if (!perAdresse) return antwort(false, 'Nur GET oder POST', {}, 405);
+    token = String(token).trim(); text = String(text).trim();
+    if (!token) return antwort(false, 'Brain72: Token fehlt in der Adresse.', {}, 400);
+    if (!text) return antwort(false, 'Brain72: Kein Text angekommen – wurde etwas diktiert?', {}, 400);
 
     // 1. Token prüfen
     const tr = await rest(`inbox_tokens?token=eq.${encodeURIComponent(token)}&select=user_id`);
     const treffer = tr.ok ? await tr.json() : [];
-    if (!treffer.length) return json({ error: 'Token unbekannt' }, 401);
+    if (!treffer.length) return antwort(false, 'Brain72: Token unbekannt – bitte in den Einstellungen neu kopieren.', {}, 401);
     const user_id = treffer[0].user_id;
 
     // 2. Stammdaten des Kontos laden (für Namenszuordnung)
@@ -113,12 +125,12 @@ Deno.serve(async (req) => {
       updatedAt: now,
     };
     const w = await rest('items', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify([{ id, user_id, kind: 'todos', data: daten, updated_at: now, deleted: false }]) });
-    if (!w.ok) return json({ error: 'Speichern fehlgeschlagen', detail: (await w.text()).slice(0, 200) }, 500);
+    if (!w.ok) return antwort(false, 'Brain72: Speichern fehlgeschlagen.', { detail: (await w.text()).slice(0, 200) }, 500);
 
     await rest(`inbox_tokens?token=eq.${encodeURIComponent(token)}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ last_used: new Date().toISOString() }) });
-    return json({ ok: true, titel: daten.title, faellig: due });
+    return antwort(true, `✓ Im Eingang: ${daten.title}`, { titel: daten.title, faellig: due });
   } catch (err) {
     console.error(err);
-    return json({ error: String((err as Error)?.message ?? err) }, 500);
+    return antwort(false, 'Brain72: Fehler – ' + String((err as Error)?.message ?? err), {}, 500);
   }
 });
