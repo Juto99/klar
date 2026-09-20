@@ -59,7 +59,13 @@ Deno.serve(async (req) => {
     } else if (!perAdresse) return antwort(false, 'Nur GET oder POST', {}, 405);
     token = String(token).trim(); text = String(text).trim();
     if (!token) return antwort(false, 'Brain72: Token fehlt in der Adresse.', {}, 400);
-    if (!text) return antwort(false, 'Brain72: Kein Text angekommen – wurde etwas diktiert?', {}, 400);
+    if (!text){
+      // Zur Fehlersuche zeigen, was die Adresse tatsächlich enthielt (Token gekürzt)
+      const felder = [...url.searchParams.keys()].join(', ') || 'keine';
+      const ende = url.search.replace(/token=[^&]*/, 'token=…').slice(-60);
+      console.log('inbox ohne Text', { felder, ende, methode: req.method });
+      return antwort(false, `Brain72: Kein Text angekommen. Felder in der Adresse: ${felder}. Ende der Adresse: ${ende || '(leer)'}`, {}, 400);
+    }
 
     // 1. Token prüfen
     const tr = await rest(`inbox_tokens?token=eq.${encodeURIComponent(token)}&select=user_id`);

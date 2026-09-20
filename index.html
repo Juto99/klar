@@ -20,6 +20,7 @@
   --text:#1B1C1F; --text-2:#62666F; --text-3:#9A9EA7;
   --line:rgba(24,28,38,.09); --line-2:rgba(24,28,38,.16);
   --accent:#3453C9; --accent-soft:rgba(52,83,201,.09); --on-accent:#FFFFFF;
+  --create:#4C6B9C; --create-h:#3F5A87;
   --work:#4D6B9E; --private:#5C8B72; --danger:#C0473A; --warn:#A87424; --ok:#3F8A5B;
   --shadow:0 1px 2px rgba(20,24,33,.05),0 6px 20px rgba(20,24,33,.07);
   --shadow-lg:0 24px 64px rgba(20,24,33,.20),0 2px 6px rgba(20,24,33,.06);
@@ -32,6 +33,7 @@
     --text:#ECEDEF; --text-2:#A2A5AD; --text-3:#6C6F77;
     --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.14);
     --accent:#8FA6F5; --accent-soft:rgba(143,166,245,.13); --on-accent:#0E1224;
+    --create:#5E7FB4; --create-h:#6E8CC1;
     --work:#89A4D2; --private:#89B79D; --danger:#E27463; --warn:#D9A34E; --ok:#6FBF8D;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.3);
     --shadow-lg:0 24px 70px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);
@@ -44,6 +46,7 @@
   --text:#ECEDEF; --text-2:#A2A5AD; --text-3:#6C6F77;
   --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.14);
   --accent:#8FA6F5; --accent-soft:rgba(143,166,245,.13); --on-accent:#0E1224;
+  --create:#5E7FB4; --create-h:#6E8CC1;
   --work:#89A4D2; --private:#89B79D; --danger:#E27463; --warn:#D9A34E; --ok:#6FBF8D;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.3);
   --shadow-lg:0 24px 70px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);
@@ -77,9 +80,9 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stro
 
 /* ---------- Sidebar ---------- */
 .brand{display:flex;align-items:center;justify-content:space-between;padding:2px 6px}
-.brand-name{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:650;letter-spacing:-.01em}
-.logo{width:22px;height:22px;border-radius:7px;background:var(--text);display:grid;place-items:center}
-.logo svg{width:14px;height:14px;stroke:var(--surface);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.brand-name{display:flex;align-items:center;gap:10px;font-size:30px;font-weight:700;letter-spacing:-.022em}
+.logo{width:28px;height:28px;border-radius:9px;background:var(--create);display:grid;place-items:center;flex:none}
+.logo svg{width:18px;height:18px;stroke:var(--surface);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .search{display:flex;align-items:center;gap:7px;background:var(--surface-3);border-radius:9px;padding:6px 9px;color:var(--text-3)}
 .search input{border:0;background:none;outline:none;width:100%;font-size:13.5px;color:var(--text)}
 .search input::placeholder{color:var(--text-3)}
@@ -90,7 +93,11 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stro
 .tile-l{font-size:14px;font-weight:550;color:var(--text)}
 .tile.on{background:var(--accent);box-shadow:none}
 .tile.on svg.i,.tile.on .tile-n,.tile.on .tile-l{color:var(--on-accent)}
-.tile-new{justify-content:center;background:var(--text);box-shadow:none;height:44px}
+.tile-new{justify-content:center;background:var(--create);box-shadow:none;height:44px}
+.tile-new:hover{background:var(--create-h)}
+.tile-new .tile-l,.tile-new svg.i{color:#fff}
+.btn-create{background:var(--create);color:#fff}
+.btn-create:hover{background:var(--create-h)}
 .tile-new:hover{background:var(--text);opacity:.88}
 .tile-new .tile-l,.tile-new svg.i{color:var(--surface)}
 .sb-group{display:flex;flex-direction:column;gap:1px}
@@ -181,33 +188,33 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .sec h3{margin:0;font-size:15px;font-weight:650;letter-spacing:-.005em}
 .sec .n{font-size:12.5px;color:var(--text-3);font-variant-numeric:tabular-nums}
 .sec.danger h3{color:var(--danger)}
-.row{display:flex;align-items:flex-start;gap:12px;padding:10px 8px;border-radius:10px;cursor:pointer;position:relative;transition:background .12s,opacity .3s,transform .3s}
+.row{display:flex;align-items:center;gap:10px;padding:5px 8px;border-radius:9px;cursor:pointer;position:relative;transition:background .12s,opacity .3s,transform .3s}
 .row::after{content:"";position:absolute;left:40px;right:8px;bottom:0;height:1px;background:var(--line)}
 .row:last-child::after{display:none}
 .row:hover{background:var(--surface-2)}
 .row:hover::after,.row.is-sel::after{opacity:0}
 .row.is-sel{background:var(--accent-soft)}
 .row.completing{opacity:0;transform:translateX(8px)}
-.check{width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 1.6px var(--c);display:grid;place-items:center;flex:none;margin-top:0;transition:background .15s}
-.check svg{width:13px;height:13px;stroke:var(--surface);stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.check{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1.6px var(--c);display:grid;place-items:center;flex:none;transition:background .15s}
+.check svg{width:12px;height:12px;stroke:var(--surface);stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0}
 .check:hover{background:color-mix(in srgb,var(--c) 14%,transparent)}
 .check.on{background:var(--c)}
 .check.on svg{opacity:1}
-.row-main{flex:1;min-width:0}
-.row-title{font-size:15px;line-height:1.35;overflow-wrap:anywhere}
+.row-title{flex:1 1 auto;min-width:60px;font-size:14.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row.is-done .row-title{color:var(--text-3);text-decoration:line-through;text-decoration-color:var(--line-2)}
-.row-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:3px;font-size:12.5px;color:var(--text-2)}
-.row-meta>span{display:inline-flex;align-items:center;gap:5px;min-width:0}
+.row-meta{display:flex;align-items:center;gap:10px;flex:0 0 auto;max-width:42%;min-width:0;justify-content:flex-end;font-size:12.5px;color:var(--text-2);white-space:nowrap;overflow:hidden}
+.row-meta .m{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .row-meta .dot{width:7px;height:7px}
 .row-meta svg.i{width:13px;height:13px}
 .av{width:18px;height:18px;border-radius:50%;background:var(--surface-3);color:var(--text-2);font-size:9.5px;font-weight:650;display:inline-grid;place-items:center;letter-spacing:.02em;flex:none}
 .avs{display:inline-flex}
 .avs .av{box-shadow:0 0 0 1.5px var(--surface)}
 .avs .av+.av{margin-left:-5px}
-.row-right{flex:none;text-align:right;font-size:13px;color:var(--text-2);display:flex;flex-direction:column;align-items:flex-end;gap:1px;padding-top:1px}
-.row-right .k{font-size:11.5px;color:var(--text-3)}
+.row-right{display:flex;align-items:center;gap:8px;flex:none;font-size:12.5px;color:var(--text-2)}
+.row-right .due{white-space:nowrap}
 .row-right .over{color:var(--danger);font-weight:550}
-.flags{display:inline-flex;align-items:center;gap:6px;margin-bottom:2px}
+.row-right .fuzzy{color:var(--text)}
+.flags{display:inline-flex;align-items:center;gap:6px}
 .pb{width:19px;height:19px;border-radius:6px;font-size:11px;font-weight:700;display:grid;place-items:center;letter-spacing:.01em}
 .pb-high{background:color-mix(in srgb,var(--danger) 16%,transparent);color:var(--danger)}
 .pb-med{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
@@ -216,13 +223,12 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .lb i{width:3px;background:var(--text-3);border-radius:1px;opacity:.35}
 .lb i:nth-child(1){height:6px}.lb i:nth-child(2){height:10px}.lb i:nth-child(3){height:14px}
 .lb-low i:nth-child(1),.lb-med i:nth-child(1),.lb-med i:nth-child(2),.lb-high i{opacity:1;background:var(--text-2)}
-.row-right .fuzzy{color:var(--text)}
-.rec .grip{display:none}
-.parkbtn{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--text-3);flex:none;margin-left:6px}
+.parkbtn{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--text-3);flex:none}
 .parkbtn:hover{background:var(--surface-2);color:var(--text)}
-.parkbtn .pbox{width:21px;height:21px;border-radius:6px;box-shadow:inset 0 0 0 1.4px currentColor;display:grid;place-items:center;font-size:11.5px;font-weight:700}
+.parkbtn .pbox{width:20px;height:20px;border-radius:6px;box-shadow:inset 0 0 0 1.4px currentColor;display:grid;place-items:center;font-size:11px;font-weight:700}
 .parkbtn.on{color:var(--accent)}
 .parkbtn.on .pbox{background:var(--accent);color:var(--on-accent);box-shadow:none}
+.rec .grip{display:none}
 .grip{display:flex;align-items:center;color:var(--text-3);margin-left:6px;flex:none}
 .grip svg.i{width:20px;height:20px;stroke-width:2.6;stroke-linecap:round}
 body.reorder-on .swipe{touch-action:none;cursor:grab}
@@ -494,6 +500,13 @@ body.reorder-on .row::after{display:none}
   .toast{bottom:calc(80px + env(safe-area-inset-bottom))}
   .hide-m{display:none}
   .search input,.sb-new input,.add-in,.opt-new input,.opt-new.sm input,.date-in,.ren,.d-in{font-size:16px}
+  .row{gap:8px;padding:5px 6px}
+  .row-title{min-width:40px}
+  .row-meta{max-width:66px;flex:0 0 auto}
+  .row-meta .m:not(.avs){display:none}
+  .row-meta .m.avs{display:inline-flex}
+  .row-meta .av:nth-child(n+3){display:none}
+  .parkbtn{width:26px;height:26px}
   .set-row{flex-wrap:wrap;padding:8px 0}
   .set-row .ren{flex:1 1 140px;min-width:120px;padding:6px 8px}
   .set-row .seg{flex:1 1 100%;max-width:220px}
@@ -858,22 +871,23 @@ let undo = null;
 /* ============ Bausteine ============ */
 function rowHTML(t, o = {}){
   const a = areaOf(t), c = catById(t.cat), d = dueLabel(t), done = t.status === 'done' || t.status === 'archived';
-  const meta = [], names = namesOf(t.persons);
-  if (c) meta.push(`<span><i class="dot" style="--c:${areaColor(a)}"></i>${esc(AREAS[a].name)} · ${esc(c.name)}</span>`);
-  else if (a) meta.push(`<span><i class="dot" style="--c:${areaColor(a)}"></i>${esc(AREAS[a].name)}</span>`);
-  if (t.project && projById(t.project)) meta.push(`<span>${ic('diamond')}${esc(projById(t.project).name)}</span>`);
-  if (names.length) meta.push(`<span><span class="avs">${names.map(n => `<span class="av">${esc(initials(n))}</span>`).join('')}</span>${esc(names.join(', '))}</span>`);
-  if (t.status === 'inbox') meta.push(`<span>${ic('wave')}Per Sprache erfasst</span>`);
+  const names = namesOf(t.persons), proj = projById(t.project);
+  // Rechts neben der Zeile: Bereich/Unterkategorie, Projekt, Personen – alles einzeilig
+  const meta = [];
   if (o.extraMeta) meta.push(o.extraMeta);
+  if (a) meta.push(`<span class="m"><i class="dot" style="--c:${areaColor(a)}"></i>${esc(AREAS[a].name)}${c ? ' · ' + esc(c.name) : ''}</span>`);
+  if (proj) meta.push(`<span class="m">${ic('diamond')}${esc(proj.name)}</span>`);
+  if (names.length) meta.push(`<span class="m avs" title="${esc(names.join(', '))}">${names.map(n => `<span class="av">${esc(initials(n))}</span>`).join('')}</span>`);
+  if (t.status === 'inbox') meta.push(`<span class="m">${ic('wave')}Diktiert</span>`);
   const flags = (t.prio || t.imp || t.load) ? `<span class="flags">${prioBadge(t.prio)}${impBadge(t.imp)}${loadBadge(t.load)}</span>` : '';
   const move = S.reorder ? `<span class="grip" aria-hidden="true">${ic('grip')}</span>` : '';
   const park = (S.reorder || o.noPark) ? '' : `<button class="parkbtn ${t.status === 'parked' ? 'on' : ''}" data-act="park" data-id="${t.id}" title="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}" aria-label="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}"><span class="pbox">P</span></button>`;
   let right = o.right;
-  if (right === undefined) right = `${flags}${d.txt ? `<span class="${d.cls}">${esc(d.txt)}</span>${d.k ? `<span class="k">${esc(d.k)}</span>` : ''}` : ''}`;
+  if (right === undefined) right = `${flags}${d.txt ? `<span class="due ${d.cls}" title="${esc(d.txt + (d.k ? ' · ' + d.k : ''))}">${esc(d.txt)}</span>` : ''}`;
   return `<div class="swipe" data-swipe="${t.id}"><div class="swipe-act"><button data-act="swipe-del" data-id="${t.id}">${ic('trash')}Löschen</button></div><div class="row ${done ? 'is-done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}">
     <button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="${done ? 'Wieder öffnen' : 'Als erledigt markieren'}"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>
-    <div class="row-main"><div class="row-title">${esc(t.title)}</div>${meta.length ? `<div class="row-meta">${meta.join('')}</div>` : ''}</div>
-    <div class="row-right">${right}</div>${park}${move}
+    <span class="row-title" title="${esc(t.title)}">${esc(t.title)}</span>
+    <span class="row-right">${right}</span>${park}${move}${meta.length ? `<span class="row-meta">${meta.join('')}</span>` : ''}
   </div></div>`;
 }
 let LAST_GROUPS = [];
@@ -887,7 +901,7 @@ function groupsHTML(groups, o = {}){
 function header(title, sub, eyebrow = '', right = ''){
   return `<div class="hdr"><div>${eyebrow ? `<div class="eyebrow">${eyebrow}</div>` : ''}<h1>${esc(title)}</h1>${sub ? `<div class="sub">${sub}</div>` : ''}</div><div style="display:flex;gap:8px;align-items:center">${right}</div></div>`;
 }
-const addBtn = () => `<button class="btn btn-p" data-act="assist-full">${ic('plus')}<span class="hide-m">Geführt anlegen</span></button>`;
+const addBtn = () => `<button class="btn btn-create" data-act="assist-full">${ic('plus')}<span class="hide-m">Geführt anlegen</span></button>`;
 function quickAdd(){
   return `<form class="qa" id="qaf" autocomplete="off">${ic('mic')}<input id="qa" placeholder="Neues To-do – sprechen oder tippen" autocomplete="off" enterkeyhint="send" aria-label="Neues To-do"><kbd class="hide-m">N</kbd></form>
   <div class="qa-hint">Frei sprechen, z. B. „Angebote vergleichen, privat, bis nächste Woche“ – dann ⏎. Personen, Projekte und Deadlines werden erkannt.</div>`;
@@ -915,9 +929,6 @@ function renderSidebar(){
     const lead = `<span class="lead" style="color:${areaColor(a)}">${ic(a === 'work' ? 'work' : 'home')}</span>`;
     const sub = op
       ? catsOf(a).map(c => item('cat:' + c.id, c.name, open.filter(t => t.cat === c.id).length || '', `<i class="dot" style="--c:${areaColor(a)}"></i>`, 'sb-sub')).join('')
-        + (S.addingCat === a
-            ? `<div class="sb-new sb-sub"><input id="newcat" data-add="cat:${a}" placeholder="Neue Unterkategorie" enterkeyhint="done"></div>`
-            : `<button class="sb-item sb-sub sb-more" data-act="add-cat" data-area="${a}">${ic('plus')}<span>Unterkategorie</span></button>`)
       : '';
     return `<button class="sb-item ${op ? 'is-open' : ''} ${S.view === 'area:' + a ? 'on' : ''}" data-act="area-open" data-area="${a}" aria-expanded="${op}">${lead}<span>${AREAS[a].name}</span><span class="cnt">${n || ''}</span>${ic('chevR', 'i chev')}</button>${sub}`;
   };
