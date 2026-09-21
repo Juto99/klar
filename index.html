@@ -71,11 +71,15 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stro
 
 /* ---------- Shell ---------- */
 .app{display:grid;grid-template-columns:260px minmax(0,1fr);height:100vh;height:100dvh}
-.app.has-detail{grid-template-columns:260px minmax(0,1fr) 372px}
+.app.has-detail{grid-template-columns:260px minmax(0,1fr) var(--dw,372px)}
 .sidebar{background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:18px;padding:calc(16px + env(safe-area-inset-top)) 12px calc(14px + env(safe-area-inset-bottom));overflow-y:auto;min-height:0}
 .main{overflow-y:auto;min-height:0;background:var(--surface)}
 .main-inner{max-width:1180px;margin:0 auto;padding:34px 40px 120px}
-.detail{display:none;border-left:1px solid var(--line);background:var(--surface);overflow-y:auto;min-height:0}
+.detail{display:none;border-left:1px solid var(--line);background:var(--surface);overflow-y:auto;min-height:0;position:relative}
+.d-resize{position:absolute;left:0;top:0;bottom:0;width:10px;margin-left:-5px;cursor:col-resize;z-index:3;touch-action:none}
+.d-resize::after{content:"";position:absolute;left:4px;top:0;bottom:0;width:2px;background:transparent;transition:background .15s}
+.d-resize:hover::after,.d-resize.aktiv::after{background:var(--accent)}
+body.resizing{cursor:col-resize;user-select:none}
 .app.has-detail .detail{display:block}
 
 /* ---------- Sidebar ---------- */
@@ -464,7 +468,7 @@ body.reorder-on .row::after{display:none}
 
 @media (max-width:1100px){
   .app.has-detail{grid-template-columns:260px minmax(0,1fr)}
-  .detail{position:fixed;top:0;right:0;bottom:0;width:min(400px,100%);z-index:50;box-shadow:var(--shadow-lg)}
+  .detail{position:fixed;top:0;right:0;bottom:0;width:min(var(--dw,400px),100%);z-index:50;box-shadow:var(--shadow-lg)}
   .app.has-detail .detail{animation:slidein .22s ease}
 }
 @keyframes slidein{from{transform:translateX(28px);opacity:.5}}
@@ -477,6 +481,7 @@ body.reorder-on .row::after{display:none}
   .detail{width:100%}
   .d-inner{padding-top:calc(10px + env(safe-area-inset-top));padding-bottom:calc(60px + env(safe-area-inset-bottom))}
   .d-back{display:inline-flex}
+  .d-resize{display:none}
   .d-x{display:none}
   .sheet{max-height:calc(var(--vvh,100dvh) - 12px)}
   .tabbar{display:grid;grid-template-columns:repeat(5,1fr);align-items:center;position:fixed;left:0;right:0;bottom:0;z-index:30;height:calc(64px + env(safe-area-inset-bottom));padding:0 6px env(safe-area-inset-bottom);background:var(--glass);-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px);border-top:1px solid var(--line)}
@@ -1284,7 +1289,7 @@ function renderDetail(){
     toast('Dieses To-do lässt sich gerade nicht öffnen.');
     return;
   }
-  $('#detail').innerHTML = html;
+  $('#detail').innerHTML = `<div class="d-resize" title="Ziehen, um die Breite zu ändern · Doppelklick setzt zurück"></div>` + html;
   $('#app').classList.add('has-detail');
   $('#detail').querySelectorAll('textarea.grow').forEach(grow);
 }
@@ -2142,6 +2147,33 @@ document.addEventListener('change', e => {
   if (f === 'title') e.target.dataset.orig = t.title;
   flushSaves(); renderMain(); renderSidebar();
 });
+/* Breite des Detailfensters per Ziehen am linken Rand */
+function setzeDetailBreite(w){
+  const grid = innerWidth > 1100;
+  const max = grid ? innerWidth - 260 - 380 : innerWidth - 40;   // mittlere Spalte bleibt lesbar
+  w = Math.round(Math.max(320, Math.min(max, w)));
+  document.documentElement.style.setProperty('--dw', w + 'px');
+  return w;
+}
+let dz = null;
+document.addEventListener('pointerdown', e => {
+  const h = e.target.closest('.d-resize'); if (!h) return;
+  e.preventDefault(); e.stopPropagation();
+  dz = { x:e.clientX, w:$('#detail').getBoundingClientRect().width, h };
+  h.setPointerCapture?.(e.pointerId); h.classList.add('aktiv'); document.body.classList.add('resizing');
+}, true);
+document.addEventListener('pointermove', e => { if (dz) setzeDetailBreite(dz.w + (dz.x - e.clientX)); });
+document.addEventListener('pointerup', () => {
+  if (!dz) return;
+  dz.h.classList.remove('aktiv'); document.body.classList.remove('resizing'); dz = null;
+  try { localStorage.setItem('brain72-dw', parseInt(getComputedStyle(document.documentElement).getPropertyValue('--dw'))); } catch (e) {}
+});
+document.addEventListener('dblclick', e => {
+  if (!e.target.closest('.d-resize')) return;
+  document.documentElement.style.removeProperty('--dw');
+  try { localStorage.removeItem('brain72-dw'); } catch (err) {}
+});
+
 /* Reihenfolge per Ziehen – nur wenn der Schalter an ist */
 let drag = null;
 function applyOrder(ids){
@@ -2253,6 +2285,7 @@ async function boot(){
   try { S.theme = localStorage.getItem('brain-theme') || localStorage.getItem('klar-theme') || 'auto'; } catch (e) {}
   try { Object.assign(S.openArea, JSON.parse(localStorage.getItem('brain-areas') || '{}')); } catch (e) {}
   try { Object.assign(S.calAreas, JSON.parse(localStorage.getItem('brain-calareas') || '{}')); } catch (e) {}
+  try { const w = +localStorage.getItem('brain72-dw'); if (w) setzeDetailBreite(w); } catch (e) {}
   applyTheme();
   try {
     idb = await openDB();
