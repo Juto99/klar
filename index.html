@@ -888,7 +888,13 @@ let undo = null;
 
 /* ============ Bausteine ============ */
 /* Suche: Treffer sichtbar machen. Aktiv nur dort, wo die Suche auch filtert (Empfehlungen). */
-const suchBegriff = () => (S.view === 'recs' ? S.q.trim() : '');
+const suchBegriff = () => (['recs', 'deadlines'].includes(S.view) ? S.q.trim() : '');
+// Gemeinsamer Suchfilter: Titel, Beschreibung, Kontext, Personen, Projekt, Kategorie
+function sucheFilter(list){
+  const q = S.q.trim().toLowerCase(); if (!q) return list;
+  return list.filter(t => [t.title, t.desc, t.ctx, namesOf(t.persons).join(' '), t.project ? projById(t.project)?.name : '', t.cat ? catById(t.cat)?.name : ''].join(' ').toLowerCase().includes(q));
+}
+const suchFeld = () => `<div class="toolbar"><label class="search">${ic('search')}<input id="allq" placeholder="Titel, Kontext, Person, Projekt …" value="${esc(S.q)}" aria-label="Suchen"></label>${S.q ? `<button class="btn btn-t btn-s" data-act="q-clear">Leeren</button>` : ''}</div>`;
 function hl(text){
   text = String(text ?? '');
   const q = suchBegriff(); if (!q) return esc(text);
@@ -1002,7 +1008,7 @@ const isMobile = () => matchMedia('(max-width:760px)').matches;
 function viewDeadlines(){
   const mob = isMobile();
   const alle = T.filter(isOpen);
-  const open = S.area === 'all' ? alle : alle.filter(t => areaOf(t) === S.area);
+  const open = sucheFilter(S.area === 'all' ? alle : alle.filter(t => areaOf(t) === S.area));
   const wStart = addD(THIS_MON, 7 * S.weekOff), wEnd = addD(wStart, 6);
   const sel = S.todaySel ? P(S.todaySel) : null;
   const strip = Array.from({ length:7 }, (_, i) => {
@@ -1027,10 +1033,11 @@ function viewDeadlines(){
     const groups = S.sort === 'due' ? bucketGroups(open) : groupList(open, S.sort);
     const leer = !T.length
       ? `<div class="empty-big"><strong>Willkommen bei Brain72.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Sprich oder tipp oben dein erstes To-do – oder leg es geführt an.'}</div>`
+      : S.q.trim() ? `<div class="empty-big"><strong>Keine Treffer für „${esc(S.q.trim())}“.</strong>Suchbegriff ändern oder leeren.</div>`
       : `<div class="empty-big"><strong>Keine offenen To-dos.</strong>Schön aufgeräumt.</div>`;
     body = groups.some(g => g.items.length) ? groupsHTML(groups) : leer;
   }
-  const leisten = `<div class="toolbar tb-split">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div>
+  const leisten = suchFeld() + `<div class="toolbar tb-split">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div>
     ${S.allView === 'grid' ? '' : `<div class="tb-group"><span class="tb-label">Gruppieren nach</span>${seg('sort', SORT_SEG)}</div>
     <div class="toolbar">${reorderSwitch()}</div>`}`;
   return header('Deadlines', esc(longDate(TODAY)), '', mob ? '' : addBtn()) + (mob ? '' : quickAdd()) + leisten +
@@ -1111,8 +1118,8 @@ function plan(t){
 function viewRecs(){
   let list = T.filter(isOpen);
   if (S.area !== 'all') list = list.filter(t => areaOf(t) === S.area);
-  if (S.q){ const q = S.q.toLowerCase(); list = list.filter(t => [t.title, t.desc, t.ctx, namesOf(t.persons).join(' '), t.project ? projById(t.project)?.name : '', t.cat ? catById(t.cat)?.name : ''].join(' ').toLowerCase().includes(q)); }
-  const leisten = `<div class="toolbar"><label class="search">${ic('search')}<input id="allq" placeholder="Titel, Kontext, Person, Projekt …" value="${esc(S.q)}" aria-label="Suchen"></label></div>
+  list = sucheFilter(list);
+  const leisten = suchFeld() + `
     <div class="toolbar tb-split">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div>
     ${S.allView === 'grid' ? '' : `<div class="tb-group"><span class="tb-label">Gruppieren nach</span>${seg('sort', SORT_SEG)}</div>
     <div class="toolbar">${reorderSwitch()}</div>`}`;
@@ -1993,6 +2000,7 @@ document.addEventListener('click', e => {
     case 'e-load': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.load = el.dataset.v || null; }); break; }
     case 'e-sort': { const t = T.find(x => x.id === id); if (t){ editTodo(t, t => { t.status = 'open'; }); toast('Einsortiert'); } break; }
     case 'set': S[el.dataset.k] = el.dataset.v; render(); break;
+    case 'q-clear': S.q = ''; render(); break;
     case 'reorder': S.reorder = !S.reorder; render(); toast(S.reorder ? 'Zum Verschieben antippen und ziehen' : 'Reihenfolge gespeichert'); break;
     case 'theme': S.theme = el.dataset.v; applyTheme(); render(); break;
     case 'area-open': {
@@ -2167,7 +2175,7 @@ document.addEventListener('input', e => {
   if (e.target.id === 'allq' || e.target.id === 'sbq'){
     S.q = e.target.value;
     const id = e.target.id, pos = e.target.selectionStart;
-    if (S.view !== 'recs') S.view = 'recs';
+    if (!['recs', 'deadlines'].includes(S.view)) S.view = 'recs';
     render();
     const f = document.getElementById(id); f.focus(); f.setSelectionRange(pos, pos);
   }
