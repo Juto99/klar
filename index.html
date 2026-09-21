@@ -878,7 +878,7 @@ function relTime(ts){
 /* ============ Zustand ============ */
 const S = {
   view:'deadlines', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
-  sort:'due', area:'all', q:'', allView:'list', reorder:false, weekOff:0, online:navigator.onLine, memOnly:false,
+  sort:'due', area:'all', q:'', qDone:false, allView:'list', reorder:false, weekOff:0, online:navigator.onLine, memOnly:false,
   addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
   syncState:'', syncError:'', lastSync:0, authOpen:false, authMode:'in', authBusy:false, authErr:'', inboxTokens:null,
   calAreas:{ work:true, private:true }
@@ -894,7 +894,18 @@ function sucheFilter(list){
   const q = S.q.trim().toLowerCase(); if (!q) return list;
   return list.filter(t => [t.title, t.desc, t.ctx, namesOf(t.persons).join(' '), t.project ? projById(t.project)?.name : '', t.cat ? catById(t.cat)?.name : ''].join(' ').toLowerCase().includes(q));
 }
-const suchFeld = () => `<div class="toolbar"><label class="search">${ic('search')}<input id="allq" placeholder="Titel, Kontext, Person, Projekt …" value="${esc(S.q)}" aria-label="Suchen"></label>${S.q ? `<button class="btn btn-t btn-s" data-act="q-clear">Leeren</button>` : ''}</div>`;
+const suchFeld = () => `<div class="toolbar"><label class="search">${ic('search')}<input id="allq" placeholder="Titel, Kontext, Person, Projekt …" value="${esc(S.q)}" aria-label="Suchen"></label>${S.q ? `<button class="btn btn-t btn-s" data-act="q-clear">Leeren</button>` : ''}<button class="switch2 ${S.qDone ? 'on' : ''}" data-act="q-done" aria-pressed="${S.qDone}"><span class="sw2"></span>auch Erledigte</button></div>`;
+// Treffer unter erledigten und archivierten To-dos – eigener Abschnitt unter der Liste
+function erledigteTrefferHTML(){
+  if (!S.q.trim() || !S.qDone) return '';
+  let list = T.filter(t => t.status === 'done' || t.status === 'archived');
+  if (S.area !== 'all') list = list.filter(t => areaOf(t) === S.area);
+  list = sucheFilter(list).sort((a, b) => String(b.doneAt || '').localeCompare(String(a.doneAt || '')));
+  return `<div class="sec"><h3>Erledigt & Archiv</h3><span class="n">${list.length}</span></div>` +
+    (list.length
+      ? `<div>${list.map(t => rowHTML(t, { noPark:true, right:`<span class="muted">${t.status === 'archived' ? 'Archiv · ' : ''}erledigt ${relDay(t.doneAt)}</span>` })).join('')}</div>`
+      : '<div class="empty">Auch unter den erledigten To-dos kein Treffer.</div>');
+}
 function hl(text){
   text = String(text ?? '');
   const q = suchBegriff(); if (!q) return esc(text);
@@ -1035,7 +1046,7 @@ function viewDeadlines(){
       ? `<div class="empty-big"><strong>Willkommen bei Brain72.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Sprich oder tipp oben dein erstes To-do – oder leg es geführt an.'}</div>`
       : S.q.trim() ? `<div class="empty-big"><strong>Keine Treffer für „${esc(S.q.trim())}“.</strong>Suchbegriff ändern oder leeren.</div>`
       : `<div class="empty-big"><strong>Keine offenen To-dos.</strong>Schön aufgeräumt.</div>`;
-    body = groups.some(g => g.items.length) ? groupsHTML(groups) : leer;
+    body = (groups.some(g => g.items.length) ? groupsHTML(groups) : leer) + erledigteTrefferHTML();
   }
   const leisten = suchFeld() + `<div class="toolbar tb-split">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div>
     ${S.allView === 'grid' ? '' : `<div class="tb-group"><span class="tb-label">Gruppieren nach</span>${seg('sort', SORT_SEG)}</div>
@@ -1133,7 +1144,7 @@ function viewRecs(){
   const zeile = t => ({ extraMeta:`<span class="rec-why">${ic('spark')}${esc(bewertet.get(t.id).grund)}</span>` });
   return header('Empfehlungen', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`, '', addBtn()) + leisten +
     `<div class="rec-note">Reihenfolge aus Frist, Dringlichkeit, Wichtigkeit und Aufwand: Aus der Größenordnung des Aufwands (Stunden, Tage, Wochen) und einem Puffer ergibt sich der späteste sinnvolle Start. Was am wenigsten Luft hat, steht oben; Wichtiges bekommt zusätzlich Vorlauf.</div>` +
-    groupsHTML(groups, { empty: S.q ? 'Keine Treffer.' : 'Keine offenen To-dos.', rowOpts: zeile });
+    groupsHTML(groups, { empty: S.q ? 'Keine Treffer.' : 'Keine offenen To-dos.', rowOpts: zeile }) + erledigteTrefferHTML();
 }
 
 // Raster nach Eisenhower: Spalten = Dringlichkeit, Zeilen = Wichtigkeit. Der Aufwand steht als Balken an der Karte.
@@ -2001,6 +2012,7 @@ document.addEventListener('click', e => {
     case 'e-sort': { const t = T.find(x => x.id === id); if (t){ editTodo(t, t => { t.status = 'open'; }); toast('Einsortiert'); } break; }
     case 'set': S[el.dataset.k] = el.dataset.v; render(); break;
     case 'q-clear': S.q = ''; render(); break;
+    case 'q-done': S.qDone = !S.qDone; render(); break;
     case 'reorder': S.reorder = !S.reorder; render(); toast(S.reorder ? 'Zum Verschieben antippen und ziehen' : 'Reihenfolge gespeichert'); break;
     case 'theme': S.theme = el.dataset.v; applyTheme(); render(); break;
     case 'area-open': {

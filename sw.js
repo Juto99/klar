@@ -1,6 +1,6 @@
 // Brain72 – Service Worker: macht die App offline-fähig.
 // Bei jeder Veröffentlichung VERSION erhöhen, damit Geräte die neue Fassung laden.
-const VERSION = 'brain72-v32';
+const VERSION = 'brain72-v33';
 const ASSETS = [
   './',
   './index.html',
