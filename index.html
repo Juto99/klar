@@ -21,6 +21,7 @@
   --line:rgba(24,28,38,.09); --line-2:rgba(24,28,38,.16);
   --accent:#3453C9; --accent-soft:rgba(52,83,201,.09); --on-accent:#FFFFFF;
   --create:#4C6B9C; --create-h:#3F5A87;
+  --mark:rgba(245,196,66,.45);
   --work:#4D6B9E; --private:#5C8B72; --danger:#C0473A; --warn:#A87424; --ok:#3F8A5B;
   --shadow:0 1px 2px rgba(20,24,33,.05),0 6px 20px rgba(20,24,33,.07);
   --shadow-lg:0 24px 64px rgba(20,24,33,.20),0 2px 6px rgba(20,24,33,.06);
@@ -34,6 +35,7 @@
     --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.14);
     --accent:#8FA6F5; --accent-soft:rgba(143,166,245,.13); --on-accent:#0E1224;
     --create:#5E7FB4; --create-h:#6E8CC1;
+    --mark:rgba(245,196,66,.35);
     --work:#89A4D2; --private:#89B79D; --danger:#E27463; --warn:#D9A34E; --ok:#6FBF8D;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.3);
     --shadow-lg:0 24px 70px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);
@@ -47,6 +49,7 @@
   --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.14);
   --accent:#8FA6F5; --accent-soft:rgba(143,166,245,.13); --on-accent:#0E1224;
   --create:#5E7FB4; --create-h:#6E8CC1;
+  --mark:rgba(245,196,66,.35);
   --work:#89A4D2; --private:#89B79D; --danger:#E27463; --warn:#D9A34E; --ok:#6FBF8D;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.3);
   --shadow-lg:0 24px 70px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);
@@ -241,6 +244,16 @@ body.reorder-on .row::after{display:none}
 .swipe.dragging-row{position:relative;z-index:5;cursor:grabbing}
 .swipe.dragging-row .row{box-shadow:var(--shadow);border-radius:10px;background:var(--surface)}
 .muted{color:var(--text-3);font-size:12.5px}
+mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
+.row-meta .m.snip{display:inline-block;color:var(--text-2);max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-meta .snip svg.i{vertical-align:-2px;margin-right:4px}
+.av.hit{box-shadow:0 0 0 2px var(--mark),0 0 0 1.5px var(--surface)}
+.d-hits{margin-top:14px;padding:10px 12px;border-radius:10px;background:var(--surface-2)}
+.d-hits .d-lab{display:flex;align-items:center;gap:6px}
+.d-hits .d-lab svg.i{width:13px;height:13px}
+.hit-row{display:flex;gap:10px;font-size:13.5px;line-height:1.5;padding:3px 0}
+.hit-l{flex:none;width:88px;color:var(--text-3);font-size:12px;padding-top:2px}
+.hit-t{white-space:pre-wrap;overflow-wrap:anywhere}
 .swipe{position:relative;overflow:hidden;border-radius:10px}
 .swipe>.row{background:var(--surface);transition:transform .18s ease}
 .swipe.dragging>.row{transition:none}
@@ -874,15 +887,41 @@ let A = null;
 let undo = null;
 
 /* ============ Bausteine ============ */
+/* Suche: Treffer sichtbar machen. Aktiv nur dort, wo die Suche auch filtert (Empfehlungen). */
+const suchBegriff = () => (S.view === 'recs' ? S.q.trim() : '');
+function hl(text){
+  text = String(text ?? '');
+  const q = suchBegriff(); if (!q) return esc(text);
+  const re = new RegExp(escRe(q), 'gi');
+  let out = '', last = 0, m;
+  while ((m = re.exec(text))){
+    out += esc(text.slice(last, m.index)) + '<mark>' + esc(m[0]) + '</mark>';
+    last = m.index + m[0].length;
+    if (!m[0].length) re.lastIndex++;
+  }
+  return out + esc(text.slice(last));
+}
+const trifft = text => { const q = suchBegriff(); return !!q && String(text || '').toLowerCase().includes(q.toLowerCase()); };
+// Kurzer Ausschnitt rund um den ersten Treffer, z. B. im Kontext
+function ausschnitt(text, rand = 22){
+  const q = suchBegriff(); text = String(text || '').replace(/\s+/g, ' ');
+  const i = text.toLowerCase().indexOf(q.toLowerCase()); if (i < 0) return '';
+  const a = Math.max(0, i - rand), b = Math.min(text.length, i + q.length + rand);
+  return (a > 0 ? '…' : '') + hl(text.slice(a, b)) + (b < text.length ? '…' : '');
+}
 function rowHTML(t, o = {}){
   const a = areaOf(t), c = catById(t.cat), d = dueLabel(t), done = t.status === 'done' || t.status === 'archived';
   const names = namesOf(t.persons), proj = projById(t.project);
   // Rechts neben der Zeile: Bereich/Unterkategorie, Projekt, Personen – alles einzeilig
   const meta = [];
+  if (suchBegriff() && !trifft(t.title)){
+    const quelle = trifft(t.desc) ? ['Beschreibung', t.desc] : trifft(t.ctx) ? ['Kontext', t.ctx] : null;
+    if (quelle) meta.push(`<span class="m snip" title="Treffer in ${quelle[0]}">${ic('search')}${ausschnitt(quelle[1])}</span>`);
+  }
   if (o.extraMeta) meta.push(o.extraMeta);
-  if (a) meta.push(`<span class="m"><i class="dot" style="--c:${areaColor(a)}"></i>${esc(AREAS[a].name)}${c ? ' · ' + esc(c.name) : ''}</span>`);
-  if (proj) meta.push(`<span class="m">${ic('diamond')}${esc(proj.name)}</span>`);
-  if (names.length) meta.push(`<span class="m avs" title="${esc(names.join(', '))}">${names.map(n => `<span class="av">${esc(initials(n))}</span>`).join('')}</span>`);
+  if (a) meta.push(`<span class="m"><i class="dot" style="--c:${areaColor(a)}"></i>${esc(AREAS[a].name)}${c ? ' · ' + hl(c.name) : ''}</span>`);
+  if (proj) meta.push(`<span class="m">${ic('diamond')}${hl(proj.name)}</span>`);
+  if (names.length) meta.push(`<span class="m avs" title="${esc(names.join(', '))}">${names.map(n => `<span class="av ${trifft(n) ? 'hit' : ''}">${esc(initials(n))}</span>`).join('')}</span>`);
   if (t.status === 'inbox') meta.push(`<span class="m">${ic('wave')}Diktiert</span>`);
   const flags = (t.prio || t.imp || t.load) ? `<span class="flags">${prioBadge(t.prio)}${impBadge(t.imp)}${loadBadge(t.load)}</span>` : '';
   const move = S.reorder ? `<span class="grip" aria-hidden="true">${ic('grip')}</span>` : '';
@@ -891,7 +930,7 @@ function rowHTML(t, o = {}){
   if (right === undefined) right = `${flags}${d.txt ? `<span class="due ${d.cls}" title="${esc(d.txt + (d.k ? ' · ' + d.k : ''))}">${esc(d.txt)}</span>` : ''}`;
   return `<div class="swipe" data-swipe="${t.id}"><div class="swipe-act"><button data-act="swipe-del" data-id="${t.id}">${ic('trash')}Löschen</button></div><div class="row ${done ? 'is-done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}">
     <button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="${done ? 'Wieder öffnen' : 'Als erledigt markieren'}"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>
-    <span class="row-title" title="${esc(t.title)}">${esc(t.title)}</span>
+    <span class="row-title" title="${esc(t.title)}">${hl(t.title)}</span>
     <span class="row-right">${right}</span>${park}${move}${meta.length ? `<span class="row-meta">${meta.join('')}</span>` : ''}
   </div></div>`;
 }
@@ -1305,6 +1344,8 @@ function detailHTML(t){
     <div class="d-top"><button class="d-back" data-act="close-detail">${ic('chevL')}<span>Zurück</span></button><span class="muted">${status}</span><button class="icon-btn d-x" data-act="close-detail" aria-label="Schließen">${ic('close')}</button></div>
     <div class="d-lab" style="margin:0 0 6px 36px">To-do · antippen zum Ändern</div>
     <div class="d-title"><button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="Erledigt umschalten"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button><textarea class="d-title-in grow" data-ef="title" data-id="${t.id}" data-orig="${esc(t.title)}" rows="1" placeholder="Was ist zu tun?" aria-label="To-do-Titel" title="Antippen zum Ändern">${esc(t.title)}</textarea></div>
+    ${suchBegriff() && (trifft(t.desc) || trifft(t.ctx) || trifft(t.title)) ? `<div class="d-hits"><div class="d-lab">${ic('search')}Treffer für „${esc(suchBegriff())}“</div>
+      ${[['Titel', t.title], ['Beschreibung', t.desc], ['Kontext', t.ctx]].filter(([, v]) => trifft(v)).map(([l, v]) => `<div class="hit-row"><span class="hit-l">${l}</span><span class="hit-t">${hl(v)}</span></div>`).join('')}</div>` : ''}
     <div class="d-sec" style="margin-top:16px"><div class="d-lab">Beschreibung</div><textarea class="d-in grow" data-ef="desc" data-id="${t.id}" rows="2" placeholder="Details, Teilschritte …">${esc(t.desc)}</textarea></div>
     <div class="d-sec"><div class="d-lab">Kontext</div><textarea class="d-in grow" data-ef="ctx" data-id="${t.id}" rows="2" placeholder="Hintergrund, Absprachen …">${esc(t.ctx)}</textarea></div>
     <div class="d-sec"><div class="d-lab">Bereich</div>
