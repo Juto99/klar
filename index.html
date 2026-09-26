@@ -516,6 +516,8 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .cbar{font-size:11px;padding:2px 6px}
   .cbar .k{display:none}
   .prog{width:64px}
+  .prow-e .prog{display:none}
+  .prow-e .prog-l{width:auto;white-space:nowrap}
   .rv{grid-template-columns:90px 1fr auto}
   .toast{bottom:calc(80px + env(safe-area-inset-bottom))}
   .hide-m{display:none}
@@ -1226,8 +1228,9 @@ function viewPeople(){
     `<div class="addbar"><input class="add-in" data-add="person" placeholder="+ Person hinzufügen" enterkeyhint="done"></div>`;
 }
 function viewProjects(){
-  const rows = [...PROJECTS].sort(byName).map(p => { const l = T.filter(t => t.project === p.id); const d = l.filter(t => t.status === 'done' || t.status === 'archived').length; const pct = l.length ? Math.round(d / l.length * 100) : 0; const c = areaColor(p.area); return `<button class="prow" data-act="nav" data-view="project:${p.id}"><span class="pico" style="--c:${c}">${ic('diamond')}</span><span class="pm"><div class="pn">${esc(p.name)}</div><div class="ps">${AREAS[p.area].name} · ${l.filter(isOpen).length} offen · ${nextDueTxt(l)}</div></span><span class="prog" style="--c:${c}"><i style="width:${pct}%"></i></span><span class="prog-l">${pct} %</span></button>`; }).join('');
-  return header('Projekte', 'Umbenennen, löschen und neu anlegen unter Verwalten.', '', `<button class="btn btn-g" data-act="nav" data-view="settings">${ic('gear')}Verwalten</button>`) +
+  // Wie bei den Personen: Name als Eingabefeld in der Zeile. To-dos speichern nur die Projekt-ID.
+  const rows = [...PROJECTS].sort(byName).map(p => { const l = T.filter(t => t.project === p.id); const d = l.filter(t => t.status === 'done' || t.status === 'archived').length; const pct = l.length ? Math.round(d / l.length * 100) : 0; const c = areaColor(p.area); return `<div class="prow prow-e"><span class="pico" style="--c:${c}">${ic('diamond')}</span><span class="pm"><input class="ren pn-in" data-rename="projects" data-id="${p.id}" value="${esc(p.name)}" aria-label="Name des Projekts ändern" enterkeyhint="done"><div class="ps">${AREAS[p.area].name} · ${l.filter(isOpen).length} offen · ${nextDueTxt(l)}</div></span><span class="prog" style="--c:${c}"><i style="width:${pct}%"></i></span><span class="prog-l">${pct} %</span><button class="icon-btn chev" data-act="nav" data-view="project:${p.id}" aria-label="To-dos von ${esc(p.name)} anzeigen">${ic('chevR')}</button></div>`; }).join('');
+  return header('Projekte', 'Namen hier direkt ändern – die To-dos übernehmen das. Löschen und neu anlegen unter Verwalten.', '', `<button class="btn btn-g" data-act="nav" data-view="settings">${ic('gear')}Verwalten</button>`) +
     (rows ? `<div class="plist">${rows}</div>` : `<div class="empty">Noch keine Projekte.</div>`) +
     `<div class="addbar"><input class="add-in" data-add="project" placeholder="+ Projekt hinzufügen" enterkeyhint="done">${areaSeg('newProjArea')}</div>`;
 }
