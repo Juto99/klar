@@ -303,6 +303,8 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .prow .pn{font-size:15px;font-weight:550}
 .prow .ps{font-size:12.5px;color:var(--text-2);margin-top:1px}
 .prow .chev{color:var(--text-3)}
+.prow-e:hover{background:none}
+.prow-e .pn-in{width:100%;font-size:15px;font-weight:550;padding:5px 7px;margin:-3px 0 0 -7px}
 .pico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 13%,transparent);color:var(--c);flex:none}
 .prog{width:120px;height:5px;border-radius:5px;background:var(--surface-3);overflow:hidden;flex:none}
 .prog i{display:block;height:100%;background:var(--c);border-radius:5px}
@@ -1216,8 +1218,10 @@ function nextDueTxt(list){
   return n ? `nächste: ${dueLabel(n).txt}` : 'keine Deadline';
 }
 function viewPeople(){
-  const rows = [...PEOPLE].sort(byName).map(p => { const l = T.filter(t => t.persons.includes(p.id)); const o = l.filter(isOpen).length; return `<button class="prow" data-act="nav" data-view="person:${p.id}"><span class="av">${esc(initials(p.name))}</span><span class="pm"><div class="pn">${esc(p.name)}</div><div class="ps">${o} offen · ${nextDueTxt(l)}</div></span><span class="chev">${ic('chevR')}</span></button>`; }).join('');
-  return header('Personen', 'Nur Vornamen oder Kürzel – nichts, was auf reale Personen rückführbar ist.', '', `<button class="btn btn-g" data-act="nav" data-view="settings">${ic('gear')}Verwalten</button>`) +
+  // Der Name steht direkt als Eingabefeld in der Zeile: umbenennen geht ohne Umweg über die Einstellungen.
+  // To-dos merken sich nur die ID der Person, darum greift ein neuer Name überall sofort.
+  const rows = [...PEOPLE].sort(byName).map(p => { const l = T.filter(t => t.persons.includes(p.id)); const o = l.filter(isOpen).length; return `<div class="prow prow-e"><span class="av">${esc(initials(p.name))}</span><span class="pm"><input class="ren pn-in" data-rename="people" data-id="${p.id}" value="${esc(p.name)}" aria-label="Name der Person ändern" enterkeyhint="done"><div class="ps">${o} offen · ${nextDueTxt(l)}</div></span><button class="icon-btn chev" data-act="nav" data-view="person:${p.id}" aria-label="To-dos von ${esc(p.name)} anzeigen">${ic('chevR')}</button></div>`; }).join('');
+  return header('Personen', 'Namen hier direkt ändern – die To-dos übernehmen das. Nur Vornamen oder Kürzel verwenden.', '', `<button class="btn btn-g" data-act="nav" data-view="settings">${ic('gear')}Verwalten</button>`) +
     (rows ? `<div class="plist">${rows}</div>` : `<div class="empty">Noch keine Personen. Leg sie hier oder beim Anlegen eines To-dos an.</div>`) +
     `<div class="addbar"><input class="add-in" data-add="person" placeholder="+ Person hinzufügen" enterkeyhint="done"></div>`;
 }
@@ -2130,7 +2134,11 @@ document.addEventListener('change', e => {
   const obj = ARR[r]().find(x => x.id === e.target.dataset.id), v = e.target.value.trim();
   if (!obj) return;
   if (!v){ e.target.value = obj.name; return; }
-  obj.name = v; save(r, obj); renderSidebar(); toast('Umbenannt');
+  obj.name = v; save(r, obj); renderSidebar();
+  // In der Personenübersicht die Liste neu sortieren; in den Einstellungen bliebe sonst der Fokus hängen.
+  if (S.view === 'people' || S.view === 'projects') renderMain();
+  if (S.sel) renderDetail();
+  toast('Umbenannt');
 });
 
 function quickSubmit(v){
