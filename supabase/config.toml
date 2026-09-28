@@ -219,8 +219,10 @@ web3 = 30
 # secret = ""
 
 [auth.email]
-# Allow/disallow new user signups via email to your project.
-enable_signup = false
+# Achtung: Dieser Schalter ist der E-Mail-Provider insgesamt. Auf false kann sich niemand mehr
+# anmelden (Fehler "Email logins are disabled"). Neue Konten werden über [auth] enable_signup = false
+# gesperrt, nicht hier.
+enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
@@ -288,12 +290,12 @@ max_frequency = "5s"
 # uri = "pg-functions://<database>/<schema>/<hook_name>"
 
 # Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
-[auth.sms.twilio]
-enabled = false
-account_sid = ""
-message_service_sid = ""
-# DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
-auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
+# Nicht deklariert: Brain72 nutzt keine SMS-Anmeldung, der Wert im Projekt bleibt unberührt.
+# [auth.sms.twilio]
+# enabled = false
+# account_sid = ""
+# message_service_sid = ""
+# auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 
 # Multi-factor-authentication is available to Supabase Pro plan.
 [auth.mfa]
