@@ -235,9 +235,12 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .d-field.md > .d-in{display:none}
 .d-field:not(.md) > .d-md{display:none}
 .prg{width:100%;accent-color:var(--accent);height:26px}
-.cal-wk{margin-bottom:10px}
-.cal-wk .wk{min-height:96px}
+.cal-wk{margin:0 0 4px}
+.cal-wk .wk{min-height:100px}
 .cal-wk .citems{padding-bottom:4px}
+.wk-head.wk-head-sm{margin:6px 4px 4px}
+.filterbar{margin-top:18px}
+.filterbar .tb-label{display:block;margin:0 0 6px 2px}
 .cols{position:relative;height:15px;margin:4px 0 2px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);user-select:none}
 .cols .c-lab{position:absolute;top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cols .c-lab.r{text-align:right}
@@ -426,6 +429,8 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .cbg.we{background:color-mix(in srgb,var(--surface-2) 60%,transparent)}
 .cbg.out{background:var(--surface-2)}
 .cbg.sel{background:var(--accent-soft)}
+.cbg.today{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.cbg.today.sel{background:var(--accent-soft)}
 .cbg:hover{background:var(--surface-2)}
 .cnum,.citems{pointer-events:none;min-width:0}
 .cnum>*,.citems>*{pointer-events:auto}
@@ -633,7 +638,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v49';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v50';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1192,8 +1197,7 @@ function renderSidebar(){
     <div class="brand"><div class="brand-txt"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span><span class="brand-wort">Brain<span class="brand-72">72</span></span></span><span class="brand-tag">copyright THS 2026</span></div></div>
     <label class="search ${S.q ? 'on' : ''}">${ic('search')}<input id="sbq" placeholder="Suchen" value="${esc(S.q)}" aria-label="To-dos durchsuchen" enterkeyhint="search">${S.q ? `<button class="sq-x" data-act="q-clear" aria-label="Suche leeren" title="Suche leeren">${ic('close')}</button>` : ''}</label>
     ${S.q.trim() ? `<button class="switch2 sq-sw ${S.qDone ? 'on' : ''}" data-act="q-done" aria-pressed="${S.qDone}"><span class="sw2"></span>auch Erledigte</button>` : ''}
-    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('bydeadline', 'clock', 'By Deadline', cnt.mitFrist)}${tile('calendar', 'cal', 'Kalender', '')}</div>
-    <div class="tiles" style="margin-top:8px">${tile('bycat', 'list', 'By Category', CATS.length)}${tile('byperson', 'person', 'By Person', PEOPLE.length)}${tile('byproject', 'folder', 'By Project', PROJECTS.length)}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}</div>
+    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}${tile('bydeadline', 'clock', 'By Deadline', cnt.mitFrist)}${tile('calendar', 'cal', 'Kalender', '')}${tile('bycat', 'list', 'By Category', CATS.length)}${tile('byperson', 'person', 'By Person', PEOPLE.length)}${tile('byproject', 'folder', 'By Project', PROJECTS.length)}</div>
     <div class="sb-group">${item('done', 'Erledigt', T.filter(t => t.status === 'done').length, ic('done'))}${item('archive', 'Archiv', T.filter(t => t.status === 'archived').length, ic('archive'))}${item('parked', 'Parkliste', T.filter(t => t.status === 'parked').length, ic('pause'))}${item('settings', 'Einstellungen', '', ic('gear'))}</div>
     <div class="sb-foot">
       <div class="sync"><i class="dot" style="--c:${syncCol}"></i><span>${syncTxt}</span>${syncBtn}<span class="ver" title="Laufende Fassung – Einstellungen → Fassung lädt die neueste">${APP_VERSION}</span></div>
@@ -1213,10 +1217,13 @@ const GRUPPEN = {
   byproject:['By Project', 'project']
 };
 // Laufende Woche im Kalenderraster – steht auf jeder Listenseite an derselben Stelle.
+// Filterzeile mit Beschriftung – auf allen Listenseiten gleich
+const filterLeiste = () => `<div class="tb-group filterbar"><span class="tb-label">Filter</span>
+  <div class="toolbar tb-split" style="width:100%">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div></div>`;
 function wochenKopf(list){
   const wStart = addD(THIS_MON, 7 * S.weekOff), wEnd = addD(wStart, 6);
   const spanne = `${wStart.getDate()}. ${wStart.getMonth() !== wEnd.getMonth() ? MON[wStart.getMonth()] + ' ' : ''}– ${wEnd.getDate()}. ${MON[wEnd.getMonth()]}`;
-  return `<div class="wk-head"><button class="icon-btn" data-act="week" data-v="-1" aria-label="Vorherige Woche">${ic('chevL')}</button>
+  return `<div class="wk-head wk-head-sm"><button class="icon-btn" data-act="week" data-v="-1" aria-label="Vorherige Woche">${ic('chevL')}</button>
       <strong>KW ${kw(wStart)}</strong><span>${spanne}</span>
       ${S.weekOff ? `<button class="link" data-act="week" data-v="0">Diese Woche</button>` : ''}
       <button class="icon-btn" style="margin-left:auto" data-act="week" data-v="1" aria-label="Nächste Woche">${ic('chevR')}</button></div>
@@ -1228,7 +1235,7 @@ function viewListe(){
   const alle = T.filter(isOpen);
   const open = sucheFilter(S.area === 'all' ? alle : alle.filter(t => areaOf(t) === S.area));
   const woche = wochenKopf(open);
-  const leisten = `<div class="toolbar tb-split">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div>` + suchFeld();
+  const leisten = filterLeiste() + suchFeld();
   let body;
   if (S.allView === 'grid'){
     body = gridHTML(open);
@@ -1316,7 +1323,7 @@ function viewRecs(){
   let list = T.filter(isOpen);
   if (S.area !== 'all') list = list.filter(t => areaOf(t) === S.area);
   list = sucheFilter(list);
-  const leisten = `<div class="toolbar tb-split">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div>` + suchFeld();
+  const leisten = filterLeiste() + suchFeld();
   if (S.allView === 'grid') return header('Empfehlungen', `${list.length} offen · Eisenhower-Raster`) + wochenKopf(list) + leisten + gridHTML(list);
   const bewertet = new Map(list.map(t => [t.id, plan(t)]));
   const nachPlan = (a, b) => byRank(a, b) || bewertet.get(b.id).s - bewertet.get(a.id).s || sortByDue(a, b);
@@ -1358,7 +1365,7 @@ function kalenderWoche(ws, vis, o = {}){
   for (let i = 0; i < 7; i++){
     const d = addD(ws, i), out = o.monat != null && d.getMonth() !== o.monat, isToday = same(d, TODAY);
     const klick = o.tagKlick ? ` data-act="cal-day" data-d="${iso(d)}"` : '';
-    cells += `<div class="cbg c${i} ${i >= 5 ? 'we' : ''} ${out ? 'out' : ''} ${o.tagKlick && iso(d) === S.calDay ? 'sel' : ''}" style="grid-column:${i + 1}"${klick}></div>`;
+    cells += `<div class="cbg c${i} ${i >= 5 ? 'we' : ''} ${out ? 'out' : ''} ${isToday ? 'today' : ''} ${o.tagKlick && iso(d) === S.calDay ? 'sel' : ''}" style="grid-column:${i + 1}"${klick}></div>`;
     nums += `<div class="cnum ${out ? 'out' : ''} ${isToday ? 'today' : ''}" style="grid-column:${i + 1}"><span>${d.getDate() === 1 ? `1. ${MONS[d.getMonth()]}` : d.getDate()}</span></div>`;
     const di = vis.filter(t => t.due?.type === 'day' && same(P(t.due.date), d)).sort((a, b) => a.title.localeCompare(b.title, 'de'));
     items += `<div class="citems" style="grid-row:${2 + bars.length};grid-column:${i + 1}">${di.slice(0, 3).map(t => `<button class="citem ${t.status === 'done' ? 'done' : ''} ${dueLabel(t).cls === 'over' ? 'over' : ''}" data-act="open" data-id="${t.id}" title="${esc(t.title)}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span class="t">${esc(t.title)}</span></button>`).join('')}${di.length > 3 ? `<span class="cmore">+${di.length - 3}</span>` : ''}</div>`;
