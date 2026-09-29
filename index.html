@@ -241,6 +241,11 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .wk-head.wk-head-sm{margin:6px 4px 4px}
 .filterbar{margin-top:18px}
 .filterbar .tb-label{display:block;margin:0 0 6px 2px}
+.f-links{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.fsel{display:inline-flex;align-items:center;gap:7px;background:var(--surface-3);border-radius:9px;padding:3px 8px 3px 11px;font-size:12.5px;color:var(--text-2);box-shadow:inset 0 0 0 1px transparent}
+.fsel.on{color:var(--text);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.fsel select{border:0;background:none;outline:none;color:var(--text);font-size:12.5px;font-family:inherit;max-width:190px;padding:4px 2px;cursor:pointer}
+.fsel select option{background:var(--surface);color:var(--text)}
 .cols{position:relative;height:15px;margin:4px 0 2px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);user-select:none}
 .cols .c-lab{position:absolute;top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cols .c-lab.r{text-align:right}
@@ -638,7 +643,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v50';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v51';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -973,7 +978,7 @@ const S = {
   sort:'due', area:'work', q:'', qDone:false, allView:'list', reorder:false, weekOff:0, online:navigator.onLine, memOnly:false,
   addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
   syncState:'', syncError:'', lastSync:0, authOpen:false, authMode:'in', authBusy:false, authErr:'', inboxTokens:null,
-  calAreas:{ work:true, private:true }, aktivEnt:null
+  calAreas:{ work:true, private:true }, aktivEnt:null, pers:'all', proj:'all'
 };
 let A = null;
 let undo = null;
@@ -1197,7 +1202,7 @@ function renderSidebar(){
     <div class="brand"><div class="brand-txt"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span><span class="brand-wort">Brain<span class="brand-72">72</span></span></span><span class="brand-tag">copyright THS 2026</span></div></div>
     <label class="search ${S.q ? 'on' : ''}">${ic('search')}<input id="sbq" placeholder="Suchen" value="${esc(S.q)}" aria-label="To-dos durchsuchen" enterkeyhint="search">${S.q ? `<button class="sq-x" data-act="q-clear" aria-label="Suche leeren" title="Suche leeren">${ic('close')}</button>` : ''}</label>
     ${S.q.trim() ? `<button class="switch2 sq-sw ${S.qDone ? 'on' : ''}" data-act="q-done" aria-pressed="${S.qDone}"><span class="sw2"></span>auch Erledigte</button>` : ''}
-    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}${tile('bydeadline', 'clock', 'By Deadline', cnt.mitFrist)}${tile('calendar', 'cal', 'Kalender', '')}${tile('bycat', 'list', 'By Category', CATS.length)}${tile('byperson', 'person', 'By Person', PEOPLE.length)}${tile('byproject', 'folder', 'By Project', PROJECTS.length)}</div>
+    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}${tile('bydeadline', 'clock', 'Nach Frist', cnt.mitFrist)}${tile('calendar', 'cal', 'Kalender', '')}${tile('bycat', 'list', 'Nach Kategorie', CATS.length)}${tile('byperson', 'person', 'Nach Person', PEOPLE.length)}${tile('byproject', 'folder', 'Nach Projekt', PROJECTS.length)}</div>
     <div class="sb-group">${item('done', 'Erledigt', T.filter(t => t.status === 'done').length, ic('done'))}${item('archive', 'Archiv', T.filter(t => t.status === 'archived').length, ic('archive'))}${item('parked', 'Parkliste', T.filter(t => t.status === 'parked').length, ic('pause'))}${item('settings', 'Einstellungen', '', ic('gear'))}</div>
     <div class="sb-foot">
       <div class="sync"><i class="dot" style="--c:${syncCol}"></i><span>${syncTxt}</span>${syncBtn}<span class="ver" title="Laufende Fassung – Einstellungen → Fassung lädt die neueste">${APP_VERSION}</span></div>
@@ -1211,15 +1216,26 @@ const MOBIL_MQ = '(max-width:760px), (max-height:520px) and (pointer:coarse)';
 const isMobile = () => matchMedia(MOBIL_MQ).matches;
 // Die vier Listenseiten unterscheiden sich nur in der Gruppierung.
 const GRUPPEN = {
-  bydeadline:['By Deadline', 'due'],
-  bycat:['By Category', 'cat'],
-  byperson:['By Person', 'person'],
-  byproject:['By Project', 'project']
+  bydeadline:['Nach Frist', 'due'],
+  bycat:['Nach Kategorie', 'cat'],
+  byperson:['Nach Person', 'person'],
+  byproject:['Nach Projekt', 'project']
 };
 // Laufende Woche im Kalenderraster – steht auf jeder Listenseite an derselben Stelle.
 // Filterzeile mit Beschriftung – auf allen Listenseiten gleich
-const filterLeiste = () => `<div class="tb-group filterbar"><span class="tb-label">Filter</span>
-  <div class="toolbar tb-split" style="width:100%">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div></div>`;
+function filterLeiste(){
+  // Auf „Nach Person“ und „Nach Projekt“ lässt sich zusätzlich auf einen Namen eingrenzen.
+  let wahl = '';
+  if (S.view === 'byperson') wahl = auswahlFeld('pers', 'Person', [...PEOPLE].sort(byName));
+  if (S.view === 'byproject') wahl = auswahlFeld('proj', 'Projekt', [...PROJECTS].sort(byName));
+  return `<div class="tb-group filterbar"><span class="tb-label">Filter</span>
+    <div class="toolbar tb-split" style="width:100%"><div class="f-links">${seg('area', AREA_SEG)}${wahl}</div>${seg('allView', VIEW_SEG)}</div></div>`;
+}
+const auswahlFeld = (key, label, liste) => `<label class="fsel ${S[key] !== 'all' ? 'on' : ''}"><span>${label}</span>
+  <select data-fsel="${key}" aria-label="Nach ${label} filtern">
+    <option value="all"${S[key] === 'all' ? ' selected' : ''}>Alle</option>
+    ${liste.map(o => `<option value="${o.id}"${S[key] === o.id ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}
+  </select></label>`;
 function wochenKopf(list){
   const wStart = addD(THIS_MON, 7 * S.weekOff), wEnd = addD(wStart, 6);
   const spanne = `${wStart.getDate()}. ${wStart.getMonth() !== wEnd.getMonth() ? MON[wStart.getMonth()] + ' ' : ''}– ${wEnd.getDate()}. ${MON[wEnd.getMonth()]}`;
@@ -1233,7 +1249,9 @@ function viewListe(){
   const mob = isMobile();
   const [titel, art] = GRUPPEN[S.view] || GRUPPEN.bydeadline;
   const alle = T.filter(isOpen);
-  const open = sucheFilter(S.area === 'all' ? alle : alle.filter(t => areaOf(t) === S.area));
+  let open = sucheFilter(S.area === 'all' ? alle : alle.filter(t => areaOf(t) === S.area));
+  if (S.view === 'byperson' && S.pers !== 'all') open = open.filter(t => t.persons.includes(S.pers));
+  if (S.view === 'byproject' && S.proj !== 'all') open = open.filter(t => t.project === S.proj);
   const woche = wochenKopf(open);
   const leisten = filterLeiste() + suchFeld();
   let body;
@@ -1271,8 +1289,16 @@ const VIEW_SEG = [['list', 'Liste'], ['grid', 'Raster']];
 function groupList(list, sortKey){
   if (sortKey === 'cat') return ['work', 'private'].flatMap(a => catsOf(a).map(c => ({ title:`${AREAS[a].name} · ${c.name}`, items:list.filter(t => t.cat === c.id).sort(sortByDue) })))
     .concat(['work', 'private'].map(a => ({ title:`${AREAS[a].name} · ohne Unterkategorie`, items:list.filter(t => areaOf(t) === a && !catById(t.cat)).sort(sortByDue) })));
-  if (sortKey === 'person') return [...[...PEOPLE].sort(byName).map(p => ({ title:p.name, items:list.filter(t => t.persons.includes(p.id)).sort(sortByDue) })), { title:'Ohne Person', items:list.filter(t => !namesOf(t.persons).length).sort(sortByDue) }];
-  if (sortKey === 'project') return [...[...PROJECTS].sort(byName).map(p => ({ title:`${p.name} · ${projPct(T.filter(t => t.project === p.id))} %`, items:list.filter(t => t.project === p.id).sort(sortByDue) })), { title:'Ohne Projekt', items:list.filter(t => !projById(t.project)).sort(sortByDue) }];
+  if (sortKey === 'person'){
+    const quelle = S.pers !== 'all' ? PEOPLE.filter(p => p.id === S.pers) : [...PEOPLE].sort(byName);
+    const gruppen = quelle.map(p => ({ title:p.name, items:list.filter(t => t.persons.includes(p.id)).sort(sortByDue) }));
+    return S.pers !== 'all' ? gruppen : [...gruppen, { title:'Ohne Person', items:list.filter(t => !namesOf(t.persons).length).sort(sortByDue) }];
+  }
+  if (sortKey === 'project'){
+    const quelle = S.proj !== 'all' ? PROJECTS.filter(p => p.id === S.proj) : [...PROJECTS].sort(byName);
+    const gruppen = quelle.map(p => ({ title:`${p.name} · ${projPct(T.filter(t => t.project === p.id))} %`, items:list.filter(t => t.project === p.id).sort(sortByDue) }));
+    return S.proj !== 'all' ? gruppen : [...gruppen, { title:'Ohne Projekt', items:list.filter(t => !projById(t.project)).sort(sortByDue) }];
+  }
   return bucketGroups(list);
 }
 /* Planung: Wann muss eine Aufgabe spätestens starten?
@@ -1393,17 +1419,17 @@ function viewCalendar(){
     <div class="legend">
       <button class="fchip ${S.calAreas.work ? 'on' : ''}" data-act="cal-area" data-v="work" aria-pressed="${S.calAreas.work}"><i class="dot" style="--c:var(--work)"></i>Arbeit</button>
       <button class="fchip ${S.calAreas.private ? 'on' : ''}" data-act="cal-area" data-v="private" aria-pressed="${S.calAreas.private}"><i class="dot" style="--c:var(--private)"></i>Privat</button>
-      <span><i class="lg-bar"></i>Wochen-Deadline</span><span><i class="lg-band"></i>Monats-Deadline</span></div>
+      <span><i class="lg-bar"></i>Wochen-Frist</span><span><i class="lg-band"></i>Monats-Frist</span></div>
     ${anyArea ? '' : '<div class="empty" style="padding:10px 4px">Beide Filter sind aus – deshalb ist der Kalender leer.</div>'}
     ${monthItems.length ? `<div class="mstrip"><span class="lab">Im Laufe des ${MON[mo]}s</span>${monthItems.map(t => `<button class="mchip" data-act="open" data-id="${t.id}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i>${esc(t.title)}</button>`).join('')}</div>` : ''}
     <div class="cal-dow">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(d => `<span>${d}</span>`).join('')}</div>
     <div class="cal">${weeks}</div>
     <div class="sec"><h3>${esc(longDate(sd))}</h3><span class="n">${dayList.length}</span></div>
-    <div>${dayList.length ? dayList.map(t => rowHTML(t)).join('') : '<div class="empty">Keine Deadlines an diesem Tag.</div>'}</div>`;
+    <div>${dayList.length ? dayList.map(t => rowHTML(t)).join('') : '<div class="empty">Keine Fristen an diesem Tag.</div>'}</div>`;
 }
 function nextDueTxt(list){
   const n = list.filter(isOpen).filter(t => t.due).sort(sortByDue)[0];
-  return n ? `nächste: ${dueLabel(n).txt}` : 'keine Deadline';
+  return n ? `nächste: ${dueLabel(n).txt}` : 'keine Frist';
 }
 // Bereichsumschalter für Projekte in den Einstellungen
 const areaSeg = (key, id = '') => `<div class="seg">${Object.entries(AREAS).map(([a, v]) => `<button class="${(key === 'newProjArea' ? S.newProjArea : projById(id)?.area) === a ? 'on' : ''}" data-act="${key === 'newProjArea' ? 'new-proj-area' : 'proj-area'}" data-id="${id}" data-v="${a}">${v.name}</button>`).join('')}</div>`;
@@ -1521,6 +1547,8 @@ function viewSettings(){
 const ALT_VIEWS = { deadlines:'bydeadline', today:'bydeadline', all:'bydeadline', people:'byperson', projects:'byproject' };
 function renderMain(){
   if (ALT_VIEWS[S.view]) S.view = ALT_VIEWS[S.view];
+  if (S.view !== 'byperson') S.pers = 'all';
+  if (S.view !== 'byproject') S.proj = 'all';
   const [kind, id] = S.view.includes(':') ? S.view.split(/:(.+)/) : [S.view];
   const views = { bydeadline:viewListe, bycat:viewListe, byperson:viewListe, byproject:viewListe,
     inbox:viewInbox, recs:viewRecs, calendar:viewCalendar, done:viewDone, archive:viewArchive, parked:viewParked, settings:viewSettings };
@@ -1631,7 +1659,7 @@ function detailHTML(t){
         : `<input type="range" class="prg" min="0" max="100" step="5" value="${progOf(t)}" data-ef="progress" data-id="${t.id}" aria-label="Fortschritt in Prozent">
       <div class="chips">${[0, 25, 50, 75, 100].map(v => chip('e-prog', v, progOf(t) === v, v + ' %')).join('')}</div>`}
     </div>
-    <div class="d-sec"><div class="d-lab">Deadline${dueInfo}</div>
+    <div class="d-sec"><div class="d-lab">Frist${dueInfo}</div>
       <div class="chips">${DUE_OPTS().map(([k, l, v]) => chip('e-due', k, sameDue(t.due, v), l)).join('')}<input type="date" class="date-in sm" data-ef="date" data-id="${t.id}" value="${t.due?.type === 'day' ? t.due.date : ''}" aria-label="Bestimmtes Datum"></div>
     </div>
     <div class="d-sec"><div class="d-lab">Personen</div>
@@ -1673,7 +1701,7 @@ function fmtRange(t){ const [s, e] = range(t); return `${s.getDate()}. ${MONS[s.
 /* ============ Tabbar (mobil) ============ */
 function renderTabbar(){
   const tab = (v, icon, l) => `<button class="tab ${S.view === v ? 'on' : ''}" data-act="nav" data-view="${v}">${ic(icon)}${l}</button>`;
-  $('#tabbar').innerHTML = `<button class="tab" data-act="menu">${ic('menu')}Menü</button>` + tab('bydeadline', 'clock', 'Deadline') +
+  $('#tabbar').innerHTML = `<button class="tab" data-act="menu">${ic('menu')}Menü</button>` + tab('bydeadline', 'clock', 'Fristen') +
     `<button class="fab" data-act="assist-capture" aria-label="To-do diktieren">${ic('mic')}</button>` +
     tab('calendar', 'cal', 'Kalender') + tab('recs', 'spark', 'Empfehlungen');
 }
@@ -1791,7 +1819,7 @@ function parse(text){
     const m = s.match(rule.rx); if (!m) continue;
     const due = rule.f([m[0], ...m.slice(2)]); if (!due) continue;
     r.due = due; s = s.replace(rule.rx, (all, b) => b + ' ');
-    rec.push('Deadline: ' + dueText(due)); break;
+    rec.push('Frist: ' + dueText(due)); break;
   }
   const pm2 = s.match(/(^|[\s,])(privat|privates|privater)(?![a-zäöüß])/i);
   const wm = s.match(/(,\s*|\s(?:für\s+die|auf\s+der|in\s+der)\s+|\s)(arbeit|büro|beruflich)(?=\s*[,.]?\s*$|\s*,)/i) || s.match(/(,?\s*)(beruflich)(?![a-zäöüß])/i);
@@ -1889,7 +1917,7 @@ function fromAI(f){
   if (draft.prio) rec.push('Dringlichkeit: ' + prioName(draft.prio));
   if (draft.imp) rec.push('Wichtigkeit: ' + impName(draft.imp));
   if (draft.load) rec.push('Aufwand: ' + loadName(draft.load));
-  if (draft.due) rec.unshift('Deadline: ' + dueText(draft.due));
+  if (draft.due) rec.unshift('Frist: ' + dueText(draft.due));
   if (draft.area) rec.push('Bereich: ' + AREAS[draft.area].name + (draft.cat ? ' · ' + catById(draft.cat).name : ''));
   return { draft, rec, sugg };
 }
@@ -2003,7 +2031,7 @@ function closeModal(){ $('#modal').hidden = true; $('#modal').innerHTML = ''; A 
 const DUE_OPTS = () => [
   ['heute', 'Heute', day(iso(TODAY))], ['morgen', 'Morgen', day(iso(addD(TODAY, 1)))],
   ['tw', 'Diese Woche', week(iso(THIS_MON))], ['nw', 'Nächste Woche', week(iso(NEXT_MON))],
-  ['nm', 'Nächster Monat', month(nextMonthKey())], ['none', 'Ohne Deadline', null]
+  ['nm', 'Nächster Monat', month(nextMonthKey())], ['none', 'Ohne Frist', null]
 ];
 const sameDue = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 function stepHTML(k){
@@ -2031,11 +2059,11 @@ function stepHTML(k){
     case 'projdue': {
       const projs = [...PROJECTS].filter(p => !d.area || p.area === d.area).sort(byName);
       const dateVal = d.due?.type === 'day' ? d.due.date : '';
-      return `<h2 class="q">Projekt und Deadline</h2>
+      return `<h2 class="q">Projekt und Frist</h2>
       <div class="grp-l">Projekt</div>
       <div class="chips">${projs.map(p => `<button class="opt ${d.project === p.id ? 'on' : ''}" data-act="a-proj" data-v="${p.id}">${ic('diamond')}${esc(p.name)}</button>`).join('')}<button class="opt ${!d.project ? 'on' : ''}" data-act="a-proj" data-v="">Kein Projekt</button>
       <label class="opt-new">${ic('plus')}<input data-f="newproject" placeholder="Neues Projekt" enterkeyhint="done"></label></div>
-      <div class="grp-l">Deadline</div>
+      <div class="grp-l">Frist</div>
       <div class="chips">${DUE_OPTS().map(([k, l, v]) => `<button class="opt ${sameDue(d.due, v) ? 'on' : ''}" data-act="a-due" data-v="${k}">${l}</button>`).join('')}
       <input type="date" class="date-in" data-f="date" value="${dateVal}" aria-label="Bestimmtes Datum"></div>`;
     }
@@ -2055,7 +2083,7 @@ function stepHTML(k){
         ${rv('Bereich', d.area ? `<i class="dot" style="--c:${areaColor(d.area)}"></i> ${AREAS[d.area].name}${catById(d.cat) ? ' · ' + esc(catById(d.cat).name) : ''}` : '', 'area')}
         ${rv('Personen', esc(namesOf(d.persons).join(', ')), 'persons')}
         ${rv('Projekt', projById(d.project) ? esc(projById(d.project).name) : '', 'projdue')}
-        ${rv('Deadline', dl ? esc(dl.txt + (dl.k ? ' · ' + dl.k : '')) : '', 'projdue')}
+        ${rv('Frist', dl ? esc(dl.txt + (dl.k ? ' · ' + dl.k : '')) : '', 'projdue')}
         ${rv('Dringlichkeit', d.prio ? prioBadge(d.prio) + ' ' + prioName(d.prio) : '', 'prioload')}
         ${rv('Wichtigkeit', d.imp ? impBadge(d.imp) + ' ' + impName(d.imp) : '', 'prioload')}
         ${rv('Aufwand', d.load ? loadBadge(d.load) + ' ' + loadName(d.load) : '', 'prioload')}
@@ -2209,6 +2237,8 @@ function nav(v){
   if (v === 'settings' && sess && S.inboxTokens === null) tokenLaden();
   S.view = v; S.confirmDel = null; S.confirmM = null;
   if (GRUPPEN[v]) { S.todaySel = null; S.weekOff = 0; }
+  if (v !== 'byperson') S.pers = 'all';
+  if (v !== 'byproject') S.proj = 'all';
   document.body.classList.remove('sb-open');
   if (innerWidth <= 1100) S.sel = null;
   render(); $('#main').scrollTop = 0;
@@ -2325,7 +2355,7 @@ document.addEventListener('click', e => {
       if (act === 'review'){
         const rec = [];
         if (namesOf(t.persons).length) rec.push('Person: ' + namesOf(t.persons).join(', '));
-        if (t.due) rec.push('Deadline: ' + dueLabel(t).txt);
+        if (t.due) rec.push('Frist: ' + dueLabel(t).txt);
         if (d.area) rec.push('Bereich: ' + AREAS[d.area].name);
         openAssistant('fill', d, { rec, raw:t.raw, fromId:id });
       } else { openAssistant('full', d, { fromId:id }); A.i = A.steps.length - 1; renderModal(); }
@@ -2477,6 +2507,8 @@ document.addEventListener('input', e => {
   saveSoon(t);
 });
 document.addEventListener('change', e => {
+  const fs = e.target.dataset?.fsel;
+  if (fs){ S[fs] = e.target.value; renderMain(); return; }
   const f = e.target.dataset?.ef; if (!f) return;
   const t = T.find(x => x.id === e.target.dataset.id); if (!t) return;
   if (f === 'date'){ editTodo(t, t => { t.due = e.target.value ? day(e.target.value) : null; }); return; }
