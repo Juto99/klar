@@ -234,13 +234,13 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .check:hover{background:color-mix(in srgb,var(--c) 14%,transparent)}
 .check.on{background:var(--c)}
 .check.on svg{opacity:1}
-.row-title{flex:1 1 auto;min-width:60px;font-size:14.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-title{flex:1 1 auto;min-width:0;font-size:14.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row.is-done .row-title{color:var(--text-3);text-decoration:line-through;text-decoration-color:var(--line-2)}
 .row-note,.row-proj,.row-people{display:flex;align-items:center;font-size:12.5px;color:var(--text-2);white-space:nowrap;overflow:hidden;min-width:0}
 .row-note{flex:0 0 150px;gap:5px;padding-left:10px;text-overflow:ellipsis}
-.row-proj{flex:0 0 116px;gap:5px;padding-left:10px}
+.row-proj{flex:0 0 124px;gap:5px;padding-left:10px;justify-content:flex-end}
 .row-proj .pn-t{overflow:hidden;text-overflow:ellipsis}
-.row-people{flex:0 0 58px;justify-content:flex-end;padding-left:8px}
+.row-people{flex:0 0 56px;justify-content:flex-end;padding-left:6px}
 .row-note .m{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .row-note .dot{width:7px;height:7px}
 .row-meta svg.i{width:13px;height:13px}
@@ -252,7 +252,7 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .row-flags{flex:none;display:flex;align-items:center;gap:2px}
 .row-flags .fl{width:22px;height:19px;display:flex;align-items:center;justify-content:center;line-height:1}
 .row-flags .fl > *{flex:none}
-.row-due{flex:0 0 82px;padding-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-due{flex:0 0 94px;padding-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row-extra{flex:none;padding-left:8px;display:flex;align-items:center}
 .row-right .due{white-space:nowrap}
 .row-right .over{color:var(--danger);font-weight:550}
@@ -590,7 +590,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = '1.0';
+const APP_VERSION = 'v42';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -649,6 +649,7 @@ const ICONS = {
   edit:'<path d="M5 19h3.5L18.5 9a2.1 2.1 0 0 0-3-3L5.5 16z"/>',
   work:'<rect x="3.5" y="7.5" width="17" height="11.5" rx="2"/><path d="M9 7.5V6.2A1.7 1.7 0 0 1 10.7 4.5h2.6A1.7 1.7 0 0 1 15 6.2v1.3M3.5 12.5h17"/>',
   home:'<path d="M4.5 10.6L12 4.6l7.5 6V19a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1z"/><path d="M9.5 20v-5.5h5V20"/>',
+  reload:'<path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4.6h-4.6"/>',
   gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4L6 18M18 18l-1.6-1.6M7.6 7.6L6 6"/>',
   down:'<path d="M12 4.5v11M7.5 11l4.5 4.5 4.5-4.5M5 19.5h14"/>',
   up:'<path d="M12 15.5v-11M7.5 9L12 4.5 16.5 9M5 19.5h14"/>',
@@ -1399,6 +1400,10 @@ function viewSettings(){
                <div class="flow"><span>Action-Button</span><i>→</i><span>Sprechen</span><i>→</i><span>KI erkennt Felder</span><i>→</i><span>Eingang</span></div></div></div>`
           : `<div class="set-actions"><button class="btn btn-p" data-act="tok-new">Token erzeugen</button></div>`}
     </div>
+    <div class="set-sec"><h3>Fassung</h3>
+      <p>Diese App läuft als <strong>${APP_VERSION}</strong>. Wenn eine Änderung fehlt, holt der Knopf die neueste Fassung vom Server. Deine To-dos bleiben dabei unangetastet.</p>
+      <div class="set-actions"><button class="btn btn-g" data-act="app-update">${ic('reload')}Neueste Fassung laden</button></div>
+    </div>
     <div class="set-sec"><h3>Daten & Backup</h3>
       <p>Ein Backup enthält alle To-dos, Kategorien, Personen und Projekte dieses Geräts – praktisch als Sicherung oder zum Umziehen ohne Konto.</p>
       <p>Auf dem iPhone die App immer über das Symbol auf dem Home-Bildschirm öffnen: Safari-Tab und Home-Bildschirm-App haben getrennte Speicher.</p>
@@ -2046,6 +2051,13 @@ function toast(msg, action, sticky){
   el.hidden = false; clearTimeout(toastTimer);
   if (!sticky) toastTimer = setTimeout(() => el.hidden = true, 3800);
 }
+// Verwirft Cache und Service Worker und lädt neu – die Datenbank bleibt, nur der Programmcode wird erneuert.
+async function appUpdate(){
+  toast('Hole neueste Fassung …');
+  try { const rs = await navigator.serviceWorker?.getRegistrations?.() ?? []; for (const r of rs) await r.unregister(); } catch (e) {}
+  try { const ks = await caches.keys(); for (const k of ks) await caches.delete(k); } catch (e) {}
+  location.reload();
+}
 function deleteTodo(t){
   const copy = JSON.parse(JSON.stringify(t));
   tomb('todos', t);
@@ -2133,6 +2145,7 @@ document.addEventListener('click', e => {
     case 'check': e.stopPropagation(); toggleDone(id); break;
     case 'undo': if (undo){ undo(); undo = null; render(); $('#toast').hidden = true; } break;
     case 'reload': location.reload(); break;
+    case 'app-update': appUpdate(); break;
     case 'close-detail': closeDetail(); break;
     case 'today-day': S.todaySel = (!el.dataset.d || el.dataset.d === S.todaySel) ? null : el.dataset.d; renderMain(); break;
     case 'week': S.todaySel = null; S.weekOff = el.dataset.v === '0' ? 0 : S.weekOff + Number(el.dataset.v); renderMain(); break;
