@@ -92,8 +92,8 @@ body.resizing{cursor:col-resize;user-select:none}
 .brand-name .logo{align-self:center}
 /* Die 72 in Schreibschrift – Systemschriften, damit die App offline gleich aussieht */
 .brand-wort{display:inline-flex;align-items:baseline}
-.brand-72{font-family:'Snell Roundhand','Apple Chancery','Segoe Script','Brush Script MT',cursive;font-weight:600;font-size:1.3em;line-height:.85;margin-left:2px;letter-spacing:.01em}
-.brand-tag{font-size:10.5px;color:var(--text-3);letter-spacing:.04em;margin:1px 0 0 38px}
+.brand-72{font-family:'Bradley Hand','Noteworthy','Segoe Script','Comic Sans MS',cursive;font-weight:700;font-size:1.08em;line-height:.9;margin-left:3px;letter-spacing:0}
+.brand-tag{font-size:10.5px;color:var(--text-2);letter-spacing:.03em;line-height:1;margin:-3px 0 0 38px}
 .logo{width:28px;height:28px;border-radius:9px;background:var(--create);display:grid;place-items:center;flex:none}
 .logo svg{width:18px;height:18px;stroke:var(--surface);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .search{display:flex;align-items:center;gap:7px;background:var(--surface-3);border-radius:9px;padding:6px 9px;color:var(--text-3)}
@@ -201,7 +201,7 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .sec h3{margin:0;font-size:15px;font-weight:650;letter-spacing:-.005em}
 .sec .n{font-size:12.5px;color:var(--text-3);font-variant-numeric:tabular-nums}
 .sec.danger h3{color:var(--danger)}
-.row{display:flex;align-items:center;gap:10px;padding:5px 8px;border-radius:9px;cursor:pointer;position:relative;transition:background .12s,opacity .3s,transform .3s}
+.row{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:9px;cursor:pointer;position:relative;transition:background .12s,opacity .3s,transform .3s}
 .row::after{content:"";position:absolute;left:40px;right:8px;bottom:0;height:1px;background:var(--line)}
 .row:last-child::after{display:none}
 .row:hover{background:var(--surface-2)}
@@ -211,7 +211,7 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .row.completing{opacity:0;transform:translateX(8px)}
 .row > *{position:relative;z-index:1}
 .rowprog{position:absolute;left:0;top:0;bottom:0;z-index:0;width:var(--p,0);background:color-mix(in srgb,var(--c) 15%,transparent);border-radius:9px 3px 3px 9px;pointer-events:none;transition:width .25s}
-.row-pct{font-size:11.5px;color:var(--text-3);font-variant-numeric:tabular-nums;flex:0 0 36px;text-align:right}
+.row-pct{font-size:11.5px;color:var(--text-3);font-variant-numeric:tabular-nums;flex:0 0 40px;text-align:right;padding-right:6px;white-space:nowrap}
 .rowdel{color:var(--text-3);flex:none}
 .rowdel:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent)}
 .fmt{display:flex;gap:4px;margin:0 0 4px auto}
@@ -236,18 +236,24 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .check.on svg{opacity:1}
 .row-title{flex:1 1 auto;min-width:60px;font-size:14.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row.is-done .row-title{color:var(--text-3);text-decoration:line-through;text-decoration-color:var(--line-2)}
-.row-meta{display:flex;align-items:center;gap:10px;flex:0 0 200px;min-width:0;justify-content:flex-end;font-size:12.5px;color:var(--text-2);white-space:nowrap;overflow:hidden}
-.row-meta .m{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis}
-.row-meta .dot{width:7px;height:7px}
+.row-note,.row-proj,.row-people{display:flex;align-items:center;font-size:12.5px;color:var(--text-2);white-space:nowrap;overflow:hidden;min-width:0}
+.row-note{flex:0 0 150px;gap:5px;padding-left:10px;text-overflow:ellipsis}
+.row-proj{flex:0 0 116px;gap:5px;padding-left:10px}
+.row-proj .pn-t{overflow:hidden;text-overflow:ellipsis}
+.row-people{flex:0 0 58px;justify-content:flex-end;padding-left:8px}
+.row-note .m{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.row-note .dot{width:7px;height:7px}
 .row-meta svg.i{width:13px;height:13px}
 .av{width:18px;height:18px;border-radius:50%;background:var(--surface-3);color:var(--text-2);font-size:9.5px;font-weight:650;display:inline-grid;place-items:center;letter-spacing:.02em;flex:none}
 .avs{display:inline-flex}
 .avs .av{box-shadow:0 0 0 1.5px var(--surface)}
 .avs .av+.av{margin-left:-5px}
-.row-right{display:flex;align-items:center;gap:8px;flex:none;font-size:12.5px;color:var(--text-2)}
-.row-flags{flex:none}
-.row-flags .fl{width:19px;height:19px;display:flex;align-items:center;justify-content:center}
-.row-due{flex:0 0 86px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-right{display:flex;align-items:center;gap:0;flex:none;font-size:12.5px;color:var(--text-2)}
+.row-flags{flex:none;display:flex;align-items:center;gap:2px}
+.row-flags .fl{width:22px;height:19px;display:flex;align-items:center;justify-content:center;line-height:1}
+.row-flags .fl > *{flex:none}
+.row-due{flex:0 0 82px;padding-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-extra{flex:none;padding-left:8px;display:flex;align-items:center}
 .row-right .due{white-space:nowrap}
 .row-right .over{color:var(--danger);font-weight:550}
 .row-right .fuzzy{color:var(--text)}
@@ -256,7 +262,7 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .pb-high{background:color-mix(in srgb,var(--danger) 16%,transparent);color:var(--danger)}
 .pb-med{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
 .pb-low{background:var(--surface-3);color:var(--text-3)}
-.lb{display:inline-flex;align-items:flex-end;gap:1.5px;height:14px}
+.lb{display:inline-flex;align-items:flex-end;gap:1.5px;height:14px;align-self:center}
 .lb i{width:3px;background:var(--text-3);border-radius:1px;opacity:.35}
 .lb i:nth-child(1){height:6px}.lb i:nth-child(2){height:10px}.lb i:nth-child(3){height:14px}
 .lb-low i:nth-child(1),.lb-med i:nth-child(1),.lb-med i:nth-child(2),.lb-high i{opacity:1;background:var(--text-2)}
@@ -554,14 +560,13 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .search input,.sb-new input,.add-in,.opt-new input,.opt-new.sm input,.date-in,.ren,.d-in{font-size:16px}
   .row{gap:8px;padding:5px 6px}
   .row-title{min-width:40px}
-  .row-meta{flex:0 0 62px}
+  .row-note,.row-proj{display:none}
+  .row-people{flex:0 0 54px;padding-left:6px}
   .row-pct{display:none}
-  .row-flags .fl{width:16px}
-  .row-flags{gap:3px}
-  .row-due{flex:0 0 66px}
-  .row-meta .m:not(.avs){display:none}
-  .row-meta .m.avs{display:inline-flex}
-  .row-meta .av:nth-child(n+4){display:none}
+  .row-flags .fl{width:18px}
+  .row-flags{gap:1px}
+  .row-due{flex:0 0 64px;padding-left:6px}
+  .row-people .av:nth-child(n+4){display:none}
   .parkbtn{width:26px;height:26px}
   .set-row{flex-wrap:wrap;padding:8px 0}
   .set-row .ren{flex:1 1 140px;min-width:120px;padding:6px 8px}
@@ -984,23 +989,26 @@ const projPct = list => list.length ? Math.round(list.reduce((sum, t) => sum + p
 function rowHTML(t, o = {}){
   const a = areaOf(t), c = catById(t.cat), d = dueLabel(t), done = t.status === 'done' || t.status === 'archived';
   const names = namesOf(t.persons), proj = projById(t.project);
-  // Rechts neben der Zeile: Projekt und Personen – alles einzeilig. Der Bereich steckt in der Farbe der Checkbox.
-  const meta = [];
-  if (suchBegriff() && !trifft(t.title)){
+  // Rechte Spalten: Notiz (nur wenn die Ansicht eine braucht), Projekt, Personen.
+  // Der Bereich steckt in der Farbe der Checkbox, darum steht er nicht mehr in der Zeile.
+  let notizInhalt = '';
+  if (o.extraMeta) notizInhalt = o.extraMeta;
+  else if (suchBegriff() && !trifft(t.title)){
     const quelle = trifft(t.desc) ? ['Beschreibung', t.desc] : trifft(t.ctx) ? ['Kontext', t.ctx] : null;
-    if (quelle) meta.push(`<span class="m snip" title="Treffer in ${quelle[0]}">${ic('search')}${ausschnitt(quelle[1])}</span>`);
+    if (quelle) notizInhalt = `<span class="m snip" title="Treffer in ${quelle[0]}">${ic('search')}${ausschnitt(quelle[1])}</span>`;
   }
-  if (o.extraMeta) meta.push(o.extraMeta);
-  if (proj) meta.push(`<span class="m">${ic('diamond')}${hl(proj.name)}</span>`);
-  if (names.length) meta.push(`<span class="m avs" title="${esc(names.join(', '))}">${names.map(n => `<span class="av ${trifft(n) ? 'hit' : ''}">${esc(initials(n))}</span>`).join('')}</span>`);
-  if (t.status === 'inbox') meta.push(`<span class="m">${ic('wave')}Diktiert</span>`);
+  // Die Spalte wird für die ganze Liste gleich behandelt, sonst verrutschen die übrigen Spalten.
+  const notiz = (o.extraMeta || suchBegriff()) ? `<span class="row-note">${notizInhalt}</span>` : '';
+  const projSp = `<span class="row-proj">${proj ? `${ic('diamond')}<span class="pn-t">${hl(proj.name)}</span>` : ''}</span>`;
+  const peopleSp = `<span class="row-people"${names.length ? ` title="${esc(names.join(', '))}"` : ''}>${names.map(n => `<span class="av ${trifft(n) ? 'hit' : ''}">${esc(initials(n))}</span>`).join('')}</span>`;
   // Feste Plätze: Dringlichkeit, Wichtigkeit, Aufwand stehen in jeder Zeile an derselben Stelle
   const slot = inner => `<span class="fl">${inner}</span>`;
   const flags = `<span class="flags row-flags">${slot(prioBadge(t.prio))}${slot(impBadge(t.imp))}${slot(loadBadge(t.load))}</span>`;
   const move = S.reorder ? `<span class="grip" aria-hidden="true">${ic('grip')}</span>` : '';
   const park = (S.reorder || o.noPark) ? '' : `<button class="parkbtn ${t.status === 'parked' ? 'on' : ''}" data-act="park" data-id="${t.id}" title="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}" aria-label="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}"><span class="pbox">P</span></button>`;
-  let right = o.right;
-  if (right === undefined) right = `${flags}<span class="row-due">${d.txt ? `<span class="due ${d.cls}" title="${esc(d.txt + (d.k ? ' · ' + d.k : ''))}">${esc(d.txt)}</span>` : ''}</span>`;
+  const dueSp = `<span class="row-due">${d.txt ? `<span class="due ${d.cls}" title="${esc(d.txt + (d.k ? ' · ' + d.k : ''))}">${esc(d.txt)}</span>` : ''}</span>`;
+  // Kennzeichen und Frist stehen in jeder Liste an derselben Stelle; eigene Inhalte kommen dahinter.
+  const right = `${flags}${dueSp}${o.right ? `<span class="row-extra">${o.right}</span>` : ''}`;
   // Fortschritt füllt die Zeile hinter dem Text bis zur Prozentzahl
   const pct = done ? 0 : progOf(t);
   const bar = pct ? `<i class="rowprog" style="--p:${pct}%;--c:${areaColor(a) || 'var(--accent)'}" aria-hidden="true"></i>` : '';
@@ -1011,7 +1019,7 @@ function rowHTML(t, o = {}){
     <button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="${done ? 'Wieder öffnen' : 'Als erledigt markieren'}"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>${park}
     <span class="row-title" title="${esc(t.title)}">${hl(t.title)}</span>
     ${pctTxt}
-    <span class="row-right">${right}</span>${del}${move}<span class="row-meta">${meta.join('')}</span>
+    <span class="row-right">${right}</span>${del}${move}${notiz}${projSp}${peopleSp}
   </div></div>`;
 }
 let LAST_GROUPS = [];
