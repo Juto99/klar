@@ -93,6 +93,7 @@ body.resizing{cursor:col-resize;user-select:none}
 /* Die 72 in Schreibschrift – Systemschriften, damit die App offline gleich aussieht */
 .brand-wort{display:inline-flex;align-items:baseline}
 .brand-72{font-family:'Bradley Hand','Noteworthy','Segoe Script','Comic Sans MS',cursive;font-weight:700;font-size:1.08em;line-height:.9;margin-left:3px;letter-spacing:0}
+.ver{margin-left:auto;font-size:10.5px;color:var(--text-3);font-variant-numeric:tabular-nums}
 .brand-tag{font-size:10.5px;color:var(--text-2);letter-spacing:.03em;line-height:1;margin:-3px 0 0 38px}
 .logo{width:28px;height:28px;border-radius:9px;background:var(--create);display:grid;place-items:center;flex:none}
 .logo svg{width:18px;height:18px;stroke:var(--surface);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
@@ -590,7 +591,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v42';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v43';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1080,7 +1081,7 @@ function renderSidebar(){
     <div class="sb-group">${areaRow('work')}${areaRow('private')}${item('people', 'Personen', PEOPLE.length, ic('person'))}${item('projects', 'Projekte', PROJECTS.length, ic('folder'))}</div>
     <div class="sb-group">${item('done', 'Erledigt', T.filter(t => t.status === 'done').length, ic('done'))}${item('archive', 'Archiv', T.filter(t => t.status === 'archived').length, ic('archive'))}${item('parked', 'Parkliste', T.filter(t => t.status === 'parked').length, ic('pause'))}${item('settings', 'Einstellungen', '', ic('gear'))}</div>
     <div class="sb-foot">
-      <div class="sync"><i class="dot" style="--c:${syncCol}"></i><span>${syncTxt}</span>${syncBtn}</div>
+      <div class="sync"><i class="dot" style="--c:${syncCol}"></i><span>${syncTxt}</span>${syncBtn}<span class="ver" title="Laufende Fassung – Einstellungen → Fassung lädt die neueste">${APP_VERSION}</span></div>
       ${themeSeg()}
     </div>`;
   if (S.addingCat) setTimeout(() => $('#newcat')?.focus(), 0);
@@ -2539,6 +2540,15 @@ async function boot(){
 function registerSW(){
   if (!('serviceWorker' in navigator)) return;
   if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
+  // Übernimmt eine neue Fassung die Kontrolle, lädt die Seite einmal neu – sonst zeigt das
+  // Gerät weiter die alte Oberfläche, obwohl längst eine neuere veröffentlicht ist.
+  const hatteControl = !!navigator.serviceWorker.controller;
+  let laedtNeu = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hatteControl || laedtNeu) return;
+    if (A || S.authOpen){ toast('Neue Fassung bereit', { act:'reload', label:'Neu laden' }, true); return; }
+    laedtNeu = true; flushSaves(); location.reload();
+  });
   navigator.serviceWorker.register('./sw.js').then(reg => {
     reg.addEventListener('updatefound', () => {
       const nw = reg.installing;
@@ -2546,6 +2556,8 @@ function registerSW(){
         if (nw.state === 'installed' && navigator.serviceWorker.controller) toast('Neue Version verfügbar', { act:'reload', label:'Neu laden' }, true);
       });
     });
+    setInterval(() => reg.update().catch(() => {}), 1800000);   // halbstündlich nachsehen
+    addEventListener('focus', () => reg.update().catch(() => {}));
   }).catch(() => {});
 }
 boot();
