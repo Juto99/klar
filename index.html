@@ -202,6 +202,26 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .row:hover::after,.row.is-sel::after{opacity:0}
 .row.is-sel{background:var(--accent-soft)}
 .row.completing{opacity:0;transform:translateX(8px)}
+.row > *{position:relative;z-index:1}
+.rowprog{position:absolute;left:0;top:0;bottom:0;z-index:0;width:var(--p,0);background:color-mix(in srgb,var(--c) 15%,transparent);border-radius:9px 3px 3px 9px;pointer-events:none;transition:width .25s}
+.row-pct{font-size:11.5px;color:var(--text-3);font-variant-numeric:tabular-nums;flex:none}
+.rowdel{color:var(--text-3);flex:none}
+.rowdel:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent)}
+.fmt{display:flex;gap:4px;margin:0 0 4px auto}
+.fmt button{width:26px;height:24px;border-radius:6px;font-size:12.5px;color:var(--text-2);background:var(--surface-2)}
+.fmt button:hover{background:var(--surface-3);color:var(--text)}
+.d-head{display:flex;align-items:center;gap:8px}
+.d-head .d-lab{margin:0}
+.d-md{padding:7px 9px;border-radius:9px;font-size:14.5px;line-height:1.45;cursor:text;white-space:pre-wrap;word-break:break-word;background:var(--surface-2)}
+.d-md:hover{background:var(--surface-3)}
+.d-field.md > .d-in{display:none}
+.d-field:not(.md) > .d-md{display:none}
+.prg{width:100%;accent-color:var(--accent);height:26px}
+.hdr-prog{display:flex;align-items:center;gap:10px;margin:2px 0 14px}
+.hdr-prog .prog{width:180px;height:7px}
+.prow.is-akt{background:var(--accent-soft)}
+.prow.is-akt::after{opacity:0}
+.prow.is-akt .pn-in{font-weight:650}
 .check{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1.6px var(--c);display:grid;place-items:center;flex:none;transition:background .15s}
 .check svg{width:12px;height:12px;stroke:var(--surface);stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0}
 .check:hover{background:color-mix(in srgb,var(--c) 14%,transparent)}
@@ -885,7 +905,7 @@ const S = {
   sort:'due', area:'work', q:'', qDone:false, allView:'list', reorder:false, weekOff:0, online:navigator.onLine, memOnly:false,
   addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
   syncState:'', syncError:'', lastSync:0, authOpen:false, authMode:'in', authBusy:false, authErr:'', inboxTokens:null,
-  calAreas:{ work:true, private:true }
+  calAreas:{ work:true, private:true }, aktivEnt:null
 };
 let A = null;
 let undo = null;
@@ -925,11 +945,28 @@ function hl(text){
 const trifft = text => { const q = suchBegriff(); return !!q && String(text || '').toLowerCase().includes(q.toLowerCase()); };
 // Kurzer Ausschnitt rund um den ersten Treffer, z. B. im Kontext
 function ausschnitt(text, rand = 22){
-  const q = suchBegriff(); text = String(text || '').replace(/\s+/g, ' ');
+  const q = suchBegriff(); text = mdRoh(text).replace(/\s+/g, ' ');   // Formatzeichen stören in der Zeile
   const i = text.toLowerCase().indexOf(q.toLowerCase()); if (i < 0) return '';
   const a = Math.max(0, i - rand), b = Math.min(text.length, i + q.length + rand);
   return (a > 0 ? '…' : '') + hl(text.slice(a, b)) + (b < text.length ? '…' : '');
 }
+/* Textformatierung: **fett** und *kursiv* – als Zeichen gespeichert, damit der Abgleich reiner Text bleibt. */
+const FETTKURSIV = /\*\*\*([^*\n]+)\*\*\*/g;
+const FETT = /\*\*([^*\n]+)\*\*/g;
+const KURSIV = /(^|[\s(\[])[*_]([^*_\n]+)[*_](?=$|[\s).,;:!?\]])/g;
+const FORMAT_TEST = /\*\*[^*\n]+\*\*|(^|[\s(\[])[*_][^*_\n]+[*_]($|[\s).,;:!?\]])/;
+const hatFormat = s => FORMAT_TEST.test(String(s || ''));
+function mdInline(text){
+  return esc(text).replace(FETTKURSIV, '<strong><em>$1</em></strong>').replace(FETT, '<strong>$1</strong>').replace(KURSIV, '$1<em>$2</em>');
+}
+const mdBlock = text => mdInline(text).replace(/\n/g, '<br>');
+const mdRoh = s => String(s ?? '').replace(FETTKURSIV, '$1').replace(FETT, '$1').replace(KURSIV, '$1$2');   // für Listen: Zeichen raus
+const fmtBar = () => `<div class="fmt"><button type="button" data-act="fmt" data-f="b" title="Fett (⌘B)" aria-label="Fett"><b>F</b></button><button type="button" data-act="fmt" data-f="i" title="Kursiv (⌘I)" aria-label="Kursiv"><i>K</i></button></div>`;
+
+/* Fortschritt: 0–100 % je To-do; Erledigtes zählt als 100 %. */
+const progOf = t => (t.status === 'done' || t.status === 'archived') ? 100 : Math.max(0, Math.min(100, Math.round(+t.progress || 0)));
+const projPct = list => list.length ? Math.round(list.reduce((sum, t) => sum + progOf(t), 0) / list.length) : 0;
+
 function rowHTML(t, o = {}){
   const a = areaOf(t), c = catById(t.cat), d = dueLabel(t), done = t.status === 'done' || t.status === 'archived';
   const names = namesOf(t.persons), proj = projById(t.project);
@@ -949,10 +986,17 @@ function rowHTML(t, o = {}){
   const park = (S.reorder || o.noPark) ? '' : `<button class="parkbtn ${t.status === 'parked' ? 'on' : ''}" data-act="park" data-id="${t.id}" title="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}" aria-label="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}"><span class="pbox">P</span></button>`;
   let right = o.right;
   if (right === undefined) right = `${flags}${d.txt ? `<span class="due ${d.cls}" title="${esc(d.txt + (d.k ? ' · ' + d.k : ''))}">${esc(d.txt)}</span>` : ''}`;
+  // Fortschritt füllt die Zeile hinter dem Text bis zur Prozentzahl
+  const pct = done ? 0 : progOf(t);
+  const bar = pct ? `<i class="rowprog" style="--p:${pct}%;--c:${areaColor(a) || 'var(--accent)'}" aria-hidden="true"></i>` : '';
+  const pctTxt = pct ? `<span class="row-pct" title="${pct} % erledigt">${pct} %</span>` : '';
+  const del = o.del ? `<button class="icon-btn rowdel" data-act="row-del" data-id="${t.id}" title="Löschen" aria-label="To-do löschen">${ic('trash')}</button>` : '';
   return `<div class="swipe" data-swipe="${t.id}"><div class="swipe-act"><button data-act="swipe-del" data-id="${t.id}">${ic('trash')}Löschen</button></div><div class="row ${done ? 'is-done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}">
+    ${bar}
     <button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="${done ? 'Wieder öffnen' : 'Als erledigt markieren'}"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>
     <span class="row-title" title="${esc(t.title)}">${hl(t.title)}</span>
-    <span class="row-right">${right}</span>${park}${move}${meta.length ? `<span class="row-meta">${meta.join('')}</span>` : ''}
+    ${pctTxt}
+    <span class="row-right">${right}</span>${del}${park}${move}${meta.length ? `<span class="row-meta">${meta.join('')}</span>` : ''}
   </div></div>`;
 }
 let LAST_GROUPS = [];
@@ -988,7 +1032,8 @@ function renderSidebar(){
     all: open.length
   };
   const tile = (v, icon, label, n) => `<button class="tile ${S.view === v ? 'on' : ''}" data-act="nav" data-view="${v}">${ic(icon)}<span class="tile-l">${label}</span>${n === '' ? '' : `<span class="tile-n">${n}</span>`}</button>`;
-  const item = (v, label, n, lead, cls = '') => `<button class="sb-item ${cls} ${S.view === v ? 'on' : ''}" data-act="nav" data-view="${v}">${lead}<span>${esc(label)}</span>${n !== '' ? `<span class="cnt">${n}</span>` : ''}</button>`;
+  const aktivIn = v => S.view === v || (v === 'projects' && S.view.startsWith('project:')) || (v === 'people' && S.view.startsWith('person:'));
+  const item = (v, label, n, lead, cls = '') => `<button class="sb-item ${cls} ${aktivIn(v) ? 'on' : ''}" data-act="nav" data-view="${v}">${lead}<span>${esc(label)}</span>${n !== '' ? `<span class="cnt">${n}</span>` : ''}</button>`;
   const areaRow = a => {
     const op = areaOpen(a), n = open.filter(t => areaOf(t) === a).length;
     const lead = `<span class="lead" style="color:${areaColor(a)}">${ic(a === 'work' ? 'work' : 'home')}</span>`;
@@ -1061,7 +1106,7 @@ function viewDeadlines(){
 function viewInbox(){
   const items = T.filter(t => t.status === 'inbox').sort((a, b) => (b.createdTs || 0) - (a.createdTs || 0));
   return header('Eingang', 'Per Sprache erfasst. Kurz prüfen, ergänzen, einsortieren.') +
-    (items.length ? `<div>${items.map(t => rowHTML(t, { noPark:true, right:`<button class="btn btn-g btn-s" data-act="review" data-id="${t.id}">Prüfen</button>` })).join('')}</div>`
+    (items.length ? `<div>${items.map(t => rowHTML(t, { noPark:true, del:true, right:`<button class="btn btn-g btn-s" data-act="review" data-id="${t.id}">Prüfen</button>` })).join('')}</div>`
       : `<div class="empty">Eingang leer.</div>`) +
     `<div class="note">${ic('wave')}<div><h4>So kommen To-dos hierher</h4>
       <p>Action-Button am iPhone drücken, sprechen, fertig: Der Kurzbefehl schickt das Diktat an Brain72, die KI erkennt Titel, Frist, Dringlichkeit, Wichtigkeit und Aufwand. Einrichtung unter Einstellungen → iPhone-Kurzbefehl.</p>
@@ -1222,15 +1267,17 @@ function nextDueTxt(list){
 function viewPeople(){
   // Der Name steht direkt als Eingabefeld in der Zeile: umbenennen geht ohne Umweg über die Einstellungen.
   // To-dos merken sich nur die ID der Person, darum greift ein neuer Name überall sofort.
-  const rows = [...PEOPLE].sort(byName).map(p => { const l = T.filter(t => t.persons.includes(p.id)); const o = l.filter(isOpen).length; return `<div class="prow prow-e"><span class="av">${esc(initials(p.name))}</span><span class="pm"><input class="ren pn-in" data-rename="people" data-id="${p.id}" value="${esc(p.name)}" aria-label="Name der Person ändern" enterkeyhint="done"><div class="ps">${o} offen · ${nextDueTxt(l)}</div></span><button class="icon-btn chev" data-act="nav" data-view="person:${p.id}" aria-label="To-dos von ${esc(p.name)} anzeigen">${ic('chevR')}</button></div>`; }).join('');
+  const aktP = S.view.startsWith('person:') ? S.view.slice(7) : S.aktivEnt;
+  const rows = [...PEOPLE].sort(byName).map(p => { const l = T.filter(t => t.persons.includes(p.id)); const o = l.filter(isOpen).length; return `<div class="prow prow-e ${p.id === aktP ? 'is-akt' : ''}"><span class="av">${esc(initials(p.name))}</span><span class="pm"><input class="ren pn-in" data-rename="people" data-id="${p.id}" value="${esc(p.name)}" aria-label="Name der Person ändern" enterkeyhint="done"><div class="ps">${o} offen · ${nextDueTxt(l)}</div></span><button class="icon-btn chev" data-act="nav" data-view="person:${p.id}" aria-label="To-dos von ${esc(p.name)} anzeigen">${ic('chevR')}</button></div>`; }).join('');
   return header('Personen', 'Namen hier direkt ändern – die To-dos übernehmen das. Nur Vornamen oder Kürzel verwenden.', '', `<button class="btn btn-g" data-act="nav" data-view="settings">${ic('gear')}Verwalten</button>`) +
     (rows ? `<div class="plist">${rows}</div>` : `<div class="empty">Noch keine Personen. Leg sie hier oder beim Anlegen eines To-dos an.</div>`) +
     `<div class="addbar"><input class="add-in" data-add="person" placeholder="+ Person hinzufügen" enterkeyhint="done"></div>`;
 }
 function viewProjects(){
   // Wie bei den Personen: Name als Eingabefeld in der Zeile. To-dos speichern nur die Projekt-ID.
-  const rows = [...PROJECTS].sort(byName).map(p => { const l = T.filter(t => t.project === p.id); const d = l.filter(t => t.status === 'done' || t.status === 'archived').length; const pct = l.length ? Math.round(d / l.length * 100) : 0; const c = areaColor(p.area); return `<div class="prow prow-e"><span class="pico" style="--c:${c}">${ic('diamond')}</span><span class="pm"><input class="ren pn-in" data-rename="projects" data-id="${p.id}" value="${esc(p.name)}" aria-label="Name des Projekts ändern" enterkeyhint="done"><div class="ps">${AREAS[p.area].name} · ${l.filter(isOpen).length} offen · ${nextDueTxt(l)}</div></span><span class="prog" style="--c:${c}"><i style="width:${pct}%"></i></span><span class="prog-l">${pct} %</span><button class="icon-btn chev" data-act="nav" data-view="project:${p.id}" aria-label="To-dos von ${esc(p.name)} anzeigen">${ic('chevR')}</button></div>`; }).join('');
-  return header('Projekte', 'Namen hier direkt ändern – die To-dos übernehmen das. Löschen und neu anlegen unter Verwalten.', '', `<button class="btn btn-g" data-act="nav" data-view="settings">${ic('gear')}Verwalten</button>`) +
+  const akt = S.view.startsWith('project:') ? S.view.slice(8) : S.aktivEnt;
+  const rows = [...PROJECTS].sort(byName).map(p => { const l = T.filter(t => t.project === p.id); const pct = projPct(l); const c = areaColor(p.area); return `<div class="prow prow-e ${p.id === akt ? 'is-akt' : ''}"><span class="pico" style="--c:${c}">${ic('diamond')}</span><span class="pm"><input class="ren pn-in" data-rename="projects" data-id="${p.id}" value="${esc(p.name)}" aria-label="Name des Projekts ändern" enterkeyhint="done"><div class="ps">${AREAS[p.area].name} · ${l.filter(isOpen).length} offen · ${nextDueTxt(l)}</div></span><span class="prog" style="--c:${c}"><i style="width:${pct}%"></i></span><span class="prog-l">${pct} %</span><button class="icon-btn chev" data-act="nav" data-view="project:${p.id}" aria-label="To-dos von ${esc(p.name)} anzeigen">${ic('chevR')}</button></div>`; }).join('');
+  return header('Projekte', 'Namen hier direkt ändern. Der Balken zeigt den mittleren Fortschritt aller To-dos des Projekts.', '', `<button class="btn btn-g" data-act="nav" data-view="settings">${ic('gear')}Verwalten</button>`) +
     (rows ? `<div class="plist">${rows}</div>` : `<div class="empty">Noch keine Projekte.</div>`) +
     `<div class="addbar"><input class="add-in" data-add="project" placeholder="+ Projekt hinzufügen" enterkeyhint="done">${areaSeg('newProjArea')}</div>`;
 }
@@ -1243,7 +1290,12 @@ function viewFiltered(kind, id){
   else if (kind === 'project' && projById(id)){ const p = projById(id); list = T.filter(t => t.project === id); title = p.name; eyebrow = `<i class="dot" style="--c:${areaColor(p.area)}"></i>Projekt · ${AREAS[p.area].name}`; }
   else { S.view = 'today'; return viewToday(); }
   const open = list.filter(isOpen), done = list.filter(t => t.status === 'done').sort((a, b) => b.doneAt.localeCompare(a.doneAt));
-  return header(title, `${open.length} offen · ${done.length} kürzlich erledigt`, eyebrow, addBtn()) + groupsHTML(bucketGroups(open), { empty:'Nichts offen.' }) +
+  let balken = '';
+  if (kind === 'project' && list.length){
+    const pct = projPct(list), c = areaColor(projById(id).area);
+    balken = `<div class="hdr-prog"><span class="prog" style="--c:${c}"><i style="width:${pct}%"></i></span><span class="prog-l">${pct} %</span><span class="muted">Fortschritt über alle To-dos</span></div>`;
+  }
+  return header(title, `${open.length} offen · ${done.length} kürzlich erledigt`, eyebrow, addBtn()) + balken + groupsHTML(bucketGroups(open), { empty:'Nichts offen.' }) +
     (done.length ? `<div class="sec"><h3>Zuletzt erledigt</h3><span class="n">${done.length}</span></div><div>${done.map(t => rowHTML(t, { right:`<span class="muted">${relDay(t.doneAt)}</span>` })).join('')}</div>` : '');
 }
 // Reihenfolge innerhalb der angezeigten Gruppe ändern
@@ -1358,6 +1410,57 @@ function renderDetail(){
   $('#detail').querySelectorAll('textarea.grow').forEach(grow);
 }
 function grow(el){ el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+// Textfeld mit Formatierleiste: beim Verlassen zeigt es den Text gesetzt, beim Antippen wieder roh.
+function formatiere(ta, f){
+  if (!ta) return;
+  const z = f === 'b' ? '**' : '*', v = ta.value;
+  let a = ta.selectionStart, b = ta.selectionEnd;
+  if (a === b){                                   // ohne Auswahl: das Wort unter dem Cursor nehmen
+    while (a > 0 && /\S/.test(v[a - 1])) a--;
+    while (b < v.length && /\S/.test(v[b])) b++;
+    if (a === b){                                 // gar kein Wort: Zeichen setzen, Cursor dazwischen
+      ta.setRangeText(z + z, a, a, 'end');
+      ta.selectionStart = ta.selectionEnd = a + z.length;
+      ta.dispatchEvent(new Event('input', { bubbles:true })); ta.focus(); return;
+    }
+  }
+  const sel = v.slice(a, b);
+  const drin = sel.startsWith(z) && sel.endsWith(z) && sel.length > 2 * z.length && !(z === '*' && sel.startsWith('**'));
+  const aussen = v.slice(a - z.length, a) === z && v.slice(b, b + z.length) === z;
+  let start = a, ende = b, txt = z + sel + z;
+  if (drin){ txt = sel.slice(z.length, -z.length); }
+  else if (aussen){ start = a - z.length; ende = b + z.length; txt = sel; }
+  ta.setRangeText(txt, start, ende, 'select');
+  ta.dispatchEvent(new Event('input', { bubbles:true }));
+  ta.focus();
+}
+// Gesetzte Ansicht antippen → zurück zum Bearbeiten
+document.addEventListener('click', e => {
+  const md = e.target.closest('.d-md'), feld = md?.closest('.d-field');
+  if (!feld) return;
+  feld.classList.remove('md');
+  const ta = feld.querySelector('textarea');
+  grow(ta); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+});
+// Feld verlassen → Text gesetzt zeigen, sofern Formatierung drin ist
+document.addEventListener('focusout', e => {
+  const ta = e.target, feld = ta?.dataset?.ef && ta.closest?.('.d-field');
+  if (!feld) return;
+  setTimeout(() => {                              // Klick auf F/K soll nicht umschalten
+    if (feld.contains(document.activeElement)) return;
+    const md = feld.querySelector('.d-md');
+    if (md) md.innerHTML = mdBlock(ta.value);
+    feld.classList.toggle('md', hatFormat(ta.value));
+  }, 120);
+});
+function textFeld(t, f, label, ph, style = ''){
+  const wert = t[f] || '';
+  return `<div class="d-sec d-field ${hatFormat(wert) ? 'md' : ''}" data-field="${f}"${style ? ` style="${style}"` : ''}>
+    <div class="d-head"><div class="d-lab">${label}</div>${fmtBar()}</div>
+    <textarea class="d-in grow" data-ef="${f}" data-id="${t.id}" rows="2" placeholder="${ph}">${esc(wert)}</textarea>
+    <div class="d-md" data-md role="button" tabindex="0" title="Antippen zum Ändern">${mdBlock(wert)}</div>
+  </div>`;
+}
 function detailHTML(t){
   const a = areaOf(t), d = dueLabel(t), done = t.status === 'done' || t.status === 'archived';
   const status = t.status === 'open' ? 'Offen' : t.status === 'inbox' ? 'Im Eingang' : t.status === 'done' ? `Erledigt ${relDay(t.doneAt)}` : `Archiviert · erledigt ${relDay(t.doneAt)}`;
@@ -1371,8 +1474,8 @@ function detailHTML(t){
     <div class="d-title"><button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="Erledigt umschalten"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button><textarea class="d-title-in grow" data-ef="title" data-id="${t.id}" data-orig="${esc(t.title)}" rows="1" placeholder="Was ist zu tun?" aria-label="To-do-Titel" title="Antippen zum Ändern">${esc(t.title)}</textarea></div>
     ${suchBegriff() && (trifft(t.desc) || trifft(t.ctx) || trifft(t.title)) ? `<div class="d-hits"><div class="d-lab">${ic('search')}Treffer für „${esc(suchBegriff())}“</div>
       ${[['Titel', t.title], ['Beschreibung', t.desc], ['Kontext', t.ctx]].filter(([, v]) => trifft(v)).map(([l, v]) => `<div class="hit-row"><span class="hit-l">${l}</span><span class="hit-t">${hl(v)}</span></div>`).join('')}</div>` : ''}
-    <div class="d-sec" style="margin-top:16px"><div class="d-lab">Beschreibung</div><textarea class="d-in grow" data-ef="desc" data-id="${t.id}" rows="2" placeholder="Details, Teilschritte …">${esc(t.desc)}</textarea></div>
-    <div class="d-sec"><div class="d-lab">Kontext</div><textarea class="d-in grow" data-ef="ctx" data-id="${t.id}" rows="2" placeholder="Hintergrund, Absprachen …">${esc(t.ctx)}</textarea></div>
+    ${textFeld(t, 'desc', 'Beschreibung', 'Details, Teilschritte …', 'margin-top:16px')}
+    ${textFeld(t, 'ctx', 'Kontext', 'Hintergrund, Absprachen …')}
     <div class="d-sec"><div class="d-lab">Bereich</div>
       <div class="chips">${Object.entries(AREAS).map(([k, v]) => chip('e-area', k, a === k, `<i class="dot" style="--c:${v.color}"></i>${v.name}`)).join('')}</div>
       ${a ? `<div class="d-lab" style="margin-top:14px">Unterkategorie</div><div class="chips">${catsOf(a).map(c => chip('e-cat', c.id, t.cat === c.id, esc(c.name))).join('')}${newIn('cat', 'Neue')}</div>` : ''}
@@ -1383,6 +1486,11 @@ function detailHTML(t){
       <div class="chips">${IMPS.map(([v, l]) => chip('e-imp', v, t.imp === v, impBadge(v) + l)).join('')}${chip('e-imp', '', !t.imp, 'Ohne')}</div>
       <div class="d-lab" style="margin-top:14px">Aufwand</div>
       <div class="chips">${LOADS.map(([v, l]) => chip('e-load', v, t.load === v, loadBadge(v) + l)).join('')}${chip('e-load', '', !t.load, 'Ohne')}</div>
+    </div>
+    <div class="d-sec"><div class="d-lab">Fortschritt · <b data-prg-l>${progOf(t)} %</b></div>
+      ${done ? `<div class="muted">Erledigt – zählt als 100 %.</div>`
+        : `<input type="range" class="prg" min="0" max="100" step="5" value="${progOf(t)}" data-ef="progress" data-id="${t.id}" aria-label="Fortschritt in Prozent">
+      <div class="chips">${[0, 25, 50, 75, 100].map(v => chip('e-prog', v, progOf(t) === v, v + ' %')).join('')}</div>`}
     </div>
     <div class="d-sec"><div class="d-lab">Deadline${dueInfo}</div>
       <div class="chips">${DUE_OPTS().map(([k, l, v]) => chip('e-due', k, sameDue(t.due, v), l)).join('')}<input type="date" class="date-in sm" data-ef="date" data-id="${t.id}" value="${t.due?.type === 'day' ? t.due.date : ''}" aria-label="Bestimmtes Datum"></div>
@@ -1767,9 +1875,9 @@ function stepHTML(k){
     case 'title': return `<h2 class="q">Was ist zu tun?</h2><p class="q-help">Kurz und aktiv formuliert.</p>
       <div class="field"><input data-f="title" value="${esc(d.title)}" placeholder="z. B. Angebote vergleichen" enterkeyhint="next"></div>`;
     case 'desc': return `<h2 class="q">Beschreibung</h2><p class="q-help">Was genau gehört dazu? Optional.</p>
-      <div class="field"><textarea data-f="desc" placeholder="Details, Teilschritte …">${esc(d.desc)}</textarea></div>`;
+      <div class="fmt-wrap">${fmtBar()}<div class="field"><textarea data-f="desc" placeholder="Details, Teilschritte …">${esc(d.desc)}</textarea></div></div>`;
     case 'ctx': return `<h2 class="q">Gibt es Kontext?</h2><p class="q-help">Hintergrund, warum es wichtig ist, worauf zu achten ist. Optional.</p>
-      <div class="field"><textarea data-f="ctx" placeholder="Hintergrund, Links, Absprachen …">${esc(d.ctx)}</textarea></div>`;
+      <div class="fmt-wrap">${fmtBar()}<div class="field"><textarea data-f="ctx" placeholder="Hintergrund, Links, Absprachen …">${esc(d.ctx)}</textarea></div></div>`;
     case 'area': return `<h2 class="q">Arbeit oder privat?</h2>
       <div class="big-opts">${Object.entries(AREAS).map(([a, v]) => `<button class="big-opt ${d.area === a ? 'on' : ''}" style="--c:${v.color}" data-act="a-area" data-v="${a}"><i class="dot" style="--c:${v.color};width:12px;height:12px"></i><span class="l">${v.name}</span><span class="s">${esc(catsOf(a).map(c => c.name).join(' · ')) || '&nbsp;'}</span></button>`).join('')}</div>`;
     case 'cat': {
@@ -1950,6 +2058,8 @@ function applyTheme(){
 }
 function nav(v){
   flushSaves();
+  // Geöffnetes Projekt bzw. geöffnete Person bleibt in der Übersicht hervorgehoben
+  if (/^(project|person):/.test(v)) S.aktivEnt = v.split(/:(.+)/)[1];
   if (v === 'settings' && sess && S.inboxTokens === null) tokenLaden();
   S.view = v; S.confirmDel = null; S.confirmM = null;
   if (v === 'deadlines'){ S.todaySel = null; S.weekOff = 0; }
@@ -2050,6 +2160,9 @@ document.addEventListener('click', e => {
       render();
       toast(t.status === 'parked' ? 'Geparkt – liegt in der Parkliste' : 'Wieder aufgenommen', { act:'undo', label:'Rückgängig' });
       break; }
+    case 'row-del': { e.stopPropagation(); const t = T.find(x => x.id === id); if (t) deleteTodo(t); break; }
+    case 'e-prog': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.progress = Number(el.dataset.v); }); break; }
+    case 'fmt': { e.preventDefault(); formatiere(el.closest('.d-field, .fmt-wrap')?.querySelector('textarea'), el.dataset.f); break; }
     case 'del': S.confirmDel = id; render(); break;
     case 'del-no': S.confirmDel = null; render(); break;
     case 'swipe-del': { const t = T.find(x => x.id === id); if (t) deleteTodo(t); break; }
@@ -2173,6 +2286,7 @@ document.addEventListener('keydown', e => {
     if (o) toast(`„${o.name}“ angelegt`);
     return;
   }
+  if ((e.metaKey || e.ctrlKey) && tag === 'TEXTAREA' && /^[biBI]$/.test(e.key)){ e.preventDefault(); formatiere(e.target, e.key.toLowerCase()); return; }
   if (e.target.dataset?.ef === 'title' && e.key === 'Enter'){ e.preventDefault(); e.target.blur(); return; }
   const add = e.target.dataset?.add;
   if (add && e.key === 'Enter'){
@@ -2207,6 +2321,11 @@ document.addEventListener('input', e => {
 document.addEventListener('input', e => {
   const f = e.target.dataset?.ef; if (!f || f === 'date') return;
   const t = T.find(x => x.id === e.target.dataset.id); if (!t) return;
+  if (f === 'progress'){
+    t.progress = Number(e.target.value);
+    const l = document.querySelector('[data-prg-l]'); if (l) l.textContent = t.progress + ' %';
+    saveSoon(t); return;
+  }
   t[f] = f === 'title' ? e.target.value.replace(/\n/g, ' ') : e.target.value;
   if (e.target.classList.contains('grow')) grow(e.target);
   saveSoon(t);
