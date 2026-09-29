@@ -204,7 +204,7 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .row.completing{opacity:0;transform:translateX(8px)}
 .row > *{position:relative;z-index:1}
 .rowprog{position:absolute;left:0;top:0;bottom:0;z-index:0;width:var(--p,0);background:color-mix(in srgb,var(--c) 15%,transparent);border-radius:9px 3px 3px 9px;pointer-events:none;transition:width .25s}
-.row-pct{font-size:11.5px;color:var(--text-3);font-variant-numeric:tabular-nums;flex:none}
+.row-pct{font-size:11.5px;color:var(--text-3);font-variant-numeric:tabular-nums;flex:0 0 36px;text-align:right}
 .rowdel{color:var(--text-3);flex:none}
 .rowdel:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent)}
 .fmt{display:flex;gap:4px;margin:0 0 4px auto}
@@ -229,7 +229,7 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .check.on svg{opacity:1}
 .row-title{flex:1 1 auto;min-width:60px;font-size:14.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row.is-done .row-title{color:var(--text-3);text-decoration:line-through;text-decoration-color:var(--line-2)}
-.row-meta{display:flex;align-items:center;gap:10px;flex:0 0 auto;max-width:42%;min-width:0;justify-content:flex-end;font-size:12.5px;color:var(--text-2);white-space:nowrap;overflow:hidden}
+.row-meta{display:flex;align-items:center;gap:10px;flex:0 0 200px;min-width:0;justify-content:flex-end;font-size:12.5px;color:var(--text-2);white-space:nowrap;overflow:hidden}
 .row-meta .m{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .row-meta .dot{width:7px;height:7px}
 .row-meta svg.i{width:13px;height:13px}
@@ -238,6 +238,9 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .avs .av{box-shadow:0 0 0 1.5px var(--surface)}
 .avs .av+.av{margin-left:-5px}
 .row-right{display:flex;align-items:center;gap:8px;flex:none;font-size:12.5px;color:var(--text-2)}
+.row-flags{flex:none}
+.row-flags .fl{width:19px;height:19px;display:flex;align-items:center;justify-content:center}
+.row-due{flex:0 0 86px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row-right .due{white-space:nowrap}
 .row-right .over{color:var(--danger);font-weight:550}
 .row-right .fuzzy{color:var(--text)}
@@ -544,7 +547,11 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .search input,.sb-new input,.add-in,.opt-new input,.opt-new.sm input,.date-in,.ren,.d-in{font-size:16px}
   .row{gap:8px;padding:5px 6px}
   .row-title{min-width:40px}
-  .row-meta{max-width:66px;flex:0 0 auto}
+  .row-meta{flex:0 0 52px}
+  .row-pct{display:none}
+  .row-flags .fl{width:16px}
+  .row-flags{gap:3px}
+  .row-due{flex:0 0 66px}
   .row-meta .m:not(.avs){display:none}
   .row-meta .m.avs{display:inline-flex}
   .row-meta .av:nth-child(n+3){display:none}
@@ -977,15 +984,17 @@ function rowHTML(t, o = {}){
     if (quelle) meta.push(`<span class="m snip" title="Treffer in ${quelle[0]}">${ic('search')}${ausschnitt(quelle[1])}</span>`);
   }
   if (o.extraMeta) meta.push(o.extraMeta);
-  if (a) meta.push(`<span class="m"><i class="dot" style="--c:${areaColor(a)}"></i>${esc(AREAS[a].name)}${c ? ' · ' + hl(c.name) : ''}</span>`);
+  if (a) meta.push(`<span class="m"><i class="dot" style="--c:${areaColor(a)}"></i>${esc(AREAS[a].name)}</span>`);
   if (proj) meta.push(`<span class="m">${ic('diamond')}${hl(proj.name)}</span>`);
   if (names.length) meta.push(`<span class="m avs" title="${esc(names.join(', '))}">${names.map(n => `<span class="av ${trifft(n) ? 'hit' : ''}">${esc(initials(n))}</span>`).join('')}</span>`);
   if (t.status === 'inbox') meta.push(`<span class="m">${ic('wave')}Diktiert</span>`);
-  const flags = (t.prio || t.imp || t.load) ? `<span class="flags">${prioBadge(t.prio)}${impBadge(t.imp)}${loadBadge(t.load)}</span>` : '';
+  // Feste Plätze: Dringlichkeit, Wichtigkeit, Aufwand stehen in jeder Zeile an derselben Stelle
+  const slot = inner => `<span class="fl">${inner}</span>`;
+  const flags = `<span class="flags row-flags">${slot(prioBadge(t.prio))}${slot(impBadge(t.imp))}${slot(loadBadge(t.load))}</span>`;
   const move = S.reorder ? `<span class="grip" aria-hidden="true">${ic('grip')}</span>` : '';
   const park = (S.reorder || o.noPark) ? '' : `<button class="parkbtn ${t.status === 'parked' ? 'on' : ''}" data-act="park" data-id="${t.id}" title="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}" aria-label="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}"><span class="pbox">P</span></button>`;
   let right = o.right;
-  if (right === undefined) right = `${flags}${d.txt ? `<span class="due ${d.cls}" title="${esc(d.txt + (d.k ? ' · ' + d.k : ''))}">${esc(d.txt)}</span>` : ''}`;
+  if (right === undefined) right = `${flags}<span class="row-due">${d.txt ? `<span class="due ${d.cls}" title="${esc(d.txt + (d.k ? ' · ' + d.k : ''))}">${esc(d.txt)}</span>` : ''}</span>`;
   // Fortschritt füllt die Zeile hinter dem Text bis zur Prozentzahl
   const pct = done ? 0 : progOf(t);
   const bar = pct ? `<i class="rowprog" style="--p:${pct}%;--c:${areaColor(a) || 'var(--accent)'}" aria-hidden="true"></i>` : '';
@@ -993,10 +1002,10 @@ function rowHTML(t, o = {}){
   const del = o.del ? `<button class="icon-btn rowdel" data-act="row-del" data-id="${t.id}" title="Löschen" aria-label="To-do löschen">${ic('trash')}</button>` : '';
   return `<div class="swipe" data-swipe="${t.id}"><div class="swipe-act"><button data-act="swipe-del" data-id="${t.id}">${ic('trash')}Löschen</button></div><div class="row ${done ? 'is-done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}">
     ${bar}
-    <button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="${done ? 'Wieder öffnen' : 'Als erledigt markieren'}"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>
+    <button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="${done ? 'Wieder öffnen' : 'Als erledigt markieren'}"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>${park}
     <span class="row-title" title="${esc(t.title)}">${hl(t.title)}</span>
     ${pctTxt}
-    <span class="row-right">${right}</span>${del}${park}${move}${meta.length ? `<span class="row-meta">${meta.join('')}</span>` : ''}
+    <span class="row-right">${right}</span>${del}${move}${meta.length ? `<span class="row-meta">${meta.join('')}</span>` : ''}
   </div></div>`;
 }
 let LAST_GROUPS = [];
@@ -1114,9 +1123,9 @@ function viewInbox(){
 }
 function viewParked(){
   const geparkt = T.filter(t => t.status === 'parked').sort(sortByDue);
-  return header('Parkliste', 'Hier ruhen To-dos, die gerade nicht dran sind. Der Pfeil in der Zeile holt sie zurück.') +
+  return header('Parkliste', 'Hier ruhen To-dos, die gerade nicht dran sind. Das P in der Zeile holt sie zurück.') +
     (geparkt.length ? `<div>${geparkt.map(t => rowHTML(t)).join('')}</div>`
-      : `<div class="empty">Nichts geparkt. Über die Pause-Taste in jeder Zeile legst du To-dos hierher.</div>`);
+      : `<div class="empty">Nichts geparkt. Über das P neben der Checkbox legst du To-dos hierher.</div>`);
 }
 const seg = (key, opts) => `<div class="seg">${opts.map(([k, l]) => `<button class="${S[key] === k ? 'on' : ''}" data-act="set" data-k="${key}" data-v="${k}">${l}</button>`).join('')}</div>`;
 const AREA_SEG = [['all', 'Alle'], ['work', 'Arbeit'], ['private', 'Privat']];
