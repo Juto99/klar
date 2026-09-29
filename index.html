@@ -531,13 +531,13 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .scrim{position:fixed;inset:0;z-index:40;background:var(--scrim)}
 .tabbar{display:none}
 
-@media (max-width:1100px){
+@media (max-width:1100px), (max-height:520px) and (pointer:coarse){
   .app.has-detail{grid-template-columns:260px minmax(0,1fr)}
   .detail{position:fixed;top:0;right:0;bottom:0;width:min(var(--dw,400px),100%);z-index:50;box-shadow:var(--shadow-lg)}
   .app.has-detail .detail{animation:slidein .22s ease}
 }
 @keyframes slidein{from{transform:translateX(28px);opacity:.5}}
-@media (max-width:760px){
+@media (max-width:760px), (max-height:520px) and (pointer:coarse){
   .app,.app.has-detail{grid-template-columns:minmax(0,1fr)}
   .sidebar{position:fixed;top:0;left:0;bottom:0;width:min(300px,86vw);z-index:50;transform:translateX(-105%);transition:transform .25s ease,visibility .25s;visibility:hidden}
   body.sb-open .sidebar{transform:none;visibility:visible;box-shadow:var(--shadow-lg)}
@@ -580,13 +580,29 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .col-fl{flex:0 0 16px}
   .col-a{display:none}
   .row-due{flex:0 0 72px;padding-left:5px}
-  .row-people{flex:0 0 54px}
   .row-people .av:nth-child(n+4){display:none}
   .parkbtn{width:26px;height:26px}
   .set-row{flex-wrap:wrap;padding:8px 0}
   .set-row .ren{flex:1 1 140px;min-width:120px;padding:6px 8px}
   .set-row .seg{flex:1 1 100%;max-width:220px}
   .addbar .add-in{max-width:none;flex:1 1 100%}
+}
+@media (max-height:520px) and (pointer:coarse){
+  .main-inner{padding:calc(10px + env(safe-area-inset-top)) 18px calc(74px + env(safe-area-inset-bottom))}
+  .hdr{margin-bottom:4px}
+  h1{font-size:21px}
+  .hdr .sub{font-size:12px}
+  .toolbar{margin-bottom:4px;gap:8px}
+  .tb-group{flex-direction:row;align-items:center;gap:8px;margin-bottom:4px}
+  .tb-group .tb-label{display:none}
+  .wk-head{margin:6px 4px 0}
+  .sec{margin:10px 0 2px}
+  .tabbar{padding:2px 8px calc(2px + env(safe-area-inset-bottom))}
+  .tab{font-size:10px;gap:1px}
+  .fab{width:42px;height:42px;margin-top:-8px}
+  .fab svg.i{width:19px;height:19px}
+  .wstrip{display:none}
+  .toast{bottom:calc(64px + env(safe-area-inset-bottom))}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -605,7 +621,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v46';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v47';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1189,7 +1205,8 @@ function renderSidebar(){
 const themeSeg = () => `<div class="seg" role="group" aria-label="Darstellung">${[['auto', 'Auto'], ['light', 'Hell'], ['dark', 'Dunkel']].map(([k, l]) => `<button class="${S.theme === k ? 'on' : ''}" data-act="theme" data-v="${k}">${l}</button>`).join('')}</div>`;
 
 /* ============ Ansichten ============ */
-const isMobile = () => matchMedia('(max-width:760px)').matches;
+const MOBIL_MQ = '(max-width:760px), (max-height:520px) and (pointer:coarse)';
+const isMobile = () => matchMedia(MOBIL_MQ).matches;
 function viewDeadlines(){
   const mob = isMobile();
   const alle = T.filter(isOpen);
