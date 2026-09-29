@@ -200,7 +200,8 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .row:last-child::after{display:none}
 .row:hover{background:var(--surface-2)}
 .row:hover::after,.row.is-sel::after{opacity:0}
-.row.is-sel{background:var(--accent-soft)}
+.row.is-sel{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.row.is-sel .row-title{font-weight:600;color:var(--text)}
 .row.completing{opacity:0;transform:translateX(8px)}
 .row > *{position:relative;z-index:1}
 .rowprog{position:absolute;left:0;top:0;bottom:0;z-index:0;width:var(--p,0);background:color-mix(in srgb,var(--c) 15%,transparent);border-radius:9px 3px 3px 9px;pointer-events:none;transition:width .25s}
@@ -240,7 +241,7 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .row-right{display:flex;align-items:center;gap:8px;flex:none;font-size:12.5px;color:var(--text-2)}
 .row-flags{flex:none}
 .row-flags .fl{width:19px;height:19px;display:flex;align-items:center;justify-content:center}
-.row-due{flex:0 0 86px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-due{flex:0 0 86px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row-right .due{white-space:nowrap}
 .row-right .over{color:var(--danger);font-weight:550}
 .row-right .fuzzy{color:var(--text)}
@@ -547,14 +548,14 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .search input,.sb-new input,.add-in,.opt-new input,.opt-new.sm input,.date-in,.ren,.d-in{font-size:16px}
   .row{gap:8px;padding:5px 6px}
   .row-title{min-width:40px}
-  .row-meta{flex:0 0 52px}
+  .row-meta{flex:0 0 62px}
   .row-pct{display:none}
   .row-flags .fl{width:16px}
   .row-flags{gap:3px}
   .row-due{flex:0 0 66px}
   .row-meta .m:not(.avs){display:none}
   .row-meta .m.avs{display:inline-flex}
-  .row-meta .av:nth-child(n+3){display:none}
+  .row-meta .av:nth-child(n+4){display:none}
   .parkbtn{width:26px;height:26px}
   .set-row{flex-wrap:wrap;padding:8px 0}
   .set-row .ren{flex:1 1 140px;min-width:120px;padding:6px 8px}
@@ -977,14 +978,13 @@ const projPct = list => list.length ? Math.round(list.reduce((sum, t) => sum + p
 function rowHTML(t, o = {}){
   const a = areaOf(t), c = catById(t.cat), d = dueLabel(t), done = t.status === 'done' || t.status === 'archived';
   const names = namesOf(t.persons), proj = projById(t.project);
-  // Rechts neben der Zeile: Bereich/Unterkategorie, Projekt, Personen – alles einzeilig
+  // Rechts neben der Zeile: Projekt und Personen – alles einzeilig. Der Bereich steckt in der Farbe der Checkbox.
   const meta = [];
   if (suchBegriff() && !trifft(t.title)){
     const quelle = trifft(t.desc) ? ['Beschreibung', t.desc] : trifft(t.ctx) ? ['Kontext', t.ctx] : null;
     if (quelle) meta.push(`<span class="m snip" title="Treffer in ${quelle[0]}">${ic('search')}${ausschnitt(quelle[1])}</span>`);
   }
   if (o.extraMeta) meta.push(o.extraMeta);
-  if (a) meta.push(`<span class="m"><i class="dot" style="--c:${areaColor(a)}"></i>${esc(AREAS[a].name)}</span>`);
   if (proj) meta.push(`<span class="m">${ic('diamond')}${hl(proj.name)}</span>`);
   if (names.length) meta.push(`<span class="m avs" title="${esc(names.join(', '))}">${names.map(n => `<span class="av ${trifft(n) ? 'hit' : ''}">${esc(initials(n))}</span>`).join('')}</span>`);
   if (t.status === 'inbox') meta.push(`<span class="m">${ic('wave')}Diktiert</span>`);
@@ -998,14 +998,14 @@ function rowHTML(t, o = {}){
   // Fortschritt füllt die Zeile hinter dem Text bis zur Prozentzahl
   const pct = done ? 0 : progOf(t);
   const bar = pct ? `<i class="rowprog" style="--p:${pct}%;--c:${areaColor(a) || 'var(--accent)'}" aria-hidden="true"></i>` : '';
-  const pctTxt = pct ? `<span class="row-pct" title="${pct} % erledigt">${pct} %</span>` : '';
+  const pctTxt = `<span class="row-pct"${pct ? ` title="${pct} % erledigt"` : ''}>${pct ? pct + ' %' : ''}</span>`;
   const del = o.del ? `<button class="icon-btn rowdel" data-act="row-del" data-id="${t.id}" title="Löschen" aria-label="To-do löschen">${ic('trash')}</button>` : '';
   return `<div class="swipe" data-swipe="${t.id}"><div class="swipe-act"><button data-act="swipe-del" data-id="${t.id}">${ic('trash')}Löschen</button></div><div class="row ${done ? 'is-done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}">
     ${bar}
     <button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="${done ? 'Wieder öffnen' : 'Als erledigt markieren'}"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>${park}
     <span class="row-title" title="${esc(t.title)}">${hl(t.title)}</span>
     ${pctTxt}
-    <span class="row-right">${right}</span>${del}${move}${meta.length ? `<span class="row-meta">${meta.join('')}</span>` : ''}
+    <span class="row-right">${right}</span>${del}${move}<span class="row-meta">${meta.join('')}</span>
   </div></div>`;
 }
 let LAST_GROUPS = [];
