@@ -212,7 +212,7 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .row.completing{opacity:0;transform:translateX(8px)}
 .row > *{position:relative;z-index:1}
 :root{--col-flag:22px;--col-pct:40px;--col-due:94px;--col-proj:124px;--col-people:56px;--col-note:150px}
-.rowprog{position:absolute;left:0;top:0;bottom:0;z-index:0;width:var(--p,0);background:color-mix(in srgb,var(--c) 15%,transparent);border-radius:9px 3px 3px 9px;pointer-events:none;transition:width .25s}
+.rowprog{position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:0;width:var(--p,0);height:calc(100% + 8px);background:color-mix(in srgb,var(--c) 15%,transparent);border-radius:6px;pointer-events:none;transition:width .25s}
 .row-pct{font-size:11.5px;color:var(--text-3);font-variant-numeric:tabular-nums;flex:0 0 var(--col-pct);text-align:right;padding-right:6px;white-space:nowrap}
 .rowdel{color:var(--text-3);flex:none}
 .rowdel:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent)}
@@ -226,6 +226,21 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .d-field.md > .d-in{display:none}
 .d-field:not(.md) > .d-md{display:none}
 .prg{width:100%;accent-color:var(--accent);height:26px}
+.cols{display:flex;align-items:center;gap:8px;padding:0 8px;margin:2px 0 2px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);user-select:none}
+.cols .c-lead{flex:0 0 56px}
+.cols .c-title{flex:1 1 auto;min-width:0}
+.cols .c-col{position:relative;display:flex;align-items:center;justify-content:flex-start;white-space:nowrap;overflow:hidden}
+.cols .c-pct{flex:0 0 var(--col-pct);justify-content:flex-end;padding-right:6px}
+.cols .c-fl{flex:0 0 var(--col-flag);justify-content:center}
+.cols .c-due{flex:0 0 var(--col-due);padding-left:8px}
+.cols .c-proj{flex:0 0 var(--col-proj);justify-content:flex-end;padding-left:10px}
+.cols .c-people{flex:0 0 var(--col-people);justify-content:flex-end;padding-left:6px}
+.cols .c-note{flex:0 0 var(--col-note);padding-left:10px}
+.cgrip{position:absolute;left:-7px;top:-6px;bottom:-6px;width:14px;cursor:col-resize;touch-action:none;z-index:2}
+.cgrip::after{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;border-radius:2px;background:var(--line-2);opacity:.5}
+.cgrip:hover::after{opacity:1;background:var(--accent)}
+body.cdrag{cursor:col-resize;user-select:none}
+body.cdrag .cgrip::after{opacity:1;background:var(--accent)}
 .col-row{gap:12px}
 .col-row .col-l{flex:0 0 190px;font-size:14px}
 .col-row .col-r{flex:1 1 auto;min-width:120px}
@@ -240,8 +255,9 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .check:hover{background:color-mix(in srgb,var(--c) 14%,transparent)}
 .check.on{background:var(--c)}
 .check.on svg{opacity:1}
-.row-title{flex:1 1 auto;min-width:0;font-size:14.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.row.is-done .row-title{color:var(--text-3);text-decoration:line-through;text-decoration-color:var(--line-2)}
+.row-title{flex:1 1 auto;min-width:0;font-size:14.5px;line-height:1.35;position:relative;display:flex;align-items:center}
+.row-title .tt{position:relative;z-index:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row.is-done .row-title .tt{color:var(--text-3);text-decoration:line-through;text-decoration-color:var(--line-2)}
 .row-note,.row-proj,.row-people{display:flex;align-items:center;font-size:12.5px;color:var(--text-2);white-space:nowrap;overflow:hidden;min-width:0}
 .row-note{flex:0 0 var(--col-note);gap:5px;padding-left:10px;text-overflow:ellipsis}
 .row-proj{flex:0 0 var(--col-proj);gap:5px;padding-left:10px;justify-content:flex-end}
@@ -562,13 +578,14 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .toast{bottom:calc(80px + env(safe-area-inset-bottom))}
   .hide-m{display:none}
   .search input,.sb-new input,.add-in,.opt-new input,.opt-new.sm input,.date-in,.ren,.d-in{font-size:16px}
-  .row{gap:8px;padding:5px 6px}
-  .row-title{min-width:40px}
+  .row{gap:5px;padding:5px 6px}
+  .row-title{min-width:56px}
   .row-note,.row-proj{display:none}
-  .row-people{flex:0 0 54px;padding-left:6px}
+  .row-people{flex:0 0 46px;padding-left:4px}
   .row-pct{display:none}
-  .col-fl{flex:0 0 18px}
-  .row-due{flex:0 0 64px;padding-left:6px}
+  .col-fl{flex:0 0 16px}
+  .col-a{display:none}
+  .row-due{flex:0 0 72px;padding-left:5px}
   .row-people{flex:0 0 54px}
   .row-people .av:nth-child(n+4){display:none}
   .parkbtn{width:26px;height:26px}
@@ -594,7 +611,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v44';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v45';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1009,6 +1026,25 @@ function spalteSetzen(k, v){
   try { localStorage.setItem('brain72-spalten', JSON.stringify(SPALTEN)); } catch (e) {}
   spaltenAnwenden();
 }
+let cdrag = null;
+document.addEventListener('pointerdown', e => {
+  const g = e.target.closest?.('[data-cgrip]'); if (!g) return;
+  e.preventDefault();
+  const k = g.dataset.cgrip;
+  cdrag = { k, x:e.clientX, start:SPALTEN[k], teiler: k === 'flag' ? 3 : 1 };
+  try { g.setPointerCapture(e.pointerId); } catch (err) {}
+  document.body.classList.add('cdrag');
+});
+document.addEventListener('pointermove', e => {
+  if (!cdrag) return;
+  spalteSetzen(cdrag.k, cdrag.start + (cdrag.x - e.clientX) / cdrag.teiler);   // nach links ziehen = breiter
+});
+addEventListener('pointerup', () => { if (cdrag){ cdrag = null; document.body.classList.remove('cdrag'); renderMain(); } });
+addEventListener('pointercancel', () => { if (cdrag){ cdrag = null; document.body.classList.remove('cdrag'); } });
+document.addEventListener('dblclick', e => {
+  const g = e.target.closest?.('[data-cgrip]'); if (!g) return;
+  spalteSetzen(g.dataset.cgrip, SPALTEN_STD[g.dataset.cgrip]); renderMain(); toast('Spalte zurückgesetzt');
+});
 function spaltenZuruecksetzen(){
   SPALTEN = { ...SPALTEN_STD };
   try { localStorage.removeItem('brain72-spalten'); } catch (e) {}
@@ -1042,9 +1078,8 @@ function rowHTML(t, o = {}){
   const pctTxt = `<span class="row-pct"${pct ? ` title="${pct} % erledigt"` : ''}>${pct ? pct + ' %' : ''}</span>`;
   const del = o.del ? `<button class="icon-btn rowdel" data-act="row-del" data-id="${t.id}" title="Löschen" aria-label="To-do löschen">${ic('trash')}</button>` : '';
   return `<div class="swipe" data-swipe="${t.id}"><div class="swipe-act"><button data-act="swipe-del" data-id="${t.id}">${ic('trash')}Löschen</button></div><div class="row ${done ? 'is-done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}">
-    ${bar}
     <button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="${done ? 'Wieder öffnen' : 'Als erledigt markieren'}"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>${park}
-    <span class="row-title" title="${esc(t.title)}">${hl(t.title)}</span>
+    <span class="row-title" title="${esc(t.title)}">${bar}<span class="tt">${hl(t.title)}</span></span>
     ${pctTxt}
     ${flags}${dueSp}${o.right ? `<span class="row-extra">${o.right}</span>` : ''}${del}${move}${notiz}${projSp}${peopleSp}
   </div></div>`;
@@ -1055,7 +1090,29 @@ function groupsHTML(groups, o = {}){
   const html = groups.filter(g => g.items.length).map(g => `
     <div class="sec ${g.cls || ''}"><h3>${esc(g.title)}</h3><span class="n">${g.items.length}</span></div>
     <div>${g.items.map(t => rowHTML(t, o.rowOpts ? o.rowOpts(t) : {})).join('')}</div>`).join('');
-  return html || `<div class="empty">${o.empty || 'Hier ist gerade nichts offen.'}</div>`;
+  // Die Kopfleiste passt nur zu Listen im Standardraster – eine eigene rechte Spalte (Erledigt, Archiv) hat ihre eigene Breite.
+  const erstes = groups.flatMap(g => g.items)[0];
+  const probe = (o.rowOpts && erstes) ? o.rowOpts(erstes) : {};
+  const leiste = probe.right ? '' : spaltenLeiste({ note: !!(probe.extraMeta || suchBegriff()) });
+  return html ? leiste + html : `<div class="empty">${o.empty || 'Hier ist gerade nichts offen.'}</div>`;
+}
+// Kopfleiste über der Liste: beschriftet die Spalten und trägt die Griffe zum Breiterziehen.
+function spaltenLeiste(o = {}){
+  if (isMobile()) return '';
+  const griff = k => `<span class="cgrip" data-cgrip="${k}" title="Spaltenbreite ziehen – Doppelklick setzt zurück" aria-label="Breite der Spalte ändern"></span>`;
+  const notiz = o.note ? `<span class="c-col c-note">${griff('note')}Notiz</span>` : '';
+  return `<div class="cols">
+    <span class="c-lead"></span>
+    <span class="c-title">To-do</span>
+    ${notiz}
+    <span class="c-col c-pct">${griff('pct')}%</span>
+    <span class="c-col c-fl">${griff('flag')}D</span>
+    <span class="c-col c-fl">W</span>
+    <span class="c-col c-fl">A</span>
+    <span class="c-col c-due">${griff('due')}Frist</span>
+    <span class="c-col c-proj">${griff('proj')}Projekt</span>
+    <span class="c-col c-people">${griff('people')}Wer</span>
+  </div>`;
 }
 function header(title, sub, eyebrow = '', right = ''){
   return `<div class="hdr"><div>${eyebrow ? `<div class="eyebrow">${eyebrow}</div>` : ''}<h1>${esc(title)}</h1>${sub ? `<div class="sub">${sub}</div>` : ''}</div><div style="display:flex;gap:8px;align-items:center">${right}</div></div>`;
@@ -1427,7 +1484,7 @@ function viewSettings(){
           : `<div class="set-actions"><button class="btn btn-p" data-act="tok-new">Token erzeugen</button></div>`}
     </div>
     <div class="set-sec"><h3>Spalten in der Liste</h3>
-      <p>Breite der rechten Spalten in Pixeln. Gilt für diesen Rechner; auf dem Telefon bleiben die schmalen Standardwerte.</p>
+      <p>Am schnellsten ziehst du die Spaltengrenzen direkt in der Liste – in der Kopfzeile über den To-dos, Doppelklick setzt eine Spalte zurück. Hier geht es auf den Pixel genau. Gilt für diesen Rechner; auf dem Telefon bleiben die schmalen Standardwerte.</p>
       <div class="set-card">${Object.keys(SPALTEN_STD).map(k => `<div class="set-row col-row"><span class="col-l">${SPALTEN_LABEL[k]}</span><input type="range" class="prg col-r" data-col="${k}" min="0" max="${SPALTEN_MAX[k]}" step="2" value="${SPALTEN[k]}" aria-label="Breite ${SPALTEN_LABEL[k]}"><span class="col-v" data-col-v="${k}">${SPALTEN[k]} px</span></div>`).join('')}</div>
       <div class="set-actions"><button class="btn btn-g" data-act="col-reset">Auf Standard zurücksetzen</button></div>
     </div>
