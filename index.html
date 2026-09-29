@@ -87,7 +87,13 @@ body.resizing{cursor:col-resize;user-select:none}
 
 /* ---------- Sidebar ---------- */
 .brand{display:flex;align-items:center;justify-content:space-between;padding:2px 6px}
-.brand-name{display:flex;align-items:center;gap:10px;font-size:30px;font-weight:700;letter-spacing:-.022em}
+.brand-txt{display:flex;flex-direction:column;min-width:0}
+.brand-name{display:flex;align-items:baseline;gap:10px;font-size:30px;font-weight:700;letter-spacing:-.022em}
+.brand-name .logo{align-self:center}
+/* Die 72 in Schreibschrift – Systemschriften, damit die App offline gleich aussieht */
+.brand-wort{display:inline-flex;align-items:baseline}
+.brand-72{font-family:'Snell Roundhand','Apple Chancery','Segoe Script','Brush Script MT',cursive;font-weight:600;font-size:1.3em;line-height:.85;margin-left:2px;letter-spacing:.01em}
+.brand-tag{font-size:10.5px;color:var(--text-3);letter-spacing:.04em;margin:1px 0 0 38px}
 .logo{width:28px;height:28px;border-radius:9px;background:var(--create);display:grid;place-items:center;flex:none}
 .logo svg{width:18px;height:18px;stroke:var(--surface);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .search{display:flex;align-items:center;gap:7px;background:var(--surface-3);border-radius:9px;padding:6px 9px;color:var(--text-3)}
@@ -1059,7 +1065,7 @@ function renderSidebar(){
   else if (S.syncState === 'error'){ syncTxt = 'Abgleich fehlgeschlagen'; syncCol = 'var(--danger)'; syncBtn = `<button class="link" data-act="sync-now">Erneut</button>`; }
   else { syncTxt = `Abgeglichen · ${relTime(S.lastSync) || 'gerade eben'}`; syncCol = 'var(--ok)'; }
   $('#sidebar').innerHTML = `
-    <div class="brand"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span>Brain72</span></div>
+    <div class="brand"><div class="brand-txt"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span><span class="brand-wort">Brain<span class="brand-72">72</span></span></span><span class="brand-tag">copyright THS 2026</span></div></div>
     <label class="search">${ic('search')}<input id="sbq" placeholder="Suchen" value="${esc(S.q)}" aria-label="To-dos durchsuchen"></label>
     <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('deadlines', 'clock', 'Deadlines', cnt.mitFrist)}${tile('calendar', 'cal', 'Kalender', '')}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}</div>
     <div class="sb-group">${areaRow('work')}${areaRow('private')}${item('people', 'Personen', PEOPLE.length, ic('person'))}${item('projects', 'Projekte', PROJECTS.length, ic('folder'))}</div>
