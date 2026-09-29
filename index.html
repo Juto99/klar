@@ -211,8 +211,9 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .row.is-sel .row-title{font-weight:600;color:var(--text)}
 .row.completing{opacity:0;transform:translateX(8px)}
 .row > *{position:relative;z-index:1}
+:root{--col-flag:22px;--col-pct:40px;--col-due:94px;--col-proj:124px;--col-people:56px;--col-note:150px}
 .rowprog{position:absolute;left:0;top:0;bottom:0;z-index:0;width:var(--p,0);background:color-mix(in srgb,var(--c) 15%,transparent);border-radius:9px 3px 3px 9px;pointer-events:none;transition:width .25s}
-.row-pct{font-size:11.5px;color:var(--text-3);font-variant-numeric:tabular-nums;flex:0 0 40px;text-align:right;padding-right:6px;white-space:nowrap}
+.row-pct{font-size:11.5px;color:var(--text-3);font-variant-numeric:tabular-nums;flex:0 0 var(--col-pct);text-align:right;padding-right:6px;white-space:nowrap}
 .rowdel{color:var(--text-3);flex:none}
 .rowdel:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent)}
 .fmt{display:flex;gap:4px;margin:0 0 4px auto}
@@ -225,6 +226,10 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .d-field.md > .d-in{display:none}
 .d-field:not(.md) > .d-md{display:none}
 .prg{width:100%;accent-color:var(--accent);height:26px}
+.col-row{gap:12px}
+.col-row .col-l{flex:0 0 190px;font-size:14px}
+.col-row .col-r{flex:1 1 auto;min-width:120px}
+.col-row .col-v{flex:0 0 56px;text-align:right;font-size:12.5px;color:var(--text-3);font-variant-numeric:tabular-nums}
 .hdr-prog{display:flex;align-items:center;gap:10px;margin:2px 0 14px}
 .hdr-prog .prog{width:180px;height:7px}
 .prow.is-akt{background:var(--accent-soft)}
@@ -238,10 +243,10 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .row-title{flex:1 1 auto;min-width:0;font-size:14.5px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row.is-done .row-title{color:var(--text-3);text-decoration:line-through;text-decoration-color:var(--line-2)}
 .row-note,.row-proj,.row-people{display:flex;align-items:center;font-size:12.5px;color:var(--text-2);white-space:nowrap;overflow:hidden;min-width:0}
-.row-note{flex:0 0 150px;gap:5px;padding-left:10px;text-overflow:ellipsis}
-.row-proj{flex:0 0 124px;gap:5px;padding-left:10px;justify-content:flex-end}
+.row-note{flex:0 0 var(--col-note);gap:5px;padding-left:10px;text-overflow:ellipsis}
+.row-proj{flex:0 0 var(--col-proj);gap:5px;padding-left:10px;justify-content:flex-end}
 .row-proj .pn-t{overflow:hidden;text-overflow:ellipsis}
-.row-people{flex:0 0 56px;justify-content:flex-end;padding-left:6px}
+.row-people{flex:0 0 var(--col-people);justify-content:flex-end;padding-left:6px}
 .row-note .m{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .row-note .dot{width:7px;height:7px}
 .row-meta svg.i{width:13px;height:13px}
@@ -249,15 +254,13 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .avs{display:inline-flex}
 .avs .av{box-shadow:0 0 0 1.5px var(--surface)}
 .avs .av+.av{margin-left:-5px}
-.row-right{display:flex;align-items:center;gap:0;flex:none;font-size:12.5px;color:var(--text-2)}
-.row-flags{flex:none;display:flex;align-items:center;gap:2px}
-.row-flags .fl{width:22px;height:19px;display:flex;align-items:center;justify-content:center;line-height:1}
-.row-flags .fl > *{flex:none}
-.row-due{flex:0 0 94px;padding-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.row-extra{flex:none;padding-left:8px;display:flex;align-items:center}
-.row-right .due{white-space:nowrap}
-.row-right .over{color:var(--danger);font-weight:550}
-.row-right .fuzzy{color:var(--text)}
+.col-fl{flex:0 0 var(--col-flag);height:19px;display:flex;align-items:center;justify-content:center;line-height:1}
+.col-fl > *{flex:none}
+.row-due{flex:0 0 var(--col-due);padding-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px;color:var(--text-2)}
+.row-extra{flex:none;padding-left:8px;display:flex;align-items:center;font-size:12.5px;color:var(--text-2)}
+.row-due .due{white-space:nowrap}
+.row-due .over{color:var(--danger);font-weight:550}
+.row-due .fuzzy{color:var(--text)}
 .flags{display:inline-flex;align-items:center;gap:6px}
 .pb{width:19px;height:19px;border-radius:6px;font-size:11px;font-weight:700;display:grid;place-items:center;letter-spacing:.01em}
 .pb-high{background:color-mix(in srgb,var(--danger) 16%,transparent);color:var(--danger)}
@@ -564,9 +567,9 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .row-note,.row-proj{display:none}
   .row-people{flex:0 0 54px;padding-left:6px}
   .row-pct{display:none}
-  .row-flags .fl{width:18px}
-  .row-flags{gap:1px}
+  .col-fl{flex:0 0 18px}
   .row-due{flex:0 0 64px;padding-left:6px}
+  .row-people{flex:0 0 54px}
   .row-people .av:nth-child(n+4){display:none}
   .parkbtn{width:26px;height:26px}
   .set-row{flex-wrap:wrap;padding:8px 0}
@@ -591,7 +594,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v43';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v44';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -988,6 +991,29 @@ const fmtBar = () => `<div class="fmt"><button type="button" data-act="fmt" data
 const progOf = t => (t.status === 'done' || t.status === 'archived') ? 100 : Math.max(0, Math.min(100, Math.round(+t.progress || 0)));
 const projPct = list => list.length ? Math.round(list.reduce((sum, t) => sum + progOf(t), 0) / list.length) : 0;
 
+/* Spaltenbreiten der Liste – vom Nutzer einstellbar, gespeichert auf diesem Gerät. */
+const SPALTEN_STD = { flag:22, pct:40, due:94, proj:124, people:56, note:150 };
+const SPALTEN_LABEL = { flag:'Kennzeichen je Symbol', pct:'Fortschritt', due:'Frist', proj:'Projekt', people:'Personen', note:'Notiz (Suche & Empfehlungen)' };
+const SPALTEN_MAX = { flag:48, pct:70, due:180, proj:260, people:140, note:320 };
+let SPALTEN = { ...SPALTEN_STD };
+function spaltenLaden(){
+  try { SPALTEN = { ...SPALTEN_STD, ...JSON.parse(localStorage.getItem('brain72-spalten') || '{}') }; }
+  catch (e) { SPALTEN = { ...SPALTEN_STD }; }
+  spaltenAnwenden();
+}
+function spaltenAnwenden(){
+  Object.entries(SPALTEN).forEach(([k, v]) => document.documentElement.style.setProperty('--col-' + k, v + 'px'));
+}
+function spalteSetzen(k, v){
+  SPALTEN[k] = Math.max(0, Math.min(SPALTEN_MAX[k] ?? 300, Math.round(+v || 0)));
+  try { localStorage.setItem('brain72-spalten', JSON.stringify(SPALTEN)); } catch (e) {}
+  spaltenAnwenden();
+}
+function spaltenZuruecksetzen(){
+  SPALTEN = { ...SPALTEN_STD };
+  try { localStorage.removeItem('brain72-spalten'); } catch (e) {}
+  spaltenAnwenden(); renderMain(); toast('Spaltenbreiten zurückgesetzt');
+}
 function rowHTML(t, o = {}){
   const a = areaOf(t), c = catById(t.cat), d = dueLabel(t), done = t.status === 'done' || t.status === 'archived';
   const names = namesOf(t.persons), proj = projById(t.project);
@@ -1003,14 +1029,13 @@ function rowHTML(t, o = {}){
   const notiz = (o.extraMeta || suchBegriff()) ? `<span class="row-note">${notizInhalt}</span>` : '';
   const projSp = `<span class="row-proj">${proj ? `${ic('diamond')}<span class="pn-t">${hl(proj.name)}</span>` : ''}</span>`;
   const peopleSp = `<span class="row-people"${names.length ? ` title="${esc(names.join(', '))}"` : ''}>${names.map(n => `<span class="av ${trifft(n) ? 'hit' : ''}">${esc(initials(n))}</span>`).join('')}</span>`;
-  // Feste Plätze: Dringlichkeit, Wichtigkeit, Aufwand stehen in jeder Zeile an derselben Stelle
-  const slot = inner => `<span class="fl">${inner}</span>`;
-  const flags = `<span class="flags row-flags">${slot(prioBadge(t.prio))}${slot(impBadge(t.imp))}${slot(loadBadge(t.load))}</span>`;
+  // Eigene Spalte je Kennzeichen – dadurch stehen Dringlichkeit, Wichtigkeit und Aufwand in jeder Zeile gleich.
+  const slot = (inner, k) => `<span class="col-fl col-${k}">${inner}</span>`;
+  const flags = `${slot(prioBadge(t.prio), 'd')}${slot(impBadge(t.imp), 'w')}${slot(loadBadge(t.load), 'a')}`;
   const move = S.reorder ? `<span class="grip" aria-hidden="true">${ic('grip')}</span>` : '';
   const park = (S.reorder || o.noPark) ? '' : `<button class="parkbtn ${t.status === 'parked' ? 'on' : ''}" data-act="park" data-id="${t.id}" title="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}" aria-label="${t.status === 'parked' ? 'Wieder aufnehmen' : 'Parken'}"><span class="pbox">P</span></button>`;
   const dueSp = `<span class="row-due">${d.txt ? `<span class="due ${d.cls}" title="${esc(d.txt + (d.k ? ' · ' + d.k : ''))}">${esc(d.txt)}</span>` : ''}</span>`;
   // Kennzeichen und Frist stehen in jeder Liste an derselben Stelle; eigene Inhalte kommen dahinter.
-  const right = `${flags}${dueSp}${o.right ? `<span class="row-extra">${o.right}</span>` : ''}`;
   // Fortschritt füllt die Zeile hinter dem Text bis zur Prozentzahl
   const pct = done ? 0 : progOf(t);
   const bar = pct ? `<i class="rowprog" style="--p:${pct}%;--c:${areaColor(a) || 'var(--accent)'}" aria-hidden="true"></i>` : '';
@@ -1021,7 +1046,7 @@ function rowHTML(t, o = {}){
     <button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="${done ? 'Wieder öffnen' : 'Als erledigt markieren'}"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>${park}
     <span class="row-title" title="${esc(t.title)}">${hl(t.title)}</span>
     ${pctTxt}
-    <span class="row-right">${right}</span>${del}${move}${notiz}${projSp}${peopleSp}
+    ${flags}${dueSp}${o.right ? `<span class="row-extra">${o.right}</span>` : ''}${del}${move}${notiz}${projSp}${peopleSp}
   </div></div>`;
 }
 let LAST_GROUPS = [];
@@ -1400,6 +1425,11 @@ function viewSettings(){
                Optional 4. <strong>Mitteilung anzeigen</strong> mit dem Ergebnis – dann siehst du „✓ Im Eingang: …“.</p>
                <div class="flow"><span>Action-Button</span><i>→</i><span>Sprechen</span><i>→</i><span>KI erkennt Felder</span><i>→</i><span>Eingang</span></div></div></div>`
           : `<div class="set-actions"><button class="btn btn-p" data-act="tok-new">Token erzeugen</button></div>`}
+    </div>
+    <div class="set-sec"><h3>Spalten in der Liste</h3>
+      <p>Breite der rechten Spalten in Pixeln. Gilt für diesen Rechner; auf dem Telefon bleiben die schmalen Standardwerte.</p>
+      <div class="set-card">${Object.keys(SPALTEN_STD).map(k => `<div class="set-row col-row"><span class="col-l">${SPALTEN_LABEL[k]}</span><input type="range" class="prg col-r" data-col="${k}" min="0" max="${SPALTEN_MAX[k]}" step="2" value="${SPALTEN[k]}" aria-label="Breite ${SPALTEN_LABEL[k]}"><span class="col-v" data-col-v="${k}">${SPALTEN[k]} px</span></div>`).join('')}</div>
+      <div class="set-actions"><button class="btn btn-g" data-act="col-reset">Auf Standard zurücksetzen</button></div>
     </div>
     <div class="set-sec"><h3>Fassung</h3>
       <p>Diese App läuft als <strong>${APP_VERSION}</strong>. Wenn eine Änderung fehlt, holt der Knopf die neueste Fassung vom Server. Deine To-dos bleiben dabei unangetastet.</p>
@@ -2147,6 +2177,7 @@ document.addEventListener('click', e => {
     case 'undo': if (undo){ undo(); undo = null; render(); $('#toast').hidden = true; } break;
     case 'reload': location.reload(); break;
     case 'app-update': appUpdate(); break;
+    case 'col-reset': spaltenZuruecksetzen(); break;
     case 'close-detail': closeDetail(); break;
     case 'today-day': S.todaySel = (!el.dataset.d || el.dataset.d === S.todaySel) ? null : el.dataset.d; renderMain(); break;
     case 'week': S.todaySel = null; S.weekOff = el.dataset.v === '0' ? 0 : S.weekOff + Number(el.dataset.v); renderMain(); break;
@@ -2356,6 +2387,12 @@ document.addEventListener('input', e => {
 });
 // Bearbeiten in der Detailansicht: Texte speichern verzögert, Datum sofort.
 document.addEventListener('input', e => {
+  const k = e.target.dataset?.col;
+  if (k){
+    spalteSetzen(k, e.target.value);
+    const l = document.querySelector(`[data-col-v="${k}"]`); if (l) l.textContent = SPALTEN[k] + ' px';
+    return;
+  }
   const f = e.target.dataset?.ef; if (!f || f === 'date') return;
   const t = T.find(x => x.id === e.target.dataset.id); if (!t) return;
   if (f === 'progress'){
@@ -2514,6 +2551,7 @@ async function boot(){
   try { Object.assign(S.openArea, JSON.parse(localStorage.getItem('brain-areas') || '{}')); } catch (e) {}
   try { Object.assign(S.calAreas, JSON.parse(localStorage.getItem('brain-calareas') || '{}')); } catch (e) {}
   try { const w = +localStorage.getItem('brain72-dw'); if (w) setzeDetailBreite(w); } catch (e) {}
+  spaltenLaden();
   applyTheme();
   try {
     idb = await openDB();
