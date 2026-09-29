@@ -235,6 +235,9 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .d-field.md > .d-in{display:none}
 .d-field:not(.md) > .d-md{display:none}
 .prg{width:100%;accent-color:var(--accent);height:26px}
+.cal-wk{margin-bottom:10px}
+.cal-wk .wk{min-height:96px}
+.cal-wk .citems{padding-bottom:4px}
 .cols{position:relative;height:15px;margin:4px 0 2px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);user-select:none}
 .cols .c-lab{position:absolute;top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cols .c-lab.r{text-align:right}
@@ -630,7 +633,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v48';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v49';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -961,7 +964,7 @@ function relTime(ts){
 
 /* ============ Zustand ============ */
 const S = {
-  view:'deadlines', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
+  view:'bydeadline', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
   sort:'due', area:'work', q:'', qDone:false, allView:'list', reorder:false, weekOff:0, online:navigator.onLine, memOnly:false,
   addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
   syncState:'', syncError:'', lastSync:0, authOpen:false, authMode:'in', authBusy:false, authErr:'', inboxTokens:null,
@@ -972,7 +975,7 @@ let undo = null;
 
 /* ============ Bausteine ============ */
 /* Suche: Treffer sichtbar machen. Aktiv nur dort, wo die Suche auch filtert (Empfehlungen). */
-const suchBegriff = () => (['recs', 'deadlines'].includes(S.view) ? S.q.trim() : '');
+const suchBegriff = () => (GRUPPEN[S.view] || S.view === 'recs' ? S.q.trim() : '');
 // Gemeinsamer Suchfilter: Titel, Beschreibung, Kontext, Personen, Projekt, Kategorie
 function sucheFilter(list){
   const q = S.q.trim().toLowerCase(); if (!q) return list;
@@ -1164,18 +1167,9 @@ function header(title, sub, eyebrow = '', right = ''){
   return `<div class="hdr"><div>${eyebrow ? `<div class="eyebrow">${eyebrow}</div>` : ''}<h1>${esc(title)}</h1>${sub ? `<div class="sub">${sub}</div>` : ''}</div><div style="display:flex;gap:8px;align-items:center">${right}</div></div>`;
 }
 const addBtn = () => `<button class="btn btn-create" data-act="assist-full">${ic('plus')}<span class="hide-m">Geführt anlegen</span></button>`;
-function quickAdd(){
-  return `<form class="qa" id="qaf" autocomplete="off">${ic('mic')}<input id="qa" placeholder="Neues To-do – sprechen oder tippen" autocomplete="off" enterkeyhint="send" aria-label="Neues To-do"><kbd class="hide-m">N</kbd></form>
-  <div class="qa-hint">Frei sprechen, z. B. „Angebote vergleichen, privat, bis nächste Woche“ – dann ⏎. Personen, Projekte und Deadlines werden erkannt.</div>`;
-}
+
 
 /* ============ Sidebar ============ */
-// Bereich ist offen, wenn aufgeklappt – oder wenn gerade etwas daraus angezeigt wird
-function areaOpen(a){
-  if (S.openArea[a]) return true;
-  if (S.addingCat === a) return true;
-  return S.view.startsWith('cat:') && catById(S.view.slice(4))?.area === a;
-}
 function renderSidebar(){
   const open = T.filter(isOpen);
   const cnt = {
@@ -1185,16 +1179,8 @@ function renderSidebar(){
     all: open.length
   };
   const tile = (v, icon, label, n) => `<button class="tile ${S.view === v ? 'on' : ''}" data-act="nav" data-view="${v}">${ic(icon)}<span class="tile-l">${label}</span>${n === '' ? '' : `<span class="tile-n">${n}</span>`}</button>`;
-  const aktivIn = v => S.view === v || (v === 'projects' && S.view.startsWith('project:')) || (v === 'people' && S.view.startsWith('person:'));
+  const aktivIn = v => S.view === v;
   const item = (v, label, n, lead, cls = '') => `<button class="sb-item ${cls} ${aktivIn(v) ? 'on' : ''}" data-act="nav" data-view="${v}">${lead}<span>${esc(label)}</span>${n !== '' ? `<span class="cnt">${n}</span>` : ''}</button>`;
-  const areaRow = a => {
-    const op = areaOpen(a), n = open.filter(t => areaOf(t) === a).length;
-    const lead = `<span class="lead" style="color:${areaColor(a)}">${ic(a === 'work' ? 'work' : 'home')}</span>`;
-    const sub = op
-      ? catsOf(a).map(c => item('cat:' + c.id, c.name, open.filter(t => t.cat === c.id).length || '', `<i class="dot" style="--c:${areaColor(a)}"></i>`, 'sb-sub')).join('')
-      : '';
-    return `<button class="sb-item ${op ? 'is-open' : ''} ${S.view === 'area:' + a ? 'on' : ''}" data-act="area-open" data-area="${a}" aria-expanded="${op}">${lead}<span>${AREAS[a].name}</span><span class="cnt">${n || ''}</span>${ic('chevR', 'i chev')}</button>${sub}`;
-  };
   let syncTxt, syncCol, syncBtn = '';
   if (S.memOnly){ syncTxt = 'Speichern nicht möglich (privates Fenster?)'; syncCol = 'var(--danger)'; }
   else if (!sess){ syncTxt = 'Nur auf diesem Gerät'; syncCol = 'var(--text-3)'; syncBtn = `<button class="link" data-act="auth-open">Anmelden</button>`; }
@@ -1206,57 +1192,55 @@ function renderSidebar(){
     <div class="brand"><div class="brand-txt"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span><span class="brand-wort">Brain<span class="brand-72">72</span></span></span><span class="brand-tag">copyright THS 2026</span></div></div>
     <label class="search ${S.q ? 'on' : ''}">${ic('search')}<input id="sbq" placeholder="Suchen" value="${esc(S.q)}" aria-label="To-dos durchsuchen" enterkeyhint="search">${S.q ? `<button class="sq-x" data-act="q-clear" aria-label="Suche leeren" title="Suche leeren">${ic('close')}</button>` : ''}</label>
     ${S.q.trim() ? `<button class="switch2 sq-sw ${S.qDone ? 'on' : ''}" data-act="q-done" aria-pressed="${S.qDone}"><span class="sw2"></span>auch Erledigte</button>` : ''}
-    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('deadlines', 'clock', 'Deadlines', cnt.mitFrist)}${tile('calendar', 'cal', 'Kalender', '')}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}</div>
-    <div class="sb-group">${areaRow('work')}${areaRow('private')}${item('people', 'Personen', PEOPLE.length, ic('person'))}${item('projects', 'Projekte', PROJECTS.length, ic('folder'))}</div>
+    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('bydeadline', 'clock', 'By Deadline', cnt.mitFrist)}${tile('calendar', 'cal', 'Kalender', '')}</div>
+    <div class="tiles" style="margin-top:8px">${tile('bycat', 'list', 'By Category', CATS.length)}${tile('byperson', 'person', 'By Person', PEOPLE.length)}${tile('byproject', 'folder', 'By Project', PROJECTS.length)}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}</div>
     <div class="sb-group">${item('done', 'Erledigt', T.filter(t => t.status === 'done').length, ic('done'))}${item('archive', 'Archiv', T.filter(t => t.status === 'archived').length, ic('archive'))}${item('parked', 'Parkliste', T.filter(t => t.status === 'parked').length, ic('pause'))}${item('settings', 'Einstellungen', '', ic('gear'))}</div>
     <div class="sb-foot">
       <div class="sync"><i class="dot" style="--c:${syncCol}"></i><span>${syncTxt}</span>${syncBtn}<span class="ver" title="Laufende Fassung – Einstellungen → Fassung lädt die neueste">${APP_VERSION}</span></div>
       ${themeSeg()}
     </div>`;
-  if (S.addingCat) setTimeout(() => $('#newcat')?.focus(), 0);
 }
 const themeSeg = () => `<div class="seg" role="group" aria-label="Darstellung">${[['auto', 'Auto'], ['light', 'Hell'], ['dark', 'Dunkel']].map(([k, l]) => `<button class="${S.theme === k ? 'on' : ''}" data-act="theme" data-v="${k}">${l}</button>`).join('')}</div>`;
 
 /* ============ Ansichten ============ */
 const MOBIL_MQ = '(max-width:760px), (max-height:520px) and (pointer:coarse)';
 const isMobile = () => matchMedia(MOBIL_MQ).matches;
-function viewDeadlines(){
+// Die vier Listenseiten unterscheiden sich nur in der Gruppierung.
+const GRUPPEN = {
+  bydeadline:['By Deadline', 'due'],
+  bycat:['By Category', 'cat'],
+  byperson:['By Person', 'person'],
+  byproject:['By Project', 'project']
+};
+// Laufende Woche im Kalenderraster – steht auf jeder Listenseite an derselben Stelle.
+function wochenKopf(list){
+  const wStart = addD(THIS_MON, 7 * S.weekOff), wEnd = addD(wStart, 6);
+  const spanne = `${wStart.getDate()}. ${wStart.getMonth() !== wEnd.getMonth() ? MON[wStart.getMonth()] + ' ' : ''}– ${wEnd.getDate()}. ${MON[wEnd.getMonth()]}`;
+  return `<div class="wk-head"><button class="icon-btn" data-act="week" data-v="-1" aria-label="Vorherige Woche">${ic('chevL')}</button>
+      <strong>KW ${kw(wStart)}</strong><span>${spanne}</span>
+      ${S.weekOff ? `<button class="link" data-act="week" data-v="0">Diese Woche</button>` : ''}
+      <button class="icon-btn" style="margin-left:auto" data-act="week" data-v="1" aria-label="Nächste Woche">${ic('chevR')}</button></div>
+    <div class="cal cal-wk">${kalenderWoche(wStart, list)}</div>`;
+}
+function viewListe(){
   const mob = isMobile();
+  const [titel, art] = GRUPPEN[S.view] || GRUPPEN.bydeadline;
   const alle = T.filter(isOpen);
   const open = sucheFilter(S.area === 'all' ? alle : alle.filter(t => areaOf(t) === S.area));
-  const wStart = addD(THIS_MON, 7 * S.weekOff), wEnd = addD(wStart, 6);
-  const sel = S.todaySel ? P(S.todaySel) : null;
-  const strip = Array.from({ length:7 }, (_, i) => {
-    const d = addD(wStart, i);
-    const items = open.filter(t => t.due?.type === 'day' && same(P(t.due.date), d));
-    const cls = `${same(d, TODAY) ? 'today' : d < TODAY ? 'past' : ''} ${sel && same(d, sel) && !same(d, TODAY) ? 'sel' : ''}`;
-    return `<button class="wday ${cls}" data-act="today-day" data-d="${iso(d)}" aria-label="${esc(longDate(d))}"><span class="wd">${WD[d.getDay()]}</span><span class="dn">${d.getDate()}</span><span class="wdots">${items.slice(0, 4).map(t => `<i class="dot" style="--c:${areaColor(areaOf(t))}"></i>`).join('')}</span></button>`;
-  }).join('');
-  const spanne = `${wStart.getDate()}. ${wStart.getMonth() !== wEnd.getMonth() ? MON[wStart.getMonth()] + ' ' : ''}– ${wEnd.getDate()}. ${MON[wEnd.getMonth()]}`;
-  const weekHead = `<div class="wk-head"><button class="icon-btn" data-act="week" data-v="-1" aria-label="Vorherige Woche">${ic('chevL')}</button>
-    <strong>KW ${kw(wStart)}</strong><span>${spanne}</span>
-    ${S.weekOff ? `<button class="link" data-act="week" data-v="0">Heute</button>` : ''}
-    <button class="icon-btn" style="margin-left:auto" data-act="week" data-v="1" aria-label="Nächste Woche">${ic('chevR')}</button></div>`;
+  const woche = wochenKopf(open);
+  const leisten = `<div class="toolbar tb-split">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div>` + suchFeld();
   let body;
   if (S.allView === 'grid'){
     body = gridHTML(open);
-  } else if (sel){
-    const items = open.filter(t => { const r = range(t); return r && r[0] <= sel && r[1] >= sel; }).sort(sortByDue);
-    body = `<div class="sec"><h3>${esc(longDate(sel))}</h3><span class="n">${items.length}</span><button class="link" style="margin-left:auto;font-size:13px" data-act="today-day" data-d="">Alle Fristen</button></div>` +
-      (items.length ? `<div>${items.map(t => rowHTML(t)).join('')}</div>` : `<div class="empty">An diesem Tag ist nichts fällig.</div>`);
   } else {
-    const groups = S.sort === 'due' ? bucketGroups(open) : groupList(open, S.sort);
+    const groups = art === 'due' ? bucketGroups(open) : groupList(open, art);
     const leer = !T.length
-      ? `<div class="empty-big"><strong>Willkommen bei Brain72.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Sprich oder tipp oben dein erstes To-do – oder leg es geführt an.'}</div>`
+      ? `<div class="empty-big"><strong>Willkommen bei Brain72.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Leg links im Menü dein erstes To-do an.'}</div>`
       : S.q.trim() ? `<div class="empty-big"><strong>Keine Treffer für „${esc(S.q.trim())}“.</strong>Suchbegriff ändern oder leeren.</div>`
       : `<div class="empty-big"><strong>Keine offenen To-dos.</strong>Schön aufgeräumt.</div>`;
     body = (groups.some(g => g.items.length) ? groupsHTML(groups) : leer) + erledigteTrefferHTML();
   }
-  const leisten = suchFeld() + `<div class="toolbar tb-split">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div>
-    ${S.allView === 'grid' ? '' : `<div class="tb-group"><span class="tb-label">Gruppieren nach</span>${seg('sort', SORT_SEG)}</div>
-    <div class="toolbar">${reorderSwitch()}</div>`}`;
-  return header('Deadlines', esc(longDate(TODAY)), '', mob ? '' : addBtn()) + (mob ? '' : quickAdd()) + leisten +
-    (S.allView === 'grid' ? '' : weekHead + `<div class="wstrip">${strip}</div>`) + body;
+  return header(titel, esc(longDate(TODAY))) + woche + leisten + body;
 }
 function viewInbox(){
   const items = T.filter(t => t.status === 'inbox').sort((a, b) => (b.createdTs || 0) - (a.createdTs || 0));
@@ -1276,14 +1260,12 @@ function viewParked(){
 const seg = (key, opts) => `<div class="seg">${opts.map(([k, l]) => `<button class="${S[key] === k ? 'on' : ''}" data-act="set" data-k="${key}" data-v="${k}">${l}</button>`).join('')}</div>`;
 const AREA_SEG = [['all', 'Alle'], ['work', 'Arbeit'], ['private', 'Privat']];
 const VIEW_SEG = [['list', 'Liste'], ['grid', 'Raster']];
-const SORT_SEG = [['due', 'Deadline'], ['cat', 'Kategorie'], ['person', 'Person'], ['project', 'Projekt']];
-const reorderSwitch = () => `<button class="switch2 ${S.reorder ? 'on' : ''}" data-act="reorder" aria-pressed="${S.reorder}"><span class="sw2"></span>Reihenfolge verschieben</button>`;
 // Gruppierung, die Heute und Alle gemeinsam nutzen
 function groupList(list, sortKey){
   if (sortKey === 'cat') return ['work', 'private'].flatMap(a => catsOf(a).map(c => ({ title:`${AREAS[a].name} · ${c.name}`, items:list.filter(t => t.cat === c.id).sort(sortByDue) })))
     .concat(['work', 'private'].map(a => ({ title:`${AREAS[a].name} · ohne Unterkategorie`, items:list.filter(t => areaOf(t) === a && !catById(t.cat)).sort(sortByDue) })));
   if (sortKey === 'person') return [...[...PEOPLE].sort(byName).map(p => ({ title:p.name, items:list.filter(t => t.persons.includes(p.id)).sort(sortByDue) })), { title:'Ohne Person', items:list.filter(t => !namesOf(t.persons).length).sort(sortByDue) }];
-  if (sortKey === 'project') return [...[...PROJECTS].sort(byName).map(p => ({ title:p.name, items:list.filter(t => t.project === p.id).sort(sortByDue) })), { title:'Ohne Projekt', items:list.filter(t => !projById(t.project)).sort(sortByDue) }];
+  if (sortKey === 'project') return [...[...PROJECTS].sort(byName).map(p => ({ title:`${p.name} · ${projPct(T.filter(t => t.project === p.id))} %`, items:list.filter(t => t.project === p.id).sort(sortByDue) })), { title:'Ohne Projekt', items:list.filter(t => !projById(t.project)).sort(sortByDue) }];
   return bucketGroups(list);
 }
 /* Planung: Wann muss eine Aufgabe spätestens starten?
@@ -1334,19 +1316,13 @@ function viewRecs(){
   let list = T.filter(isOpen);
   if (S.area !== 'all') list = list.filter(t => areaOf(t) === S.area);
   list = sucheFilter(list);
-  const leisten = suchFeld() + `
-    <div class="toolbar tb-split">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div>
-    ${S.allView === 'grid' ? '' : `<div class="tb-group"><span class="tb-label">Gruppieren nach</span>${seg('sort', SORT_SEG)}</div>
-    <div class="toolbar">${reorderSwitch()}</div>`}`;
-  if (S.allView === 'grid') return header('Empfehlungen', `${list.length} offen · Eisenhower-Raster`, '', addBtn()) + leisten + gridHTML(list);
+  const leisten = `<div class="toolbar tb-split">${seg('area', AREA_SEG)}${seg('allView', VIEW_SEG)}</div>` + suchFeld();
+  if (S.allView === 'grid') return header('Empfehlungen', `${list.length} offen · Eisenhower-Raster`) + wochenKopf(list) + leisten + gridHTML(list);
   const bewertet = new Map(list.map(t => [t.id, plan(t)]));
   const nachPlan = (a, b) => byRank(a, b) || bewertet.get(b.id).s - bewertet.get(a.id).s || sortByDue(a, b);
-  const groups = (S.sort === 'due'
-      ? bucketGroups(list)
-      : groupList(list, S.sort)
-    ).map(g => ({ ...g, items:[...g.items].sort(nachPlan) }));
+  const groups = bucketGroups(list).map(g => ({ ...g, items:[...g.items].sort(nachPlan) }));
   const zeile = t => ({ extraMeta:`<span class="rec-why">${ic('spark')}${esc(bewertet.get(t.id).grund)}</span>` });
-  return header('Empfehlungen', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`, '', addBtn()) + leisten +
+  return header('Empfehlungen', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`) + wochenKopf(list) + leisten +
     `<div class="rec-note">Reihenfolge aus Frist, Dringlichkeit, Wichtigkeit und Aufwand: Aus der Größenordnung des Aufwands (Stunden, Tage, Wochen) und einem Puffer ergibt sich der späteste sinnvolle Start. Was am wenigsten Luft hat, steht oben; Wichtiges bekommt zusätzlich Vorlauf.</div>` +
     groupsHTML(groups, { empty: S.q ? 'Keine Treffer.' : 'Keine offenen To-dos.', rowOpts: zeile }) + erledigteTrefferHTML();
 }
@@ -1372,6 +1348,26 @@ function gridHTML(list){
     (offen.length ? `<div>${offen.sort(sortByDue).map(t => rowHTML(t)).join('')}</div>` : '<div class="empty">Alles eingestuft.</div>');
   return html;
 }
+// Eine Kalenderwoche im Rasterlook – im Kalender als Teil des Monats, auf den Listenseiten allein.
+function kalenderWoche(ws, vis, o = {}){
+  const mob = isMobile();
+  const allBars = vis.filter(t => t.due?.type === 'week' && same(P(t.due.start), ws));
+  const bars = mob ? allBars.slice(0, 3) : allBars;          // Handy: höchstens 3 Streifen
+  const rows = `auto ${bars.map(() => 'auto').join(' ')} 1fr`;
+  let cells = '', nums = '', items = '';
+  for (let i = 0; i < 7; i++){
+    const d = addD(ws, i), out = o.monat != null && d.getMonth() !== o.monat, isToday = same(d, TODAY);
+    const klick = o.tagKlick ? ` data-act="cal-day" data-d="${iso(d)}"` : '';
+    cells += `<div class="cbg c${i} ${i >= 5 ? 'we' : ''} ${out ? 'out' : ''} ${o.tagKlick && iso(d) === S.calDay ? 'sel' : ''}" style="grid-column:${i + 1}"${klick}></div>`;
+    nums += `<div class="cnum ${out ? 'out' : ''} ${isToday ? 'today' : ''}" style="grid-column:${i + 1}"><span>${d.getDate() === 1 ? `1. ${MONS[d.getMonth()]}` : d.getDate()}</span></div>`;
+    const di = vis.filter(t => t.due?.type === 'day' && same(P(t.due.date), d)).sort((a, b) => a.title.localeCompare(b.title, 'de'));
+    items += `<div class="citems" style="grid-row:${2 + bars.length};grid-column:${i + 1}">${di.slice(0, 3).map(t => `<button class="citem ${t.status === 'done' ? 'done' : ''} ${dueLabel(t).cls === 'over' ? 'over' : ''}" data-act="open" data-id="${t.id}" title="${esc(t.title)}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span class="t">${esc(t.title)}</span></button>`).join('')}${di.length > 3 ? `<span class="cmore">+${di.length - 3}</span>` : ''}</div>`;
+  }
+  const barHTML = bars.map((t, j) => mob
+    ? `<span class="cbar mini ${t.status === 'done' ? 'done' : ''}" style="grid-row:${2 + j};--c:${areaColor(areaOf(t))}" title="${esc(t.title)}"></span>`
+    : `<button class="cbar ${t.status === 'done' ? 'done' : ''}" style="grid-row:${2 + j};--c:${areaColor(areaOf(t))}" data-act="open" data-id="${t.id}"><i class="dot"></i><span class="t">${esc(t.title)}</span><span class="k">KW ${kw(ws)}</span></button>`).join('');
+  return `<div class="wk" style="grid-template-rows:${rows}">${cells}${nums}${barHTML}${items}</div>`;
+}
 function viewCalendar(){
   const mob = isMobile();
   const m = S.calMonth, y = m.getFullYear(), mo = m.getMonth();
@@ -1380,29 +1376,12 @@ function viewCalendar(){
   const sichtbar = t => { const a = areaOf(t); return a ? S.calAreas[a] : anyArea; };   // ohne Bereich: mitlaufen lassen
   const vis = T.filter(t => t.due && (isOpen(t) || t.status === 'done') && sichtbar(t));
   let weeks = '';
-  for (let ws = mondayOf(first); ws <= last; ws = addD(ws, 7)){
-    const allBars = vis.filter(t => t.due.type === 'week' && same(P(t.due.start), ws));
-    // Handy: höchstens 3 schmale Streifen, damit genug Fläche zum Antippen des Tages bleibt
-    const bars = mob ? allBars.slice(0, 3) : allBars;
-    const rows = `auto ${bars.map(() => 'auto').join(' ')} 1fr`;
-    let cells = '', nums = '', items = '';
-    for (let i = 0; i < 7; i++){
-      const d = addD(ws, i), out = d.getMonth() !== mo, isToday = same(d, TODAY);
-      cells += `<div class="cbg c${i} ${i >= 5 ? 'we' : ''} ${out ? 'out' : ''} ${iso(d) === S.calDay ? 'sel' : ''}" style="grid-column:${i + 1}" data-act="cal-day" data-d="${iso(d)}"></div>`;
-      nums += `<div class="cnum ${out ? 'out' : ''} ${isToday ? 'today' : ''}" style="grid-column:${i + 1}"><span>${d.getDate() === 1 ? `1. ${MONS[d.getMonth()]}` : d.getDate()}</span></div>`;
-      const di = vis.filter(t => t.due.type === 'day' && same(P(t.due.date), d)).sort((a, b) => a.title.localeCompare(b.title, 'de'));
-      items += `<div class="citems" style="grid-row:${2 + bars.length};grid-column:${i + 1}">${di.slice(0, 3).map(t => `<button class="citem ${t.status === 'done' ? 'done' : ''} ${dueLabel(t).cls === 'over' ? 'over' : ''}" data-act="open" data-id="${t.id}" title="${esc(t.title)}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span class="t">${esc(t.title)}</span></button>`).join('')}${di.length > 3 ? `<span class="cmore">+${di.length - 3}</span>` : ''}</div>`;
-    }
-    const barHTML = bars.map((t, j) => mob
-      ? `<span class="cbar mini ${t.status === 'done' ? 'done' : ''}" style="grid-row:${2 + j};--c:${areaColor(areaOf(t))}" title="${esc(t.title)}"></span>`
-      : `<button class="cbar ${t.status === 'done' ? 'done' : ''}" style="grid-row:${2 + j};--c:${areaColor(areaOf(t))}" data-act="open" data-id="${t.id}"><i class="dot"></i><span class="t">${esc(t.title)}</span><span class="k">KW ${kw(ws)}</span></button>`).join('');
-    weeks += `<div class="wk" style="grid-template-rows:${rows}">${cells}${nums}${barHTML}${items}</div>`;
-  }
+  for (let ws = mondayOf(first); ws <= last; ws = addD(ws, 7)) weeks += kalenderWoche(ws, vis, { monat:mo, tagKlick:true });
   const monthItems = vis.filter(t => t.due.type === 'month' && t.due.month === monthKey(first));
   const sd = P(S.calDay);
   const order = { day:0, week:1, month:2 };
   const dayList = vis.filter(t => { const [s, e] = range(t); return s <= sd && e >= sd; }).sort((a, b) => order[a.due.type] - order[b.due.type]);
-  return header('Kalender', 'Feste Termine als Punkt, „nächste Woche“ als Balken, „nächster Monat“ als Band.', '', addBtn()) +
+  return header('Kalender', 'Feste Termine als Punkt, „nächste Woche“ als Balken, „nächster Monat“ als Band.') +
     `<div class="cal-head"><h2>${MON[mo]} ${y}</h2><button class="icon-btn" data-act="cal-prev" aria-label="Vorheriger Monat">${ic('chevL')}</button><button class="btn btn-g btn-s" data-act="cal-today">Heute</button><button class="icon-btn" data-act="cal-next" aria-label="Nächster Monat">${ic('chevR')}</button></div>
     <div class="legend">
       <button class="fchip ${S.calAreas.work ? 'on' : ''}" data-act="cal-area" data-v="work" aria-pressed="${S.calAreas.work}"><i class="dot" style="--c:var(--work)"></i>Arbeit</button>
@@ -1419,23 +1398,7 @@ function nextDueTxt(list){
   const n = list.filter(isOpen).filter(t => t.due).sort(sortByDue)[0];
   return n ? `nächste: ${dueLabel(n).txt}` : 'keine Deadline';
 }
-function viewPeople(){
-  // Der Name steht direkt als Eingabefeld in der Zeile: umbenennen geht ohne Umweg über die Einstellungen.
-  // To-dos merken sich nur die ID der Person, darum greift ein neuer Name überall sofort.
-  const aktP = S.view.startsWith('person:') ? S.view.slice(7) : S.aktivEnt;
-  const rows = [...PEOPLE].sort(byName).map(p => { const l = T.filter(t => t.persons.includes(p.id)); const o = l.filter(isOpen).length; return `<div class="prow prow-e ${p.id === aktP ? 'is-akt' : ''}"><span class="av">${esc(initials(p.name))}</span><span class="pm"><input class="ren pn-in" data-rename="people" data-id="${p.id}" value="${esc(p.name)}" aria-label="Name der Person ändern" enterkeyhint="done"><div class="ps">${o} offen · ${nextDueTxt(l)}</div></span><button class="icon-btn chev" data-act="nav" data-view="person:${p.id}" aria-label="To-dos von ${esc(p.name)} anzeigen">${ic('chevR')}</button></div>`; }).join('');
-  return header('Personen', 'Namen hier direkt ändern – die To-dos übernehmen das. Nur Vornamen oder Kürzel verwenden.', '', `<button class="btn btn-g" data-act="nav" data-view="settings">${ic('gear')}Verwalten</button>`) +
-    (rows ? `<div class="plist">${rows}</div>` : `<div class="empty">Noch keine Personen. Leg sie hier oder beim Anlegen eines To-dos an.</div>`) +
-    `<div class="addbar"><input class="add-in" data-add="person" placeholder="+ Person hinzufügen" enterkeyhint="done"></div>`;
-}
-function viewProjects(){
-  // Wie bei den Personen: Name als Eingabefeld in der Zeile. To-dos speichern nur die Projekt-ID.
-  const akt = S.view.startsWith('project:') ? S.view.slice(8) : S.aktivEnt;
-  const rows = [...PROJECTS].sort(byName).map(p => { const l = T.filter(t => t.project === p.id); const pct = projPct(l); const c = areaColor(p.area); return `<div class="prow prow-e ${p.id === akt ? 'is-akt' : ''}"><span class="pico" style="--c:${c}">${ic('diamond')}</span><span class="pm"><input class="ren pn-in" data-rename="projects" data-id="${p.id}" value="${esc(p.name)}" aria-label="Name des Projekts ändern" enterkeyhint="done"><div class="ps">${AREAS[p.area].name} · ${l.filter(isOpen).length} offen · ${nextDueTxt(l)}</div></span><span class="prog" style="--c:${c}"><i style="width:${pct}%"></i></span><span class="prog-l">${pct} %</span><button class="icon-btn chev" data-act="nav" data-view="project:${p.id}" aria-label="To-dos von ${esc(p.name)} anzeigen">${ic('chevR')}</button></div>`; }).join('');
-  return header('Projekte', 'Namen hier direkt ändern. Der Balken zeigt den mittleren Fortschritt aller To-dos des Projekts.', '', `<button class="btn btn-g" data-act="nav" data-view="settings">${ic('gear')}Verwalten</button>`) +
-    (rows ? `<div class="plist">${rows}</div>` : `<div class="empty">Noch keine Projekte.</div>`) +
-    `<div class="addbar"><input class="add-in" data-add="project" placeholder="+ Projekt hinzufügen" enterkeyhint="done">${areaSeg('newProjArea')}</div>`;
-}
+// Bereichsumschalter für Projekte in den Einstellungen
 const areaSeg = (key, id = '') => `<div class="seg">${Object.entries(AREAS).map(([a, v]) => `<button class="${(key === 'newProjArea' ? S.newProjArea : projById(id)?.area) === a ? 'on' : ''}" data-act="${key === 'newProjArea' ? 'new-proj-area' : 'proj-area'}" data-id="${id}" data-v="${a}">${v.name}</button>`).join('')}</div>`;
 function viewFiltered(kind, id){
   let list, title, eyebrow;
@@ -1443,14 +1406,14 @@ function viewFiltered(kind, id){
   else if (kind === 'cat' && catById(id)){ const c = catById(id); list = T.filter(t => t.cat === id); title = c.name; eyebrow = `<i class="dot" style="--c:${areaColor(c.area)}"></i>${AREAS[c.area].name}`; }
   else if (kind === 'person' && personById(id)){ list = T.filter(t => t.persons.includes(id)); title = personName(id); eyebrow = 'Person'; }
   else if (kind === 'project' && projById(id)){ const p = projById(id); list = T.filter(t => t.project === id); title = p.name; eyebrow = `<i class="dot" style="--c:${areaColor(p.area)}"></i>Projekt · ${AREAS[p.area].name}`; }
-  else { S.view = 'today'; return viewToday(); }
+  else { S.view = 'bydeadline'; return viewListe(); }
   const open = list.filter(isOpen), done = list.filter(t => t.status === 'done').sort((a, b) => b.doneAt.localeCompare(a.doneAt));
   let balken = '';
   if (kind === 'project' && list.length){
     const pct = projPct(list), c = areaColor(projById(id).area);
     balken = `<div class="hdr-prog"><span class="prog" style="--c:${c}"><i style="width:${pct}%"></i></span><span class="prog-l">${pct} %</span><span class="muted">Fortschritt über alle To-dos</span></div>`;
   }
-  return header(title, `${open.length} offen · ${done.length} kürzlich erledigt`, eyebrow, addBtn()) + balken + groupsHTML(bucketGroups(open), { empty:'Nichts offen.' }) +
+  return header(title, `${open.length} offen · ${done.length} kürzlich erledigt`, eyebrow) + balken + groupsHTML(bucketGroups(open), { empty:'Nichts offen.' }) +
     (done.length ? `<div class="sec"><h3>Zuletzt erledigt</h3><span class="n">${done.length}</span></div><div>${done.map(t => rowHTML(t, { right:`<span class="muted">${relDay(t.doneAt)}</span>` })).join('')}</div>` : '');
 }
 // Reihenfolge innerhalb der angezeigten Gruppe ändern
@@ -1547,9 +1510,13 @@ function viewSettings(){
     </div>`;
 }
 
+// Frühere Seitennamen weiterleiten, damit gespeicherte Zustände und alte Verweise nicht ins Leere laufen
+const ALT_VIEWS = { deadlines:'bydeadline', today:'bydeadline', all:'bydeadline', people:'byperson', projects:'byproject' };
 function renderMain(){
+  if (ALT_VIEWS[S.view]) S.view = ALT_VIEWS[S.view];
   const [kind, id] = S.view.includes(':') ? S.view.split(/:(.+)/) : [S.view];
-  const views = { deadlines:viewDeadlines, inbox:viewInbox, recs:viewRecs, calendar:viewCalendar, people:viewPeople, projects:viewProjects, done:viewDone, archive:viewArchive, parked:viewParked, settings:viewSettings };
+  const views = { bydeadline:viewListe, bycat:viewListe, byperson:viewListe, byproject:viewListe,
+    inbox:viewInbox, recs:viewRecs, calendar:viewCalendar, done:viewDone, archive:viewArchive, parked:viewParked, settings:viewSettings };
   const html = views[kind] ? views[kind]() : viewFiltered(kind, id);
   const scroll = $('#main').scrollTop;
   $('#main').innerHTML = `<div class="main-inner">${html}</div>`;
@@ -1699,7 +1666,7 @@ function fmtRange(t){ const [s, e] = range(t); return `${s.getDate()}. ${MONS[s.
 /* ============ Tabbar (mobil) ============ */
 function renderTabbar(){
   const tab = (v, icon, l) => `<button class="tab ${S.view === v ? 'on' : ''}" data-act="nav" data-view="${v}">${ic(icon)}${l}</button>`;
-  $('#tabbar').innerHTML = `<button class="tab" data-act="menu">${ic('menu')}Menü</button>` + tab('deadlines', 'clock', 'Deadlines') +
+  $('#tabbar').innerHTML = `<button class="tab" data-act="menu">${ic('menu')}Menü</button>` + tab('bydeadline', 'clock', 'Deadline') +
     `<button class="fab" data-act="assist-capture" aria-label="To-do diktieren">${ic('mic')}</button>` +
     tab('calendar', 'cal', 'Kalender') + tab('recs', 'spark', 'Empfehlungen');
 }
@@ -2234,7 +2201,7 @@ function nav(v){
   if (/^(project|person):/.test(v)) S.aktivEnt = v.split(/:(.+)/)[1];
   if (v === 'settings' && sess && S.inboxTokens === null) tokenLaden();
   S.view = v; S.confirmDel = null; S.confirmM = null;
-  if (v === 'deadlines'){ S.todaySel = null; S.weekOff = 0; }
+  if (GRUPPEN[v]) { S.todaySel = null; S.weekOff = 0; }
   document.body.classList.remove('sb-open');
   if (innerWidth <= 1100) S.sel = null;
   render(); $('#main').scrollTop = 0;
@@ -2306,13 +2273,6 @@ document.addEventListener('click', e => {
     case 'q-done': S.qDone = !S.qDone; render(); break;
     case 'reorder': S.reorder = !S.reorder; render(); toast(S.reorder ? 'Zum Verschieben antippen und ziehen' : 'Reihenfolge gespeichert'); break;
     case 'theme': S.theme = el.dataset.v; applyTheme(); render(); break;
-    case 'area-open': {
-      const a = el.dataset.area;
-      if (S.view === 'area:' + a && areaOpen(a)){ S.openArea[a] = false; saveAreas(); renderSidebar(); }
-      else { S.openArea[a] = true; saveAreas(); nav('area:' + a); }
-      break;
-    }
-    case 'add-cat': S.addingCat = S.addingCat === el.dataset.area ? null : el.dataset.area; S.openArea[el.dataset.area] = true; saveAreas(); renderSidebar(); break;
     case 'new-proj-area': S.newProjArea = el.dataset.v; renderMain(); break;
     case 'proj-area': { const p = projById(id); if (p){ p.area = el.dataset.v; save('projects', p); render(); } break; }
     case 'goto-day': S.calDay = el.dataset.d; S.calMonth = new Date(P(el.dataset.d).getFullYear(), P(el.dataset.d).getMonth(), 1); nav('calendar'); break;
@@ -2467,7 +2427,6 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     const o = addEntity(add, e.target.value);
     if (o){
-      if (e.target.id === 'newcat'){ S.addingCat = null; S.view = 'cat:' + o.id; }
       render(); toast(`„${o.name}“ angelegt`);
       const again = document.querySelector(`[data-add="${add}"]`); if (again && e.target.id !== 'newcat') again.focus();
     }
@@ -2486,7 +2445,7 @@ document.addEventListener('input', e => {
   if (e.target.id === 'allq' || e.target.id === 'sbq'){
     S.q = e.target.value;
     const id = e.target.id, pos = e.target.selectionStart;
-    if (!['recs', 'deadlines'].includes(S.view)) S.view = 'recs';
+    if (!GRUPPEN[S.view] && S.view !== 'recs') S.view = 'bydeadline';
     render();
     const f = document.getElementById(id); f.focus(); f.setSelectionRange(pos, pos);
   }
