@@ -235,6 +235,7 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .d-field.md > .d-in{display:none}
 .d-field:not(.md) > .d-md{display:none}
 .prg{width:100%;accent-color:var(--accent);height:26px}
+.sec-done h3{color:var(--text-2)}
 .cal-wk{margin:0 0 4px}
 .cal-wk .wk{min-height:100px}
 .cal-wk .citems{padding-bottom:4px}
@@ -644,7 +645,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v52';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v53';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1260,16 +1261,23 @@ function viewListe(){
   if (S.tag !== 'all'){ const d = P(S.tag); open = open.filter(t => { const r = range(t); return r && r[0] <= d && r[1] >= d; }); }
   const woche = wochenKopf(open, true);
   const leisten = filterLeiste() + suchFeld();
+  // Zwei Blöcke: oben die offenen To-dos gruppiert, darunter das Erledigte am Stück
+  const offen = open.filter(isOpen);
+  const fertig = open.filter(t => t.status === 'done').sort((a, b) => String(b.doneAt || '').localeCompare(String(a.doneAt || '')));
+  const erledigtBlock = fertig.length
+    ? `<div class="sec sec-done"><h3>Erledigt</h3><span class="n">${fertig.length}</span></div>
+       <div>${fertig.map(t => rowHTML(t, { noPark:true })).join('')}</div>`
+    : '';
   let body;
   if (S.allView === 'grid'){
-    body = gridHTML(open);
+    body = gridHTML(offen) + erledigtBlock;
   } else {
-    const groups = art === 'due' ? bucketGroups(open) : groupList(open, art);
+    const groups = art === 'due' ? bucketGroups(offen) : groupList(offen, art);
     const leer = !T.length
       ? `<div class="empty-big"><strong>Willkommen bei Brain72.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Leg links im Menü dein erstes To-do an.'}</div>`
       : S.q.trim() ? `<div class="empty-big"><strong>Keine Treffer für „${esc(S.q.trim())}“.</strong>Suchbegriff ändern oder leeren.</div>`
       : `<div class="empty-big"><strong>Keine offenen To-dos.</strong>Schön aufgeräumt.</div>`;
-    body = (groups.some(g => g.items.length) ? groupsHTML(groups) : leer) + erledigteTrefferHTML();
+    body = (groups.some(g => g.items.length) ? groupsHTML(groups) : (fertig.length ? '' : leer)) + erledigtBlock + erledigteTrefferHTML();
   }
   return header(titel, esc(longDate(TODAY))) + woche + leisten + body;
 }
