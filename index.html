@@ -26,6 +26,7 @@
   --shadow:0 1px 2px rgba(20,24,33,.05),0 6px 20px rgba(20,24,33,.07);
   --shadow-lg:0 24px 64px rgba(20,24,33,.20),0 2px 6px rgba(20,24,33,.06);
   --scrim:rgba(24,26,32,.26); --glass:rgba(255,255,255,.8);
+  --pastel:rgba(92,139,114,.10); --pastel-2:rgba(92,139,114,.22);
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){
@@ -40,6 +41,7 @@
     --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.3);
     --shadow-lg:0 24px 70px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);
     --scrim:rgba(0,0,0,.5); --glass:rgba(24,25,28,.82);
+    --pastel:rgba(137,183,157,.10); --pastel-2:rgba(137,183,157,.18);
     color-scheme:dark;
   }
 }
@@ -100,9 +102,10 @@ body.resizing{cursor:col-resize;user-select:none}
 .brand-tag{font-size:10.5px;color:var(--text-2);letter-spacing:.03em;line-height:1;margin:-3px 0 0 38px}
 .logo{width:28px;height:28px;border-radius:9px;background:var(--create);display:grid;place-items:center;flex:none}
 .logo svg{width:18px;height:18px;stroke:var(--surface);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.search{display:flex;align-items:center;gap:7px;background:var(--surface-2);border-radius:9px;padding:7px 9px;color:var(--text-2);box-shadow:inset 0 0 0 1px var(--line-2);transition:box-shadow .15s,background .15s}
-.search:hover{background:var(--surface-3)}
-.search:focus-within{background:var(--surface-3);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.search{display:flex;align-items:center;gap:9px;height:44px;background:var(--pastel-2);border-radius:12px;padding:0 12px;color:var(--text-2);box-shadow:inset 0 0 0 1px var(--line-2);transition:box-shadow .15s,background .15s}
+.search:hover{background:var(--pastel-2);box-shadow:inset 0 0 0 1px var(--line-2),0 0 0 1px var(--line)}
+.search:focus-within{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.search input{font-size:14px}
 .search.on{box-shadow:inset 0 0 0 1.5px var(--accent)}
 .search input{border:0;background:none;outline:none;width:100%;min-width:0;font-size:13.5px;color:var(--text)}
 .search input::placeholder{color:var(--text-3)}
@@ -443,7 +446,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .wk:first-child{border-top:0}
 .cbg{grid-row:1/-1;border-left:1px solid var(--line);cursor:pointer}
 .cbg.c0{border-left:0}
-.cbg.we{background:color-mix(in srgb,var(--surface-2) 60%,transparent)}
+.cbg.we{background:var(--pastel)}
 .cbg.out{background:var(--surface-2)}
 .cbg.sel{background:var(--accent-soft)}
 .cbg.today{background:color-mix(in srgb,var(--accent) 14%,transparent)}
@@ -657,7 +660,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v58';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v59';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1137,9 +1140,11 @@ function rowHTML(t, o = {}){
 let LAST_GROUPS = [];
 function groupsHTML(groups, o = {}){
   LAST_GROUPS = groups.filter(g => g.items.length).map(g => g.items.map(t => t.id));
-  const html = groups.filter(g => g.items.length).map(g => `
+  const html = groups.filter(g => g.items.length || g.leer).map(g => `
     <div class="sec ${g.cls || ''}"><h3>${esc(g.title)}</h3><span class="n">${g.items.length}</span></div>
-    <div>${g.items.map(t => rowHTML(t, o.rowOpts ? o.rowOpts(t) : {})).join('')}</div>`).join('');
+    ${g.items.length
+      ? `<div>${g.items.map(t => rowHTML(t, o.rowOpts ? o.rowOpts(t) : {})).join('')}</div>`
+      : `<div class="empty">${esc(g.leer)}</div>`}`).join('');
   // Die Kopfleiste passt nur zu Listen im Standardraster – eine eigene rechte Spalte (Erledigt, Archiv) hat ihre eigene Breite.
   const erstes = groups.flatMap(g => g.items)[0];
   const probe = (o.rowOpts && erstes) ? o.rowOpts(erstes) : {};
@@ -1236,7 +1241,7 @@ const GRUPPEN = {
 };
 // Laufende Woche im Kalenderraster – steht auf jeder Listenseite an derselben Stelle.
 // Filterzeile mit Beschriftung – auf allen Listenseiten gleich
-function filterLeiste(){
+function filterLeiste(o = {}){
   // Neben dem Bereich lässt sich auf einen Tag der Woche und – je nach Seite – auf eine Person
   // oder ein Projekt eingrenzen; der Schalter blendet zusätzlich Erledigtes ein.
   let wahl = '';
@@ -1244,7 +1249,7 @@ function filterLeiste(){
   if (S.view === 'byproject') wahl += auswahlFeld('proj', 'Projekt', [...PROJECTS].sort(byName));
   const erledigt = `<button class="switch2 sw-erl ${S.qDone ? 'on' : ''}" data-act="q-done" aria-pressed="${S.qDone}"><span class="sw2"></span>Erledigte</button>`;
   return `<div class="tb-group filterbar"><span class="tb-label">Filter</span>
-    <div class="toolbar tb-split" style="width:100%"><div class="f-links">${seg('area', AREA_SEG)}${wahl}${erledigt}</div>${seg('allView', VIEW_SEG)}</div></div>`;
+    <div class="toolbar tb-split" style="width:100%"><div class="f-links">${seg('area', AREA_SEG)}${wahl}${erledigt}</div>${o.ohneAnsicht ? '' : seg('allView', VIEW_SEG)}</div></div>`;
 }
 const auswahlFeld = (key, label, liste, alleTxt = 'Alle') => `<label class="fsel ${S[key] !== 'all' ? 'on' : ''}"><span>${label}</span>
   <select data-fsel="${key}" aria-label="Nach ${label} filtern">
@@ -1268,7 +1273,10 @@ function viewListe(){
   if (S.view === 'byperson' && S.pers !== 'all') open = open.filter(t => t.persons.includes(S.pers));
   if (S.view === 'byproject' && S.proj !== 'all') open = open.filter(t => t.project === S.proj);
   const wochenListe = open;                       // ohne Tagesfilter, damit oben die ganze Woche sichtbar bleibt
-  if (S.tag !== 'all'){ const d = P(S.tag); open = open.filter(t => { const r = range(t); return r && r[0] <= d && r[1] >= d; }); }
+  const tagGewaehlt = S.tag !== 'all' ? P(S.tag) : null;
+  const amTag = t => { const r = range(t); return r && r[0] <= tagGewaehlt && r[1] >= tagGewaehlt; };
+  // Auf „Nach Frist“ zeigt der gewählte Tag oben seine Aufgaben, darunter folgt das Spätere.
+  if (tagGewaehlt && art !== 'due') open = open.filter(amTag);
   const woche = wochenKopf(wochenListe, true);
   const leisten = filterLeiste() + suchFeld();
   // Zwei Blöcke: oben die offenen To-dos gruppiert, darunter das Erledigte am Stück
@@ -1282,7 +1290,15 @@ function viewListe(){
   if (S.allView === 'grid'){
     body = gridHTML(offen) + erledigtBlock;
   } else {
-    const groups = art === 'due' ? bucketGroups(offen) : groupList(offen, art);
+    let groups;
+    if (art === 'due' && tagGewaehlt){
+      const heutige = offen.filter(amTag).sort(sortByDue);
+      const spaeter = offen.filter(t => { const r = range(t); return !r || r[0] > tagGewaehlt; });
+      groups = [{ title:longDate(tagGewaehlt), items:heutige, leer:'Keine Tasks an diesem Tag.' },
+        ...bucketGroups(spaeter).map(g => ({ ...g, title:g.title }))];
+    } else {
+      groups = art === 'due' ? bucketGroups(offen) : groupList(offen, art);
+    }
     const leer = !T.length
       ? `<div class="empty-big"><strong>Willkommen bei Brain72.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Leg links im Menü dein erstes To-do an.'}</div>`
       : S.q.trim() ? `<div class="empty-big"><strong>Keine Treffer für „${esc(S.q.trim())}“.</strong>Suchbegriff ändern oder leeren.</div>`
@@ -1437,9 +1453,9 @@ function viewCalendar(){
   const mob = isMobile();
   const m = S.calMonth, y = m.getFullYear(), mo = m.getMonth();
   const first = new Date(y, mo, 1), last = new Date(y, mo + 1, 0);
-  const anyArea = S.calAreas.work || S.calAreas.private;
-  const sichtbar = t => { const a = areaOf(t); return a ? S.calAreas[a] : anyArea; };   // ohne Bereich: mitlaufen lassen
-  const vis = T.filter(t => t.due && (isOpen(t) || t.status === 'done') && sichtbar(t));
+  // Bereich und Erledigtes steuert dieselbe Filterleiste wie auf den Listenseiten
+  const sichtbar = t => S.area === 'all' || !areaOf(t) || areaOf(t) === S.area;
+  const vis = T.filter(t => t.due && (isOpen(t) || (S.qDone && t.status === 'done')) && sichtbar(t));
   let weeks = '';
   for (let ws = mondayOf(first); ws <= last; ws = addD(ws, 7)) weeks += kalenderWoche(ws, vis, { monat:mo, tagKlick:true });
   const monthItems = vis.filter(t => t.due.type === 'month' && t.due.month === monthKey(first));
@@ -1448,11 +1464,8 @@ function viewCalendar(){
   const dayList = vis.filter(t => { const [s, e] = range(t); return s <= sd && e >= sd; }).sort((a, b) => order[a.due.type] - order[b.due.type]);
   return header('Kalender', 'Feste Termine als Punkt, „nächste Woche“ als Balken, „nächster Monat“ als Band.') +
     `<div class="cal-head"><h2>${MON[mo]} ${y}</h2><button class="icon-btn" data-act="cal-prev" aria-label="Vorheriger Monat">${ic('chevL')}</button><button class="btn btn-g btn-s" data-act="cal-today">Heute</button><button class="icon-btn" data-act="cal-next" aria-label="Nächster Monat">${ic('chevR')}</button></div>
-    <div class="legend">
-      <button class="fchip ${S.calAreas.work ? 'on' : ''}" data-act="cal-area" data-v="work" aria-pressed="${S.calAreas.work}"><i class="dot" style="--c:var(--work)"></i>Arbeit</button>
-      <button class="fchip ${S.calAreas.private ? 'on' : ''}" data-act="cal-area" data-v="private" aria-pressed="${S.calAreas.private}"><i class="dot" style="--c:var(--private)"></i>Privat</button>
-      <span><i class="lg-bar"></i>Wochen-Frist</span><span><i class="lg-band"></i>Monats-Frist</span></div>
-    ${anyArea ? '' : '<div class="empty" style="padding:10px 4px">Beide Filter sind aus – deshalb ist der Kalender leer.</div>'}
+    ${filterLeiste({ ohneAnsicht:true })}
+    <div class="legend"><span><i class="lg-bar"></i>Wochen-Frist</span><span><i class="lg-band"></i>Monats-Frist</span></div>
     ${monthItems.length ? `<div class="mstrip"><span class="lab">Im Laufe des ${MON[mo]}s</span>${monthItems.map(t => `<button class="mchip" data-act="open" data-id="${t.id}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i>${esc(t.title)}</button>`).join('')}</div>` : ''}
     <div class="cal-dow">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(d => `<span>${d}</span>`).join('')}</div>
     <div class="cal">${weeks}</div>
