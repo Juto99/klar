@@ -239,6 +239,12 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .d-field:not(.md) > .d-md{display:none}
 .prg{width:100%;accent-color:var(--accent);height:26px}
 .sec-done h3{color:var(--text-2)}
+.wk-wahl{grid-template-columns:repeat(7,minmax(0,1fr)) 78px}
+.cwd{display:block;font-style:normal;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:1px}
+.calle{border-left:1px solid var(--line);background:var(--surface-2)}
+.calle.sel{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.calle-l{text-align:center;color:var(--text-2);font-size:11px;line-height:1.25;padding-top:10px}
+.calle-l span{display:inline;min-width:0;height:auto;padding:0;border-radius:0}
 .cal-wk{margin:0 0 4px}
 .cal-wk .wk{min-height:100px}
 .cal-wk .citems{padding-bottom:4px}
@@ -650,7 +656,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v56';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v57';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1233,9 +1239,7 @@ const GRUPPEN = {
 function filterLeiste(){
   // Neben dem Bereich lässt sich auf einen Tag der Woche und – je nach Seite – auf eine Person
   // oder ein Projekt eingrenzen; der Schalter blendet zusätzlich Erledigtes ein.
-  const wStart = addD(THIS_MON, 7 * S.weekOff);
-  const tage = Array.from({ length:7 }, (_, i) => { const d = addD(wStart, i); return { id:iso(d), name:`${WDL[d.getDay()]}, ${d.getDate()}. ${MON[d.getMonth()]}` }; });
-  let wahl = auswahlFeld('tag', 'Tag', tage, 'Alle Tage');
+  let wahl = '';
   if (S.view === 'byperson') wahl += auswahlFeld('pers', 'Person', [...PEOPLE].sort(byName));
   if (S.view === 'byproject') wahl += auswahlFeld('proj', 'Projekt', [...PROJECTS].sort(byName));
   const erledigt = `<button class="switch2 sw-erl ${S.qDone ? 'on' : ''}" data-act="q-done" aria-pressed="${S.qDone}"><span class="sw2"></span>Erledigte</button>`;
@@ -1368,13 +1372,14 @@ function viewRecs(){
   let list = T.filter(isOpen);
   if (S.area !== 'all') list = list.filter(t => areaOf(t) === S.area);
   list = sucheFilter(list);
+  if (S.tag !== 'all'){ const d = P(S.tag); list = list.filter(t => { const r = range(t); return r && r[0] <= d && r[1] >= d; }); }
   const leisten = filterLeiste() + suchFeld();
-  if (S.allView === 'grid') return header('Empfehlungen', `${list.length} offen · Eisenhower-Raster`) + wochenKopf(list) + leisten + gridHTML(list);
+  if (S.allView === 'grid') return header('Empfehlungen', `${list.length} offen · Eisenhower-Raster`) + wochenKopf(list, true) + leisten + gridHTML(list);
   const bewertet = new Map(list.map(t => [t.id, plan(t)]));
   const nachPlan = (a, b) => byRank(a, b) || bewertet.get(b.id).s - bewertet.get(a.id).s || sortByDue(a, b);
   const groups = bucketGroups(list).map(g => ({ ...g, items:[...g.items].sort(nachPlan) }));
   const zeile = t => ({ extraMeta:`<span class="rec-why">${ic('spark')}${esc(bewertet.get(t.id).grund)}</span>` });
-  return header('Empfehlungen', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`) + wochenKopf(list) + leisten +
+  return header('Empfehlungen', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`) + wochenKopf(list, true) + leisten +
     `<div class="rec-note">Reihenfolge aus Frist, Dringlichkeit, Wichtigkeit und Aufwand: Aus der Größenordnung des Aufwands (Stunden, Tage, Wochen) und einem Puffer ergibt sich der späteste sinnvolle Start. Was am wenigsten Luft hat, steht oben; Wichtiges bekommt zusätzlich Vorlauf.</div>` +
     groupsHTML(groups, { empty: S.q ? 'Keine Treffer.' : 'Keine offenen To-dos.', rowOpts: zeile }) + erledigteTrefferHTML();
 }
@@ -1411,14 +1416,20 @@ function kalenderWoche(ws, vis, o = {}){
     const d = addD(ws, i), out = o.monat != null && d.getMonth() !== o.monat, isToday = same(d, TODAY);
     const klick = o.tagKlick ? ` data-act="cal-day" data-d="${iso(d)}"` : o.tagWahl ? ` data-act="tag-wahl" data-d="${iso(d)}"` : '';
     cells += `<div class="cbg c${i} ${i >= 5 ? 'we' : ''} ${out ? 'out' : ''} ${isToday ? 'today' : ''} ${(o.tagKlick && iso(d) === S.calDay) || (o.tagWahl && iso(d) === S.tag) ? 'sel' : ''}" style="grid-column:${i + 1}"${klick}></div>`;
-    nums += `<div class="cnum ${out ? 'out' : ''} ${isToday ? 'today' : ''}" style="grid-column:${i + 1}"><span>${d.getDate() === 1 ? `1. ${MONS[d.getMonth()]}` : d.getDate()}</span></div>`;
+    const wdTxt = o.tagWahl ? `<i class="cwd">${WD[d.getDay()]}</i>` : '';
+    nums += `<div class="cnum ${out ? 'out' : ''} ${isToday ? 'today' : ''}" style="grid-column:${i + 1}">${wdTxt}<span>${d.getDate() === 1 ? `1. ${MONS[d.getMonth()]}` : d.getDate()}</span></div>`;
     const di = vis.filter(t => t.due?.type === 'day' && same(P(t.due.date), d)).sort((a, b) => a.title.localeCompare(b.title, 'de'));
     items += `<div class="citems" style="grid-row:${2 + bars.length};grid-column:${i + 1}">${di.slice(0, 3).map(t => `<button class="citem ${t.status === 'done' ? 'done' : ''} ${dueLabel(t).cls === 'over' ? 'over' : ''}" data-act="open" data-id="${t.id}" title="${esc(t.title)}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span class="t">${esc(t.title)}</span></button>`).join('')}${di.length > 3 ? `<span class="cmore">+${di.length - 3}</span>` : ''}</div>`;
   }
   const barHTML = bars.map((t, j) => mob
     ? `<span class="cbar mini ${t.status === 'done' ? 'done' : ''}" style="grid-row:${2 + j};--c:${areaColor(areaOf(t))}" title="${esc(t.title)}"></span>`
     : `<button class="cbar ${t.status === 'done' ? 'done' : ''}" style="grid-row:${2 + j};--c:${areaColor(areaOf(t))}" data-act="open" data-id="${t.id}"><i class="dot"></i><span class="t">${esc(t.title)}</span><span class="k">KW ${kw(ws)}</span></button>`).join('');
-  return `<div class="wk" style="grid-template-rows:${rows}">${cells}${nums}${barHTML}${items}</div>`;
+  if (o.tagWahl){
+    // Ganz rechts eine schmale Spalte, die den Tagesfilter wieder aufhebt
+    cells += `<div class="cbg calle ${S.tag === 'all' ? 'sel' : ''}" style="grid-column:8" data-act="tag-wahl" data-d="all"></div>`;
+    nums += `<div class="cnum calle-l" style="grid-column:8"><span>Alle<br>Tage</span></div>`;
+  }
+  return `<div class="wk ${o.tagWahl ? 'wk-wahl' : ''}" style="grid-template-rows:${rows}">${cells}${nums}${barHTML}${items}</div>`;
 }
 function viewCalendar(){
   const mob = isMobile();
