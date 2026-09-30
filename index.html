@@ -660,7 +660,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v59';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v60';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1272,11 +1272,11 @@ function viewListe(){
   let open = sucheFilter(S.area === 'all' ? alle : alle.filter(t => areaOf(t) === S.area));
   if (S.view === 'byperson' && S.pers !== 'all') open = open.filter(t => t.persons.includes(S.pers));
   if (S.view === 'byproject' && S.proj !== 'all') open = open.filter(t => t.project === S.proj);
-  const wochenListe = open;                       // ohne Tagesfilter, damit oben die ganze Woche sichtbar bleibt
+  const wochenListe = open;                       // die Wochenzeile bleibt immer vollständig
   const tagGewaehlt = S.tag !== 'all' ? P(S.tag) : null;
-  const amTag = t => { const r = range(t); return r && r[0] <= tagGewaehlt && r[1] >= tagGewaehlt; };
-  // Auf „Nach Frist“ zeigt der gewählte Tag oben seine Aufgaben, darunter folgt das Spätere.
-  if (tagGewaehlt && art !== 'due') open = open.filter(amTag);
+  // Zum Tag zählt nur, was auf dieses Datum terminiert ist – nicht jede Wochen- oder Monatsfrist,
+  // die den Tag zufällig überspannt. Die stehen darunter in ihren gewohnten Gruppen.
+  const amTag = t => t.due?.type === 'day' && same(P(t.due.date), tagGewaehlt);
   const woche = wochenKopf(wochenListe, true);
   const leisten = filterLeiste() + suchFeld();
   // Zwei Blöcke: oben die offenen To-dos gruppiert, darunter das Erledigte am Stück
@@ -1288,17 +1288,13 @@ function viewListe(){
     : '';
   let body;
   if (S.allView === 'grid'){
-    body = gridHTML(offen) + erledigtBlock;
+    body = gridHTML(tagGewaehlt ? offen.filter(amTag) : offen) + erledigtBlock;
   } else {
-    let groups;
-    if (art === 'due' && tagGewaehlt){
-      const heutige = offen.filter(amTag).sort(sortByDue);
-      const spaeter = offen.filter(t => { const r = range(t); return !r || r[0] > tagGewaehlt; });
-      groups = [{ title:longDate(tagGewaehlt), items:heutige, leer:'Keine Tasks an diesem Tag.' },
-        ...bucketGroups(spaeter).map(g => ({ ...g, title:g.title }))];
-    } else {
-      groups = art === 'due' ? bucketGroups(offen) : groupList(offen, art);
-    }
+    const rest = tagGewaehlt ? offen.filter(t => !amTag(t)) : offen;
+    const restGruppen = art === 'due' ? bucketGroups(rest) : groupList(rest, art);
+    const groups = tagGewaehlt
+      ? [{ title:longDate(tagGewaehlt), items:offen.filter(amTag).sort(sortByDue), leer:'Keine Tasks an diesem Tag.' }, ...restGruppen]
+      : restGruppen;
     const leer = !T.length
       ? `<div class="empty-big"><strong>Willkommen bei Brain72.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Leg links im Menü dein erstes To-do an.'}</div>`
       : S.q.trim() ? `<div class="empty-big"><strong>Keine Treffer für „${esc(S.q.trim())}“.</strong>Suchbegriff ändern oder leeren.</div>`
@@ -1390,12 +1386,17 @@ function viewRecs(){
   if (S.area !== 'all') list = list.filter(t => areaOf(t) === S.area);
   list = sucheFilter(list);
   const wochenListe = list;                       // die Wochenzeile bleibt vollständig
-  if (S.tag !== 'all'){ const d = P(S.tag); list = list.filter(t => { const r = range(t); return r && r[0] <= d && r[1] >= d; }); }
+  const tagGewaehlt = S.tag !== 'all' ? P(S.tag) : null;
+  const amTag = t => t.due?.type === 'day' && same(P(t.due.date), tagGewaehlt);
   const leisten = filterLeiste() + suchFeld();
-  if (S.allView === 'grid') return header('Empfehlungen', `${list.length} offen · Eisenhower-Raster`) + wochenKopf(wochenListe, true) + leisten + gridHTML(list);
+  if (S.allView === 'grid') return header('Empfehlungen', `${list.length} offen · Eisenhower-Raster`) + wochenKopf(wochenListe, true) + leisten + gridHTML(tagGewaehlt ? list.filter(amTag) : list);
   const bewertet = new Map(list.map(t => [t.id, plan(t)]));
   const nachPlan = (a, b) => byRank(a, b) || bewertet.get(b.id).s - bewertet.get(a.id).s || sortByDue(a, b);
-  const groups = bucketGroups(list).map(g => ({ ...g, items:[...g.items].sort(nachPlan) }));
+  const rest = tagGewaehlt ? list.filter(t => !amTag(t)) : list;
+  const groups = [
+    ...(tagGewaehlt ? [{ title:longDate(tagGewaehlt), items:list.filter(amTag).sort(nachPlan), leer:'Keine Tasks an diesem Tag.' }] : []),
+    ...bucketGroups(rest).map(g => ({ ...g, items:[...g.items].sort(nachPlan) }))
+  ];
   const zeile = t => ({ extraMeta:`<span class="rec-why">${ic('spark')}${esc(bewertet.get(t.id).grund)}</span>` });
   return header('Empfehlungen', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`) + wochenKopf(wochenListe, true) + leisten +
     `<div class="rec-note">Reihenfolge aus Frist, Dringlichkeit, Wichtigkeit und Aufwand: Aus der Größenordnung des Aufwands (Stunden, Tage, Wochen) und einem Puffer ergibt sich der späteste sinnvolle Start. Was am wenigsten Luft hat, steht oben; Wichtiges bekommt zusätzlich Vorlauf.</div>` +
