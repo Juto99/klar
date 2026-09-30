@@ -242,6 +242,9 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .d-field:not(.md) > .d-md{display:none}
 .prg{width:100%;accent-color:var(--accent);height:26px}
 .sec-done h3{color:var(--text-2)}
+.sec-park h3{color:var(--warn)}
+.park-note{font-size:12.5px;color:var(--text-2);margin:0 4px 6px}
+.park-act{display:inline-flex;gap:6px;align-items:center}
 .wk-wahl{grid-template-columns:repeat(7,minmax(0,1fr)) 78px}
 .cwd{display:block;font-style:normal;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:1px}
 .calle{border-left:1px solid var(--line);background:var(--surface-2)}
@@ -660,7 +663,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v60';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v61';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1341,45 +1344,92 @@ function groupList(list, sortKey){
    Aufwand gibt die Größenordnung der Dauer (Stunden / Tage / Wochen), Dringlichkeit und Wichtigkeit den Puffer.
    Frist minus Dauer minus Puffer ergibt den spätesten Start. Wer am wenigsten Luft hat, steht oben.
    Wichtigkeit zählt zusätzlich stärker als Dringlichkeit, damit Wichtiges nicht dauerhaft von Kleinkram verdrängt wird. */
-const DAUER = { low:1, med:3, high:14 };            // Kalendertage von Anfang bis fertig
+/* Aufwand als Arbeitstage: Stunden, Tage, Wochen. Die Zahlen sind Erfahrungswerte,
+   sie werden unten mit dem Planungsaufschlag multipliziert. */
+const DAUER = { low:0.5, med:3, high:12 };
 const DAUER_TXT = { low:'ein paar Stunden', med:'einige Tage', high:'mehrere Wochen' };
+const PLAN_FAKTOR = 1.5;                            // Planungsirrtum: Geschätztes dauert länger
 const kurzDatum = d => `${WD[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1}.`;
+const istWerktag = d => d.getDay() !== 0 && d.getDay() !== 6;
+// Tage zwischen zwei Daten – für Arbeit zählen nur Werktage, privat zählt jeder Tag.
+function tageDazwischen(von, bis, werktags){
+  const vor = bis >= von;
+  let a = new Date(vor ? von : bis);
+  const b = vor ? bis : von;
+  let n = 0, schutz = 0;
+  while (a < b && schutz++ < 800){ if (!werktags || istWerktag(a)) n++; a = addD(a, 1); }
+  return vor ? n : -n;
+}
+// Zieht n Arbeitstage von einem Datum ab – Wochenenden werden bei Arbeit übersprungen.
+function minusTage(d, n, werktags){
+  let r = new Date(d), rest = Math.ceil(n), schutz = 0;
+  while (rest > 0 && schutz++ < 800){ r = addD(r, -1); if (!werktags || istWerktag(r)) rest--; }
+  return r;
+}
+/* Empfehlungen beruhen auf bewährten Faustregeln der Arbeitsorganisation:
+   • Eisenhower – Wichtiges zählt mehr als bloß Dringendes.
+   • Planungsirrtum (Kahneman/Tversky) – geschätzte Dauer mit 1,5 multiplizieren.
+   • Kritische Kette (Goldratt) – Puffer ans Ende legen und den spätesten Start ausrechnen,
+     statt jede Aufgabe einzeln aufzupolstern.
+   • Zeigarnik-Effekt und Fortschrittsprinzip (Amabile) – Angefangenes zuerst zu Ende bringen.
+   • Arbeit ruht am Wochenende: Für Arbeits-To-dos zählen nur Werktage, also muss früher
+     begonnen werden, wenn ein Wochenende dazwischenliegt. */
 function plan(t){
   const r = range(t);
+  const werktags = areaOf(t) === 'work';
+  const anteil = progOf(t) / 100;
   const wichtig = t.imp === 'high' ? 30 : t.imp === 'med' ? 14 : t.imp === 'low' ? 2 : 8;
   const dringend = t.prio === 'high' ? 20 : t.prio === 'med' ? 9 : t.prio === 'low' ? 1 : 6;
-  const dauer = DAUER[t.load] ?? 2;
+  const roh = DAUER[t.load] ?? 1.5;
+  const rest = Math.max(0.25, roh * (1 - anteil)) * PLAN_FAKTOR;     // Restaufwand mit Aufschlag
   const dauerTxt = t.load ? DAUER_TXT[t.load] : '';
+  const restTxt = anteil > 0 ? `noch gut ${rest < 1 ? 'ein halber Arbeitstag' : Math.round(rest) + ' Arbeitstage'}` : dauerTxt;
   let s, grund, start = null;
   if (!r){
     s = 18 + wichtig + dringend + (t.load === 'low' ? 6 : 0);
-    grund = t.imp === 'high' ? 'Wichtig, ohne Frist – selbst einplanen'
+    grund = anteil > 0 ? `Angefangen (${progOf(t)} %) – zu Ende bringen`
+      : t.imp === 'high' ? 'Wichtig, ohne Frist – selbst einplanen'
       : t.load === 'low' ? 'Kleinigkeit ohne Frist'
       : 'Ohne Frist';
   } else {
     const frist = r[1];
-    const tageBis = Math.round((frist - TODAY) / DAY);
     const puffer = 0.5 + (t.prio === 'high' ? 0.5 : 0) + (t.imp === 'high' ? 1 : 0);
-    start = addD(frist, -Math.ceil(dauer + puffer));
-    const luft = Math.round((start - TODAY) / DAY);
-    if (tageBis < 0) s = 100 + Math.min(12, -tageBis);
-    else if (luft <= 0) s = 90 - Math.min(6, tageBis);
+    start = minusTage(frist, rest + puffer, werktags);
+    const luft = tageDazwischen(TODAY, start, werktags);              // Arbeitstage bis zum spätesten Start
+    const bisFrist = tageDazwischen(TODAY, frist, werktags);
+    const kalenderTage = Math.round((frist - TODAY) / DAY);
+    const wochenendeDazwischen = werktags && kalenderTage > bisFrist;
+    if (kalenderTage < 0) s = 100 + Math.min(12, -kalenderTage);
+    else if (luft <= 0) s = 90 - Math.min(6, bisFrist);
     else s = Math.max(22, 82 - luft * 7);
     s += wichtig + dringend;
-    grund = tageBis < 0 ? 'Überfällig – sofort erledigen'
-      : luft < 0 ? `Puffer weg – jetzt starten${dauerTxt ? ', braucht ' + dauerTxt : ''}`
-      : luft === 0 ? `Heute starten${dauerTxt ? ', braucht ' + dauerTxt : ''}`
+    grund = kalenderTage < 0 ? 'Überfällig – sofort erledigen'
+      : anteil >= 0.5 && luft > 0 ? `Zu ${progOf(t)} % fertig – ${restTxt}, Rest bis ${kurzDatum(start)}`
+      : luft < 0 ? `Puffer weg – jetzt starten${restTxt ? ', ' + restTxt : ''}`
+      : luft === 0 ? `Heute starten${restTxt ? ', ' + restTxt : ''}`
+      : wochenendeDazwischen && luft <= 3 ? `Wochenende dazwischen – spätestens ${kurzDatum(start)} anfangen`
       : luft <= 2 ? `Spätester Start: ${kurzDatum(start)}`
       : t.imp === 'high' && t.prio !== 'high' ? `Wichtig, nicht dringend – ab ${kurzDatum(start)} einplanen`
       : t.prio === 'high' ? `Dringend – ab ${kurzDatum(start)}`
-      : t.load === 'low' && tageBis <= 7 ? 'Kleinigkeit – zwischendurch erledigen'
+      : t.load === 'low' && bisFrist <= 5 ? 'Kleinigkeit – zwischendurch erledigen'
       : `Zeit bis ${kurzDatum(start)}`;
   }
+  if (anteil > 0 && anteil < 1) s += anteil >= 0.5 ? 9 : 6;                       // Angefangenes zu Ende bringen
   if (t.load === 'low' && r && Math.round((r[1] - TODAY) / DAY) <= 7) s += 6;      // schnell weg damit
   if (t.imp === 'high' && t.prio !== 'high') s += 4;                               // Wichtiges nicht verdrängen lassen
   if (t.prio === 'high' && t.imp === 'low' && t.load === 'low') s += 3;            // dringend, klein, schnell abhaken
   if (t.created && (TODAY - P(t.created)) / DAY > 21) s += 5;                      // Altlast
   return { s, start, grund };
+}
+/* Nicht wichtig, nicht dringend, keine nahe Frist, noch nicht angefangen: Solche To-dos
+   schleppt man erfahrungsgemäß monatelang mit. Vorschlag zum Parken – entschieden wird von Hand. */
+function parkVorschlaege(list){
+  return list.filter(t => t.status === 'open' && !t.behalten
+      && (!t.imp || t.imp === 'low') && (!t.prio || t.prio === 'low')
+      && progOf(t) === 0
+      && (() => { const r = range(t); return !r || Math.round((r[1] - TODAY) / DAY) > 21; })())
+    .sort((a, b) => String(a.created || '').localeCompare(String(b.created || '')))
+    .slice(0, 5);
 }
 function viewRecs(){
   let list = T.filter(isOpen);
@@ -1399,10 +1449,18 @@ function viewRecs(){
   ];
   const zeile = t => ({ extraMeta:`<span class="rec-why">${ic('spark')}${esc(bewertet.get(t.id).grund)}</span>` });
   return header('Empfehlungen', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`) + wochenKopf(wochenListe, true) + leisten +
-    `<div class="rec-note">Reihenfolge aus Frist, Dringlichkeit, Wichtigkeit und Aufwand: Aus der Größenordnung des Aufwands (Stunden, Tage, Wochen) und einem Puffer ergibt sich der späteste sinnvolle Start. Was am wenigsten Luft hat, steht oben; Wichtiges bekommt zusätzlich Vorlauf.</div>` +
-    groupsHTML(groups, { empty: S.q ? 'Keine Treffer.' : 'Keine offenen To-dos.', rowOpts: zeile }) + erledigteTrefferHTML();
+    `<div class="rec-note">Reihenfolge aus Frist, Aufwand, Fortschritt, Dringlichkeit und Wichtigkeit. Der geschätzte Aufwand wird um die Hälfte aufgeschlagen (geschätzte Dauer trügt), bereits Erledigtes abgezogen; daraus und aus einem Puffer ergibt sich der späteste sinnvolle Start. <strong>Arbeits-To-dos rechnen nur mit Werktagen</strong> – liegt ein Wochenende vor der Frist, muss entsprechend früher begonnen werden. Angefangenes rückt nach oben, damit es nicht liegen bleibt.</div>` +
+    groupsHTML(groups, { empty: S.q ? 'Keine Treffer.' : 'Keine offenen To-dos.', rowOpts: zeile }) + parkBlockHTML(list) + erledigteTrefferHTML();
 }
 
+// Vorschlagsblock: Der Nutzer entscheidet, nichts wird von selbst geparkt.
+function parkBlockHTML(list){
+  const vor = parkVorschlaege(list);
+  if (!vor.length) return '';
+  return `<div class="sec sec-park"><h3>Zum Parken vorgeschlagen</h3><span class="n">${vor.length}</span></div>
+    <div class="park-note">Weder wichtig noch dringend, ohne nahe Frist und noch nicht begonnen. Parken heißt: aus der Liste, aber nicht gelöscht.</div>
+    <div>${vor.map(t => rowHTML(t, { noPark:true, right:`<span class="park-act"><button class="btn btn-g btn-s" data-act="park" data-id="${t.id}">Parken</button><button class="btn btn-t btn-s" data-act="park-nein" data-id="${t.id}">Behalten</button></span>` })).join('')}</div>`;
+}
 // Raster nach Eisenhower: Spalten = Dringlichkeit, Zeilen = Wichtigkeit. Der Aufwand steht als Balken an der Karte.
 const ECKE = { 'high|high':'Sofort erledigen', 'high|low':'Fest einplanen', 'low|high':'Schnell abhaken', 'low|low':'Lohnt das?' };
 function gridHTML(list){
@@ -2356,6 +2414,7 @@ document.addEventListener('click', e => {
     case 'set': S[el.dataset.k] = el.dataset.v; render(); break;
     case 'q-clear': S.q = ''; render(); $('#sbq')?.focus(); break;
     case 'q-done': S.qDone = !S.qDone; render(); break;
+    case 'park-nein': { const t = T.find(x => x.id === id); if (t){ t.behalten = true; save('todos', t); render(); toast('Bleibt in der Liste'); } break; }
     case 'reorder': S.reorder = !S.reorder; render(); toast(S.reorder ? 'Zum Verschieben antippen und ziehen' : 'Reihenfolge gespeichert'); break;
     case 'theme': S.theme = el.dataset.v; applyTheme(); render(); break;
     case 'new-proj-area': S.newProjArea = el.dataset.v; renderMain(); break;
