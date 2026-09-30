@@ -243,6 +243,8 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .prg{width:100%;accent-color:var(--accent);height:26px}
 .sec-done h3{color:var(--text-2)}
 .sec-park h3{color:var(--warn)}
+.rnum{display:inline-grid;place-items:center;min-width:20px;height:18px;margin-right:8px;padding:0 5px;border-radius:6px;background:var(--surface-3);color:var(--text-2);font-size:11px;font-weight:650;font-variant-numeric:tabular-nums;vertical-align:1px}
+.row:hover .rnum{background:var(--accent-soft);color:var(--accent)}
 .park-note{font-size:12.5px;color:var(--text-2);margin:0 4px 6px}
 .park-act{display:inline-flex;gap:6px;align-items:center}
 .wk-wahl{grid-template-columns:repeat(7,minmax(0,1fr)) 78px}
@@ -663,7 +665,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v61';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v62';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1135,7 +1137,7 @@ function rowHTML(t, o = {}){
   const del = o.del ? `<button class="icon-btn rowdel" data-act="row-del" data-id="${t.id}" title="Löschen" aria-label="To-do löschen">${ic('trash')}</button>` : '';
   return `<div class="swipe" data-swipe="${t.id}"><div class="swipe-act"><button data-act="swipe-del" data-id="${t.id}">${ic('trash')}Löschen</button></div><div class="row ${done ? 'is-done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}">
     <button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="${done ? 'Wieder öffnen' : 'Als erledigt markieren'}"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>${park}
-    <span class="row-title" title="${esc(t.title)}">${bar}<span class="tt">${hl(t.title)}</span></span>
+    <span class="row-title" title="${esc(t.title)}">${bar}<span class="tt">${o.rang ? `<span class="rnum">${o.rang}</span>` : ''}${hl(t.title)}</span></span>
     ${pctTxt}
     ${flags}${dueSp}${o.right ? `<span class="row-extra">${o.right}</span>` : ''}${del}${move}${notiz}${projSp}${peopleSp}
   </div></div>`;
@@ -1441,15 +1443,29 @@ function viewRecs(){
   const leisten = filterLeiste() + suchFeld();
   if (S.allView === 'grid') return header('Empfehlungen', `${list.length} offen · Eisenhower-Raster`) + wochenKopf(wochenListe, true) + leisten + gridHTML(tagGewaehlt ? list.filter(amTag) : list);
   const bewertet = new Map(list.map(t => [t.id, plan(t)]));
-  const nachPlan = (a, b) => byRank(a, b) || bewertet.get(b.id).s - bewertet.get(a.id).s || sortByDue(a, b);
+  // Eine durchgehende Reihenfolge statt Fristgruppen: Wer zuerst anfangen muss, steht oben.
+  const nachRang = (a, b) => {
+    const pa = bewertet.get(a.id), pb = bewertet.get(b.id);
+    const ra = range(a), rb = range(b);
+    const ueA = ra && ra[1] < TODAY, ueB = rb && rb[1] < TODAY;
+    if (ueA !== ueB) return ueA ? -1 : 1;                       // Überfälliges zuerst
+    if (ueA && ueB) return (ra[1] - rb[1]) || pb.s - pa.s;
+    const sa = pa.start ? +pa.start : Infinity, sb = pb.start ? +pb.start : Infinity;
+    if (sa !== sb) return sa - sb;                              // dann nach spätestem Start
+    return pb.s - pa.s || sortByDue(a, b);                      // gleicher Tag: Rang entscheidet
+  };
   const rest = tagGewaehlt ? list.filter(t => !amTag(t)) : list;
+  const mitFrist = rest.filter(t => range(t)).sort(nachRang);
+  const ohneFrist = rest.filter(t => !range(t)).sort((a, b) => bewertet.get(b.id).s - bewertet.get(a.id).s);
   const groups = [
-    ...(tagGewaehlt ? [{ title:longDate(tagGewaehlt), items:list.filter(amTag).sort(nachPlan), leer:'Keine Tasks an diesem Tag.' }] : []),
-    ...bucketGroups(rest).map(g => ({ ...g, items:[...g.items].sort(nachPlan) }))
+    ...(tagGewaehlt ? [{ title:longDate(tagGewaehlt), items:list.filter(amTag).sort(nachRang), leer:'Keine Tasks an diesem Tag.' }] : []),
+    ...(mitFrist.length ? [{ title:'Reihenfolge zum Abarbeiten', items:mitFrist }] : []),
+    ...(ohneFrist.length ? [{ title:'Ohne Frist – selbst einplanen', items:ohneFrist }] : [])
   ];
-  const zeile = t => ({ extraMeta:`<span class="rec-why">${ic('spark')}${esc(bewertet.get(t.id).grund)}</span>` });
+  const nummer = new Map(mitFrist.map((t, i) => [t.id, i + 1]));
+  const zeile = t => ({ rang:nummer.get(t.id), extraMeta:`<span class="rec-why">${ic('spark')}${esc(bewertet.get(t.id).grund)}</span>` });
   return header('Empfehlungen', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`) + wochenKopf(wochenListe, true) + leisten +
-    `<div class="rec-note">Reihenfolge aus Frist, Aufwand, Fortschritt, Dringlichkeit und Wichtigkeit. Der geschätzte Aufwand wird um die Hälfte aufgeschlagen (geschätzte Dauer trügt), bereits Erledigtes abgezogen; daraus und aus einem Puffer ergibt sich der späteste sinnvolle Start. <strong>Arbeits-To-dos rechnen nur mit Werktagen</strong> – liegt ein Wochenende vor der Frist, muss entsprechend früher begonnen werden. Angefangenes rückt nach oben, damit es nicht liegen bleibt.</div>` +
+    `<div class="rec-note">Von oben nach unten abarbeiten: Ganz oben steht, was zuerst begonnen werden muss. Die Reihenfolge ergibt sich aus Frist, Aufwand, Fortschritt, Dringlichkeit und Wichtigkeit. Der geschätzte Aufwand wird um die Hälfte aufgeschlagen (geschätzte Dauer trügt), bereits Erledigtes abgezogen; daraus und aus einem Puffer ergibt sich der späteste sinnvolle Start. <strong>Arbeits-To-dos rechnen nur mit Werktagen</strong> – liegt ein Wochenende vor der Frist, muss entsprechend früher begonnen werden. Angefangenes rückt nach oben, damit es nicht liegen bleibt.</div>` +
     groupsHTML(groups, { empty: S.q ? 'Keine Treffer.' : 'Keine offenen To-dos.', rowOpts: zeile }) + parkBlockHTML(list) + erledigteTrefferHTML();
 }
 
