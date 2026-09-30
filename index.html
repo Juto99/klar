@@ -242,7 +242,8 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .wk-wahl{grid-template-columns:repeat(7,minmax(0,1fr)) 78px}
 .cwd{display:block;font-style:normal;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:1px}
 .calle{border-left:1px solid var(--line);background:var(--surface-2)}
-.calle.sel{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.calle.sel{background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.calle.sel + .cnum,.calle.sel ~ .calle-l{color:var(--text)}
 .calle-l{text-align:center;color:var(--text-2);font-size:11px;line-height:1.25;padding-top:10px}
 .calle-l span{display:inline;min-width:0;height:auto;padding:0;border-radius:0}
 .cal-wk{margin:0 0 4px}
@@ -656,7 +657,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v57';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v58';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1215,7 +1216,7 @@ function renderSidebar(){
     <div class="brand"><div class="brand-txt"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span><span class="brand-wort">Brain<span class="brand-72">72</span></span></span><span class="brand-tag">copyright THS 2026</span></div></div>
     <label class="search ${S.q ? 'on' : ''}">${ic('search')}<input id="sbq" placeholder="Suchen" value="${esc(S.q)}" aria-label="To-dos durchsuchen" enterkeyhint="search">${S.q ? `<button class="sq-x" data-act="q-clear" aria-label="Suche leeren" title="Suche leeren">${ic('close')}</button>` : ''}</label>
     ${S.q.trim() ? `<button class="switch2 sq-sw ${S.qDone ? 'on' : ''}" data-act="q-done" aria-pressed="${S.qDone}"><span class="sw2"></span>auch Erledigte</button>` : ''}
-    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('calendar', 'cal', 'Kalender', '')}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}${tile('bydeadline', 'clock', 'Nach Frist', cnt.mitFrist)}${tile('bycat', 'list', 'Nach Kategorie', CATS.length)}${tile('byperson', 'person', 'Nach Person', PEOPLE.length)}${tile('byproject', 'folder', 'Nach Projekt', PROJECTS.length)}</div>
+    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('calendar', 'cal', 'Kalender', '')}${tile('bydeadline', 'clock', 'Nach Frist', cnt.mitFrist)}${tile('byperson', 'person', 'Nach Person', PEOPLE.length)}${tile('byproject', 'folder', 'Nach Projekt', PROJECTS.length)}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}</div>
     <div class="sb-group">${item('done', 'Erledigt', T.filter(t => t.status === 'done').length, ic('done'))}${item('archive', 'Archiv', T.filter(t => t.status === 'archived').length, ic('archive'))}${item('parked', 'Parkliste', T.filter(t => t.status === 'parked').length, ic('pause'))}${item('settings', 'Einstellungen', '', ic('gear'))}</div>
     <div class="sb-foot">
       <div class="sync"><i class="dot" style="--c:${syncCol}"></i><span>${syncTxt}</span>${syncBtn}<span class="ver" title="Laufende Fassung – Einstellungen → Fassung lädt die neueste">${APP_VERSION}</span></div>
@@ -1230,7 +1231,6 @@ const isMobile = () => matchMedia(MOBIL_MQ).matches;
 // Die vier Listenseiten unterscheiden sich nur in der Gruppierung.
 const GRUPPEN = {
   bydeadline:['Nach Frist', 'due'],
-  bycat:['Nach Kategorie', 'cat'],
   byperson:['Nach Person', 'person'],
   byproject:['Nach Projekt', 'project']
 };
@@ -1267,8 +1267,9 @@ function viewListe(){
   let open = sucheFilter(S.area === 'all' ? alle : alle.filter(t => areaOf(t) === S.area));
   if (S.view === 'byperson' && S.pers !== 'all') open = open.filter(t => t.persons.includes(S.pers));
   if (S.view === 'byproject' && S.proj !== 'all') open = open.filter(t => t.project === S.proj);
+  const wochenListe = open;                       // ohne Tagesfilter, damit oben die ganze Woche sichtbar bleibt
   if (S.tag !== 'all'){ const d = P(S.tag); open = open.filter(t => { const r = range(t); return r && r[0] <= d && r[1] >= d; }); }
-  const woche = wochenKopf(open, true);
+  const woche = wochenKopf(wochenListe, true);
   const leisten = filterLeiste() + suchFeld();
   // Zwei Blöcke: oben die offenen To-dos gruppiert, darunter das Erledigte am Stück
   const offen = open.filter(isOpen);
@@ -1372,14 +1373,15 @@ function viewRecs(){
   let list = T.filter(isOpen);
   if (S.area !== 'all') list = list.filter(t => areaOf(t) === S.area);
   list = sucheFilter(list);
+  const wochenListe = list;                       // die Wochenzeile bleibt vollständig
   if (S.tag !== 'all'){ const d = P(S.tag); list = list.filter(t => { const r = range(t); return r && r[0] <= d && r[1] >= d; }); }
   const leisten = filterLeiste() + suchFeld();
-  if (S.allView === 'grid') return header('Empfehlungen', `${list.length} offen · Eisenhower-Raster`) + wochenKopf(list, true) + leisten + gridHTML(list);
+  if (S.allView === 'grid') return header('Empfehlungen', `${list.length} offen · Eisenhower-Raster`) + wochenKopf(wochenListe, true) + leisten + gridHTML(list);
   const bewertet = new Map(list.map(t => [t.id, plan(t)]));
   const nachPlan = (a, b) => byRank(a, b) || bewertet.get(b.id).s - bewertet.get(a.id).s || sortByDue(a, b);
   const groups = bucketGroups(list).map(g => ({ ...g, items:[...g.items].sort(nachPlan) }));
   const zeile = t => ({ extraMeta:`<span class="rec-why">${ic('spark')}${esc(bewertet.get(t.id).grund)}</span>` });
-  return header('Empfehlungen', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`) + wochenKopf(list, true) + leisten +
+  return header('Empfehlungen', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`) + wochenKopf(wochenListe, true) + leisten +
     `<div class="rec-note">Reihenfolge aus Frist, Dringlichkeit, Wichtigkeit und Aufwand: Aus der Größenordnung des Aufwands (Stunden, Tage, Wochen) und einem Puffer ergibt sich der späteste sinnvolle Start. Was am wenigsten Luft hat, steht oben; Wichtiges bekommt zusätzlich Vorlauf.</div>` +
     groupsHTML(groups, { empty: S.q ? 'Keine Treffer.' : 'Keine offenen To-dos.', rowOpts: zeile }) + erledigteTrefferHTML();
 }
@@ -1574,13 +1576,13 @@ function viewSettings(){
 }
 
 // Frühere Seitennamen weiterleiten, damit gespeicherte Zustände und alte Verweise nicht ins Leere laufen
-const ALT_VIEWS = { deadlines:'bydeadline', today:'bydeadline', all:'bydeadline', people:'byperson', projects:'byproject' };
+const ALT_VIEWS = { deadlines:'bydeadline', today:'bydeadline', all:'bydeadline', bycat:'bydeadline', people:'byperson', projects:'byproject' };
 function renderMain(){
   if (ALT_VIEWS[S.view]) S.view = ALT_VIEWS[S.view];
   if (S.view !== 'byperson') S.pers = 'all';
   if (S.view !== 'byproject') S.proj = 'all';
   const [kind, id] = S.view.includes(':') ? S.view.split(/:(.+)/) : [S.view];
-  const views = { bydeadline:viewListe, bycat:viewListe, byperson:viewListe, byproject:viewListe,
+  const views = { bydeadline:viewListe, byperson:viewListe, byproject:viewListe,
     inbox:viewInbox, recs:viewRecs, calendar:viewCalendar, done:viewDone, archive:viewArchive, parked:viewParked, settings:viewSettings };
   const html = views[kind] ? views[kind]() : viewFiltered(kind, id);
   const scroll = $('#main').scrollTop;
