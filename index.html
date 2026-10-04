@@ -243,6 +243,14 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .prg{width:100%;accent-color:var(--accent);height:26px}
 .sec-done h3{color:var(--text-2)}
 .sec-park h3{color:var(--warn)}
+.sec-over h3{color:var(--danger)}
+.sec-today h3{color:var(--accent)}
+.sec.sec-over + div .row{box-shadow:inset 2.5px 0 0 var(--danger)}
+/* deckend mischen – sonst scheint die rote Wischfläche unter der Zeile durch */
+.sec.sec-today + div .row{box-shadow:inset 2.5px 0 0 var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--surface))}
+.sec.sec-today + div .row:hover{background:color-mix(in srgb,var(--accent) 16%,var(--surface))}
+.sec.sec-over + div .row .rnum{background:color-mix(in srgb,var(--danger) 16%,transparent);color:var(--danger)}
+.sec.sec-today + div .row .rnum{background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--accent)}
 .rnum{display:inline-grid;place-items:center;min-width:20px;height:18px;margin-right:8px;padding:0 5px;border-radius:6px;background:var(--surface-3);color:var(--text-2);font-size:11px;font-weight:650;font-variant-numeric:tabular-nums;vertical-align:1px}
 .row:hover .rnum{background:var(--accent-soft);color:var(--accent)}
 .park-note{font-size:12.5px;color:var(--text-2);margin:0 4px 6px}
@@ -665,7 +673,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v63';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v64';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1459,14 +1467,21 @@ function viewRecs(){
     return pb.s - pa.s || sortByDue(a, b);                      // gleicher Tag: Rang entscheidet
   };
   const rest = tagGewaehlt ? list.filter(t => !amTag(t)) : list;
-  const mitFrist = rest.filter(t => range(t)).sort(nachRang);
+  // Drei Stufen: was die Frist gerissen hat, was heute endet, und danach die geplante Reihenfolge.
+  const ende = t => { const r = range(t); return r ? r[1] : null; };
+  const ueberfaellig = rest.filter(t => { const e = ende(t); return e && e < TODAY; }).sort(nachRang);
+  const heute = rest.filter(t => { const e = ende(t); return e && same(e, TODAY); }).sort(nachRang);
+  const spaeter = rest.filter(t => { const e = ende(t); return e && e > TODAY; }).sort(nachRang);
   const ohneFrist = rest.filter(t => !range(t)).sort((a, b) => bewertet.get(b.id).s - bewertet.get(a.id).s);
   const groups = [
     ...(tagGewaehlt ? [{ title:longDate(tagGewaehlt), items:list.filter(amTag).sort(nachRang), leer:'Keine Tasks an diesem Tag.' }] : []),
-    ...(mitFrist.length ? [{ title:'Reihenfolge zum Abarbeiten', items:mitFrist }] : []),
+    ...(ueberfaellig.length ? [{ title:'Überfällig', items:ueberfaellig, cls:'sec-over' }] : []),
+    ...(heute.length ? [{ title:'Heute fällig', items:heute, cls:'sec-today' }] : []),
+    ...(spaeter.length ? [{ title:'Reihenfolge zum Abarbeiten', items:spaeter }] : []),
     ...(ohneFrist.length ? [{ title:'Ohne Frist – selbst einplanen', items:ohneFrist }] : [])
   ];
-  const nummer = new Map(mitFrist.map((t, i) => [t.id, i + 1]));
+  // Durchgehende Nummern über alle drei Blöcke – so lässt sich von oben nach unten abarbeiten.
+  const nummer = new Map([...ueberfaellig, ...heute, ...spaeter].map((t, i) => [t.id, i + 1]));
   const zeile = t => ({ rang:nummer.get(t.id), extraMeta:`<span class="rec-why">${ic('spark')}${esc(bewertet.get(t.id).grund)}</span>` });
   return header('Empfehlungen', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`) + wochenKopf(wochenListe, true) + leisten +
     `<div class="rec-note">Von oben nach unten abarbeiten: Ganz oben steht, was zuerst begonnen werden muss. Die Reihenfolge ergibt sich aus Frist, Aufwand, Fortschritt, Dringlichkeit und Wichtigkeit. Der geschätzte Aufwand wird um die Hälfte aufgeschlagen (geschätzte Dauer trügt), bereits Erledigtes abgezogen; daraus und aus einem Puffer ergibt sich der späteste sinnvolle Start. <strong>Arbeits-To-dos rechnen nur mit Werktagen</strong> – liegt ein Wochenende vor der Frist, muss entsprechend früher begonnen werden. Angefangenes rückt nach oben, damit es nicht liegen bleibt.</div>` +
