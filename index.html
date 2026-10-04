@@ -246,6 +246,8 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .sec-park h3{color:var(--warn)}
 .sec-over h3{color:var(--danger)}
 .sec-today h3{color:var(--accent)}
+.sec-tomorrow h3{color:var(--text)}
+.sec.sec-tomorrow + div .row{background:color-mix(in srgb,var(--accent) 4%,var(--surface))}
 /* Flächig hinterlegt statt mit Kante – und deckend gemischt, sonst scheint die rote
    Wischfläche unter der Zeile durch. */
 .sec.sec-over + div .row{background:color-mix(in srgb,var(--danger) 8%,var(--surface))}
@@ -258,7 +260,9 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .row:hover .rnum{background:var(--accent-soft);color:var(--accent)}
 .park-note{font-size:12.5px;color:var(--text-2);margin:0 4px 6px}
 .park-act{display:inline-flex;gap:6px;align-items:center}
-.wk-wahl{grid-template-columns:repeat(7,minmax(0,1fr)) 78px}
+.wk.wk-wahl{grid-template-columns:repeat(7,minmax(0,1fr)) 78px}
+.wk.wk-dow{min-height:0;border-top:0;background:var(--surface-2)}
+.wk-dow span{padding:5px 8px;font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:.05em;text-transform:uppercase}
 .cwd{display:block;font-style:normal;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:1px}
 .calle{border-left:1px solid var(--line);background:var(--surface-2)}
 .calle.sel{background:color-mix(in srgb,var(--accent) 22%,transparent)}
@@ -628,6 +632,8 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .search input,.sb-new input,.add-in,.opt-new input,.opt-new.sm input,.date-in,.ren,.d-in{font-size:16px}
   .row{gap:5px;padding:5px 6px}
   .row-title{min-width:56px}
+  .wk.wk-wahl{grid-template-columns:repeat(7,minmax(0,1fr)) 52px}
+  .calle-l{font-size:9.5px}
   .row-note,.row-proj{display:none}
   .row-people{flex:0 0 46px;padding-left:4px}
   .row-pct{display:none}
@@ -685,7 +691,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v66';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v67';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -867,6 +873,7 @@ function bucket(t){
   const [s, e] = r;
   if (e < TODAY) return 'overdue';
   if (t.due.type === 'day' && same(s, TODAY)) return 'today';
+  if (t.due.type === 'day' && same(s, addD(TODAY, 1))) return 'tomorrow';
   if (e < NEXT_MON) return 'week';
   if (s >= NEXT_MON && e < AFTER_NEXT) return 'next';
   return 'later';
@@ -894,7 +901,7 @@ function dueLabel(t){
 const byRank = (a, b) => (a.rank ?? 1e15) - (b.rank ?? 1e15);
 const sortByDue = (a, b) => byRank(a, b) || endKey(a) - endKey(b) || a.title.localeCompare(b.title, 'de');
 const buckets = () => [
-  ['overdue', 'Überfällig', 'sec-over'], ['today', 'Heute', 'sec-today'],
+  ['overdue', 'Überfällig', 'sec-over'], ['today', 'Heute', 'sec-today'], ['tomorrow', 'Morgen', 'sec-tomorrow'],
   ['week', `Diese Woche · KW ${kw(TODAY)}`], ['next', `Nächste Woche · KW ${kw(NEXT_MON)}`],
   ['later', 'Später'], ['none', 'Ohne Datum']
 ];
@@ -1021,6 +1028,7 @@ function relTime(ts){
 /* ============ Zustand ============ */
 const S = {
   view:'bydeadline', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
+  calSel:{ art:'day', wert:iso(TODAY) },
   sort:'due', area:'work', q:'', qDone:false, allView:'list', reorder:false, weekOff:0, online:navigator.onLine, memOnly:false,
   addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
   syncState:'', syncError:'', lastSync:0, authOpen:false, authMode:'in', authBusy:false, authErr:'', inboxTokens:null,
@@ -1482,18 +1490,21 @@ function viewRecs(){
   // Drei Stufen: was die Frist gerissen hat, was heute endet, und danach die geplante Reihenfolge.
   const ende = t => { const r = range(t); return r ? r[1] : null; };
   const ueberfaellig = rest.filter(t => { const e = ende(t); return e && e < TODAY; }).sort(nachRang);
+  const MORGEN = addD(TODAY, 1);
   const heute = rest.filter(t => { const e = ende(t); return e && same(e, TODAY); }).sort(nachRang);
-  const spaeter = rest.filter(t => { const e = ende(t); return e && e > TODAY; }).sort(nachRang);
+  const morgen = rest.filter(t => { const e = ende(t); return e && same(e, MORGEN); }).sort(nachRang);
+  const spaeter = rest.filter(t => { const e = ende(t); return e && e > MORGEN; }).sort(nachRang);
   const ohneFrist = rest.filter(t => !range(t)).sort((a, b) => bewertet.get(b.id).s - bewertet.get(a.id).s);
   const groups = [
     ...(tagGewaehlt ? [{ title:longDate(tagGewaehlt), items:list.filter(amTag).sort(nachRang), leer:'Keine Tasks an diesem Tag.' }] : []),
     ...(ueberfaellig.length ? [{ title:'Überfällig', items:ueberfaellig, cls:'sec-over' }] : []),
     ...(heute.length ? [{ title:'Heute fällig', items:heute, cls:'sec-today' }] : []),
+    ...(morgen.length ? [{ title:'Morgen fällig', items:morgen, cls:'sec-tomorrow' }] : []),
     ...(spaeter.length ? [{ title:'Reihenfolge zum Abarbeiten', items:spaeter }] : []),
     ...(ohneFrist.length ? [{ title:'Ohne Frist – selbst einplanen', items:ohneFrist }] : [])
   ];
   // Durchgehende Nummern über alle drei Blöcke – so lässt sich von oben nach unten abarbeiten.
-  const nummer = new Map([...ueberfaellig, ...heute, ...spaeter].map((t, i) => [t.id, i + 1]));
+  const nummer = new Map([...ueberfaellig, ...heute, ...morgen, ...spaeter].map((t, i) => [t.id, i + 1]));
   const zeile = t => ({ rang:nummer.get(t.id), extraMeta:`<span class="rec-why">${ic('spark')}${esc(bewertet.get(t.id).grund)}</span>` });
   return header('Empfehlungen', `${list.length} offen${S.q ? ` · Suche „${esc(S.q)}“` : ''}`) + wochenKopf(wochenListe, true) + leisten +
     `<div class="rec-note">Von oben nach unten abarbeiten: Ganz oben steht, was zuerst begonnen werden muss. Die Reihenfolge ergibt sich aus Frist, Aufwand, Fortschritt, Dringlichkeit und Wichtigkeit. Der geschätzte Aufwand wird um die Hälfte aufgeschlagen (geschätzte Dauer trügt), bereits Erledigtes abgezogen; daraus und aus einem Puffer ergibt sich der späteste sinnvolle Start. <strong>Arbeits-To-dos rechnen nur mit Werktagen</strong> – liegt ein Wochenende vor der Frist, muss entsprechend früher begonnen werden. Angefangenes rückt nach oben, damit es nicht liegen bleibt.</div>` +
@@ -1539,7 +1550,8 @@ function kalenderWoche(ws, vis, o = {}){
   for (let i = 0; i < 7; i++){
     const d = addD(ws, i), out = o.monat != null && d.getMonth() !== o.monat, isToday = same(d, TODAY);
     const klick = o.tagKlick ? ` data-act="cal-day" data-d="${iso(d)}"` : o.tagWahl ? ` data-act="tag-wahl" data-d="${iso(d)}"` : '';
-    cells += `<div class="cbg c${i} ${i >= 5 ? 'we' : ''} ${out ? 'out' : ''} ${isToday ? 'today' : ''} ${(o.tagKlick && iso(d) === S.calDay) || (o.tagWahl && iso(d) === S.tag) ? 'sel' : ''}" style="grid-column:${i + 1}"${klick}></div>`;
+    const gewaehlt = (o.tagKlick && S.calSel.art === 'day' && iso(d) === S.calSel.wert) || (o.tagWahl && iso(d) === S.tag);
+    cells += `<div class="cbg c${i} ${i >= 5 ? 'we' : ''} ${out ? 'out' : ''} ${isToday ? 'today' : ''} ${gewaehlt ? 'sel' : ''}" style="grid-column:${i + 1}"${klick}></div>`;
     const wdTxt = o.tagWahl ? `<i class="cwd">${WD[d.getDay()]}</i>` : '';
     nums += `<div class="cnum ${out ? 'out' : ''} ${isToday ? 'today' : ''}" style="grid-column:${i + 1}">${wdTxt}<span>${d.getDate() === 1 ? `1. ${MONS[d.getMonth()]}` : d.getDate()}</span></div>`;
     const di = vis.filter(t => t.due?.type === 'day' && same(P(t.due.date), d)).sort((a, b) => a.title.localeCompare(b.title, 'de'));
@@ -1551,9 +1563,15 @@ function kalenderWoche(ws, vis, o = {}){
   if (o.tagWahl){
     // Ganz rechts eine schmale Spalte, die den Tagesfilter wieder aufhebt
     cells += `<div class="cbg calle ${S.tag === 'all' ? 'sel' : ''}" style="grid-column:8" data-act="tag-wahl" data-d="all"></div>`;
-    nums += `<div class="cnum calle-l" style="grid-column:8"><span>Alle<br>Tage</span></div>`;
+    nums += `<div class="cnum calle-l" style="grid-column:8"><span>Ganze<br>Woche</span></div>`;
   }
-  return `<div class="wk ${o.tagWahl ? 'wk-wahl' : ''}" style="grid-template-rows:${rows}">${cells}${nums}${barHTML}${items}</div>`;
+  if (o.wochenWahl){
+    // Im Kalender wählt dieselbe Spalte die ganze Woche aus
+    const anWoche = S.calSel.art === 'week' && S.calSel.wert === iso(ws);
+    cells += `<div class="cbg calle ${anWoche ? 'sel' : ''}" style="grid-column:8" data-act="cal-week" data-d="${iso(ws)}"></div>`;
+    nums += `<div class="cnum calle-l" style="grid-column:8"><span>Ganze<br>Woche</span></div>`;
+  }
+  return `<div class="wk ${o.tagWahl || o.wochenWahl ? 'wk-wahl' : ''}" style="grid-template-rows:${rows}">${cells}${nums}${barHTML}${items}</div>`;
 }
 function viewCalendar(){
   const mob = isMobile();
@@ -1563,20 +1581,37 @@ function viewCalendar(){
   const sichtbar = t => S.area === 'all' || !areaOf(t) || areaOf(t) === S.area;
   const vis = T.filter(t => t.due && (isOpen(t) || (S.qDone && t.status === 'done')) && sichtbar(t));
   let weeks = '';
-  for (let ws = mondayOf(first); ws <= last; ws = addD(ws, 7)) weeks += kalenderWoche(ws, vis, { monat:mo, tagKlick:true });
-  const monthItems = vis.filter(t => t.due.type === 'month' && t.due.month === monthKey(first));
-  const sd = P(S.calDay);
-  const order = { day:0, week:1, month:2 };
-  const dayList = vis.filter(t => { const [s, e] = range(t); return s <= sd && e >= sd; }).sort((a, b) => order[a.due.type] - order[b.due.type]);
+  for (let ws = mondayOf(first); ws <= last; ws = addD(ws, 7)) weeks += kalenderWoche(ws, vis, { monat:mo, tagKlick:true, wochenWahl:true });
+  // Unter dem Kalender steht genau das, was im gewählten Zeitraum fällig ist – nichts, was ihn nur überspannt.
+  const sel = S.calSel, order = { day:0, week:1, month:2 };
+  const imMonat = (t, key) => t.due.type === 'month' ? t.due.month === key
+    : monthKey(P(t.due.type === 'week' ? t.due.start : t.due.date)) === key;
+  let listTitel, auswahl;
+  if (sel.art === 'month'){
+    listTitel = `${MON[P(sel.wert + '-01').getMonth()]} ${P(sel.wert + '-01').getFullYear()}`;
+    auswahl = vis.filter(t => imMonat(t, sel.wert));
+  } else if (sel.art === 'week'){
+    const wmo = P(sel.wert), wso = addD(wmo, 6);
+    listTitel = `KW ${kw(wmo)} · ${wmo.getDate()}. ${MON[wmo.getMonth()]} – ${wso.getDate()}. ${MON[wso.getMonth()]}`;
+    auswahl = vis.filter(t => t.due.type === 'day' ? (P(t.due.date) >= wmo && P(t.due.date) <= wso)
+      : t.due.type === 'week' ? same(P(t.due.start), wmo) : false);
+  } else {
+    const sd = P(sel.wert);
+    listTitel = longDate(sd);
+    auswahl = vis.filter(t => t.due.type === 'day' && same(P(t.due.date), sd));
+  }
+  const dayList = auswahl.sort((a, b) => order[a.due.type] - order[b.due.type] || sortByDue(a, b));
+  const leerTxt = sel.art === 'month' ? 'In diesem Monat ist nichts fällig.'
+    : sel.art === 'week' ? 'In dieser Woche ist nichts fällig.' : 'An diesem Tag ist nichts fällig.';
   return header('Kalender', 'Feste Termine als Punkt, „nächste Woche“ als Balken, „nächster Monat“ als Band.') +
-    `<div class="cal-head"><h2>${MON[mo]} ${y}</h2><button class="icon-btn" data-act="cal-prev" aria-label="Vorheriger Monat">${ic('chevL')}</button><button class="btn btn-g btn-s" data-act="cal-today">Heute</button><button class="icon-btn" data-act="cal-next" aria-label="Nächster Monat">${ic('chevR')}</button></div>
+    `<div class="cal-head"><h2>${MON[mo]} ${y}</h2>
+      <button class="btn ${sel.art === 'month' ? 'btn-p' : 'btn-g'} btn-s" data-act="cal-month" data-d="${monthKey(first)}">Ganzer Monat</button>
+      <button class="icon-btn" data-act="cal-prev" aria-label="Vorheriger Monat">${ic('chevL')}</button><button class="btn btn-g btn-s" data-act="cal-today">Heute</button><button class="icon-btn" data-act="cal-next" aria-label="Nächster Monat">${ic('chevR')}</button></div>
     ${filterLeiste({ ohneAnsicht:true })}
     <div class="legend"><span><i class="lg-bar"></i>Wochen-Frist</span><span><i class="lg-band"></i>Monats-Frist</span></div>
-    ${monthItems.length ? `<div class="mstrip"><span class="lab">Im Laufe des ${MON[mo]}s</span>${monthItems.map(t => `<button class="mchip" data-act="open" data-id="${t.id}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i>${esc(t.title)}</button>`).join('')}</div>` : ''}
-    <div class="cal-dow">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(d => `<span>${d}</span>`).join('')}</div>
-    <div class="cal">${weeks}</div>
-    <div class="sec"><h3>${esc(longDate(sd))}</h3><span class="n">${dayList.length}</span></div>
-    <div>${dayList.length ? dayList.map(t => rowHTML(t)).join('') : '<div class="empty">Keine Fristen an diesem Tag.</div>'}</div>`;
+    <div class="cal"><div class="wk wk-wahl wk-dow">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((d, i) => `<span style="grid-column:${i + 1}">${d}</span>`).join('')}<span style="grid-column:8"></span></div>${weeks}</div>
+    <div class="sec"><h3>${esc(listTitel)}</h3><span class="n">${dayList.length}</span></div>
+    <div>${dayList.length ? dayList.map(t => rowHTML(t)).join('') : `<div class="empty">${leerTxt}</div>`}</div>`;
 }
 function nextDueTxt(list){
   const n = list.filter(isOpen).filter(t => t.due).sort(sortByDue)[0];
@@ -2487,17 +2522,19 @@ document.addEventListener('click', e => {
     case 'theme': S.theme = el.dataset.v; applyTheme(); render(); break;
     case 'new-proj-area': S.newProjArea = el.dataset.v; renderMain(); break;
     case 'proj-area': { const p = projById(id); if (p){ p.area = el.dataset.v; save('projects', p); render(); } break; }
-    case 'goto-day': S.calDay = el.dataset.d; S.calMonth = new Date(P(el.dataset.d).getFullYear(), P(el.dataset.d).getMonth(), 1); nav('calendar'); break;
+    case 'goto-day': S.calDay = el.dataset.d; S.calSel = { art:'day', wert:el.dataset.d }; S.calMonth = new Date(P(el.dataset.d).getFullYear(), P(el.dataset.d).getMonth(), 1); nav('calendar'); break;
     case 'cal-area': {
       const v = el.dataset.v;
       S.calAreas[v] = !S.calAreas[v];
       try { localStorage.setItem('brain-calareas', JSON.stringify(S.calAreas)); } catch (e) {}
       renderMain(); break;
     }
-    case 'cal-day': S.calDay = el.dataset.d; renderMain(); break;
+    case 'cal-day': S.calSel = { art:'day', wert:el.dataset.d }; S.calDay = el.dataset.d; renderMain(); break;
+    case 'cal-week': S.calSel = { art:'week', wert:el.dataset.d }; renderMain(); break;
+    case 'cal-month': S.calSel = S.calSel.art === 'month' ? { art:'day', wert:iso(TODAY) } : { art:'month', wert:el.dataset.d }; renderMain(); break;
     case 'cal-prev': S.calMonth = new Date(S.calMonth.getFullYear(), S.calMonth.getMonth() - 1, 1); renderMain(); break;
     case 'cal-next': S.calMonth = new Date(S.calMonth.getFullYear(), S.calMonth.getMonth() + 1, 1); renderMain(); break;
-    case 'cal-today': S.calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); S.calDay = iso(TODAY); renderMain(); break;
+    case 'cal-today': S.calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); S.calDay = iso(TODAY); S.calSel = { art:'day', wert:iso(TODAY) }; renderMain(); break;
     case 'park': { e.stopPropagation(); const t = T.find(x => x.id === id); if (!t) break;
       const vorher = t.status;
       t.status = t.status === 'parked' ? 'open' : 'parked';
