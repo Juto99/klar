@@ -665,7 +665,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v62';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v63';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -827,9 +827,13 @@ const personName = id => personById(id)?.name || '';
 const namesOf = ids => ids.map(personName).filter(Boolean);
 const areaOf = t => (t.cat ? catById(t.cat)?.area : null) || t.area || (t.project ? projById(t.project)?.area : null) || null;
 const areaColor = a => a ? AREAS[a].color : 'var(--text-3)';
-const initials = n => n.trim().slice(0, 2).toUpperCase();
+// „Müller, Tom“ → MT, „Chitra“ → CH: erste Buchstaben der Wortteile, sonst die ersten zwei Zeichen.
+const initials = n => {
+  const w = String(n ?? '').split(/[\s,._-]+/).filter(Boolean);
+  return (w.length > 1 ? w[0][0] + w[1][0] : (w[0] || '').slice(0, 2)).toUpperCase();
+};
 const isOpen = t => t.status === 'open';
-const byName = (a, b) => a.name.localeCompare(b.name, 'de');
+const byName = (a, b) => a.name.localeCompare(b.name, 'de', { sensitivity:'base', numeric:true });
 const catsOf = a => CATS.filter(c => c.area === a).sort(byName);
 function range(t){
   if (!t.due) return null;
@@ -2060,20 +2064,36 @@ function startAssistant(text){
 }
 
 /* ============ Stammdaten anlegen ============ */
-function addEntity(kind, name){
+/* Namen vergleichbar machen: Groß/klein, Umlaute, Satzzeichen und Wortstellung sind egal.
+   „Müller, Tom“, „mueller tom“ und „Tom Müller“ gelten damit als derselbe Name. */
+const normName = s => String(s ?? '').toLowerCase()
+  .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+  .replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean).sort().join(' ');
+// Gleich im Kern, aber nicht Zeichen für Zeichen: dafür gibt es eine Warnung statt stiller Übernahme.
+function aehnlicherName(name, liste){
+  const n = normName(name); if (!n) return null;
+  return liste.find(o => { const m = normName(o.name); return m && m !== n && (m.startsWith(n) || n.startsWith(m)); }) || null;
+}
+function addEntity(kind, name, still = false){
   name = name.trim(); if (!name) return null;
+  const melde = txt => { if (!still) toast(txt); };
+  const anlegen = (liste, store, obj, vorhanden) => {
+    if (vorhanden){ melde(`„${vorhanden.name}“ gibt es schon – wird verwendet`); return vorhanden; }
+    const nah = aehnlicherName(name, liste);
+    liste.push(obj); save(store, obj);
+    melde(nah ? `„${name}“ angelegt – Achtung, ähnlich wie „${nah.name}“` : `„${name}“ angelegt`);
+    return obj;
+  };
   if (kind.startsWith('cat:')){
     const area = kind.slice(4);
-    const ex = CATS.find(c => c.area === area && c.name.toLowerCase() === name.toLowerCase()); if (ex) return ex;
-    const c = { id:uid(), area, name }; CATS.push(c); save('cats', c); return c;
+    return anlegen(CATS.filter(c => c.area === area), 'cats', { id:uid(), area, name },
+      CATS.find(c => c.area === area && normName(c.name) === normName(name)));
   }
   if (kind === 'person'){
-    const ex = PEOPLE.find(p => p.name.toLowerCase() === name.toLowerCase()); if (ex) return ex;
-    const p = { id:uid(), name }; PEOPLE.push(p); save('people', p); return p;
+    return anlegen(PEOPLE, 'people', { id:uid(), name }, PEOPLE.find(p => normName(p.name) === normName(name)));
   }
   if (kind === 'project'){
-    const ex = PROJECTS.find(p => p.name.toLowerCase() === name.toLowerCase()); if (ex) return ex;
-    const p = { id:uid(), name, area:S.newProjArea }; PROJECTS.push(p); save('projects', p); return p;
+    return anlegen(PROJECTS, 'projects', { id:uid(), name, area:S.newProjArea }, PROJECTS.find(p => normName(p.name) === normName(name)));
   }
 }
 function removeEntity(store, id){
@@ -2157,7 +2177,7 @@ const sameDue = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null
 function stepHTML(k){
   const d = A.draft;
   switch (k){
-    case 'capture': return `<textarea class="cap-in" data-f="capture" rows="3" enterkeyhint="send" placeholder="" aria-label="Neues To-do">${esc(A.capture)}</textarea>
+    case 'capture': return `<div class="fmt-wrap">${fmtBar()}<textarea class="cap-in" data-f="capture" rows="3" enterkeyhint="send" placeholder="" aria-label="Neues To-do">${esc(A.capture)}</textarea></div>
       <button class="btn btn-g btn-wide" data-act="assist-full">${ic('list')}Schritt für Schritt</button>`;
     case 'title': return `<h2 class="q">Was ist zu tun?</h2><p class="q-help">Kurz und aktiv formuliert.</p>
       <div class="field"><input data-f="title" value="${esc(d.title)}" placeholder="z. B. Angebote vergleichen" enterkeyhint="next"></div>`;
@@ -2427,7 +2447,12 @@ document.addEventListener('click', e => {
     case 'e-imp': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.imp = el.dataset.v || null; }); break; }
     case 'e-load': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.load = el.dataset.v || null; }); break; }
     case 'e-sort': { const t = T.find(x => x.id === id); if (t){ editTodo(t, t => { t.status = 'open'; }); toast('Einsortiert'); } break; }
-    case 'set': S[el.dataset.k] = el.dataset.v; render(); break;
+    case 'set': {
+      const k = el.dataset.k;
+      S[k] = el.dataset.v;
+      if (k === 'area') S.sel = null;        // sonst bliebe ein To-do aus dem anderen Bereich offen
+      render(); break;
+    }
     case 'q-clear': S.q = ''; render(); $('#sbq')?.focus(); break;
     case 'q-done': S.qDone = !S.qDone; render(); break;
     case 'park-nein': { const t = T.find(x => x.id === id); if (t){ t.behalten = true; save('todos', t); render(); toast('Bleibt in der Liste'); } break; }
@@ -2577,7 +2602,6 @@ document.addEventListener('keydown', e => {
     if (addE === 'cat'){ o = addEntity('cat:' + a, e.target.value); if (o) editTodo(t, t => { t.cat = o.id; t.area = o.area; }); }
     if (addE === 'person'){ o = addEntity('person', e.target.value); if (o) editTodo(t, t => { if (!t.persons.includes(o.id)) t.persons = [...t.persons, o.id]; }); }
     if (addE === 'project'){ const prev = S.newProjArea; S.newProjArea = a; o = addEntity('project', e.target.value); S.newProjArea = prev; if (o) editTodo(t, t => { t.project = o.id; if (!t.area) t.area = o.area; }); }
-    if (o) toast(`„${o.name}“ angelegt`);
     return;
   }
   if ((e.metaKey || e.ctrlKey) && tag === 'TEXTAREA' && /^[biBI]$/.test(e.key)){ e.preventDefault(); formatiere(e.target, e.key.toLowerCase()); return; }
@@ -2587,7 +2611,7 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     const o = addEntity(add, e.target.value);
     if (o){
-      render(); toast(`„${o.name}“ angelegt`);
+      render();
       const again = document.querySelector(`[data-add="${add}"]`); if (again && e.target.id !== 'newcat') again.focus();
     }
     return;
@@ -2631,7 +2655,7 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', e => {
   const fs = e.target.dataset?.fsel;
-  if (fs){ S[fs] = e.target.value; renderMain(); return; }
+  if (fs){ S[fs] = e.target.value; if (fs === 'pers' || fs === 'proj') S.sel = null; render(); return; }
   const f = e.target.dataset?.ef; if (!f) return;
   const t = T.find(x => x.id === e.target.dataset.id); if (!t) return;
   if (f === 'date'){ editTodo(t, t => { t.due = e.target.value ? day(e.target.value) : null; }); return; }
