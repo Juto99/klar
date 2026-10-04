@@ -99,6 +99,7 @@ body.resizing{cursor:col-resize;user-select:none}
 .brand-wort{display:inline-flex;align-items:baseline}
 .brand-72{font-family:'Bradley Hand','Noteworthy','Segoe Script','Comic Sans MS',cursive;font-weight:700;font-size:1.08em;line-height:.9;margin-left:3px;letter-spacing:0}
 .ver{margin-left:auto;font-size:10.5px;color:var(--text-3);font-variant-numeric:tabular-nums}
+.brand-app{font-size:12.5px;font-weight:600;letter-spacing:.02em;color:var(--text-2);align-self:center;margin-left:8px;padding:2px 7px;border-radius:7px;background:var(--surface-3)}
 .brand-tag{font-size:10.5px;color:var(--text-2);letter-spacing:.03em;line-height:1;margin:-3px 0 0 38px}
 .logo{width:28px;height:28px;border-radius:9px;background:var(--create);display:grid;place-items:center;flex:none}
 .logo svg{width:18px;height:18px;stroke:var(--surface);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
@@ -245,10 +246,12 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .sec-park h3{color:var(--warn)}
 .sec-over h3{color:var(--danger)}
 .sec-today h3{color:var(--accent)}
-.sec.sec-over + div .row{box-shadow:inset 2.5px 0 0 var(--danger)}
-/* deckend mischen – sonst scheint die rote Wischfläche unter der Zeile durch */
-.sec.sec-today + div .row{box-shadow:inset 2.5px 0 0 var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--surface))}
-.sec.sec-today + div .row:hover{background:color-mix(in srgb,var(--accent) 16%,var(--surface))}
+/* Flächig hinterlegt statt mit Kante – und deckend gemischt, sonst scheint die rote
+   Wischfläche unter der Zeile durch. */
+.sec.sec-over + div .row{background:color-mix(in srgb,var(--danger) 8%,var(--surface))}
+.sec.sec-over + div .row:hover{background:color-mix(in srgb,var(--danger) 14%,var(--surface))}
+.sec.sec-today + div .row{background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
+.sec.sec-today + div .row:hover{background:color-mix(in srgb,var(--accent) 15%,var(--surface))}
 .sec.sec-over + div .row .rnum{background:color-mix(in srgb,var(--danger) 16%,transparent);color:var(--danger)}
 .sec.sec-today + div .row .rnum{background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--accent)}
 .rnum{display:inline-grid;place-items:center;min-width:20px;height:18px;margin-right:8px;padding:0 5px;border-radius:6px;background:var(--surface-3);color:var(--text-2);font-size:11px;font-weight:650;font-variant-numeric:tabular-nums;vertical-align:1px}
@@ -673,7 +676,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v64';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v65';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -882,7 +885,7 @@ function dueLabel(t){
 const byRank = (a, b) => (a.rank ?? 1e15) - (b.rank ?? 1e15);
 const sortByDue = (a, b) => byRank(a, b) || endKey(a) - endKey(b) || a.title.localeCompare(b.title, 'de');
 const buckets = () => [
-  ['overdue', 'Überfällig', 'danger'], ['today', 'Heute'],
+  ['overdue', 'Überfällig', 'sec-over'], ['today', 'Heute', 'sec-today'],
   ['week', `Diese Woche · KW ${kw(TODAY)}`], ['next', `Nächste Woche · KW ${kw(NEXT_MON)}`],
   ['later', 'Später'], ['none', 'Ohne Datum']
 ];
@@ -1235,7 +1238,7 @@ function renderSidebar(){
   else if (S.syncState === 'error'){ syncTxt = 'Abgleich fehlgeschlagen'; syncCol = 'var(--danger)'; syncBtn = `<button class="link" data-act="sync-now">Erneut</button>`; }
   else { syncTxt = `Abgeglichen · ${relTime(S.lastSync) || 'gerade eben'}`; syncCol = 'var(--ok)'; }
   $('#sidebar').innerHTML = `
-    <div class="brand"><div class="brand-txt"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span><span class="brand-wort">Brain<span class="brand-72">72</span></span></span><span class="brand-tag">copyright THS 2026</span></div></div>
+    <div class="brand"><div class="brand-txt"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span><span class="brand-wort">Brain<span class="brand-72">72</span></span><span class="brand-app">ToDo</span></span><span class="brand-tag">copyright THS 2026</span></div></div>
     <label class="search ${S.q ? 'on' : ''}">${ic('search')}<input id="sbq" placeholder="Suchen" value="${esc(S.q)}" aria-label="To-dos durchsuchen" enterkeyhint="search">${S.q ? `<button class="sq-x" data-act="q-clear" aria-label="Suche leeren" title="Suche leeren">${ic('close')}</button>` : ''}</label>
     ${S.q.trim() ? `<button class="switch2 sq-sw ${S.qDone ? 'on' : ''}" data-act="q-done" aria-pressed="${S.qDone}"><span class="sw2"></span>auch Erledigte</button>` : ''}
     <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('calendar', 'cal', 'Kalender', '')}${tile('bydeadline', 'clock', 'Nach Frist', cnt.mitFrist)}${tile('byperson', 'person', 'Nach Person', PEOPLE.length)}${tile('byproject', 'folder', 'Nach Projekt', PROJECTS.length)}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}</div>
