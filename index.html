@@ -691,7 +691,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v67';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v68';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -905,8 +905,12 @@ const buckets = () => [
   ['week', `Diese Woche · KW ${kw(TODAY)}`], ['next', `Nächste Woche · KW ${kw(NEXT_MON)}`],
   ['later', 'Später'], ['none', 'Ohne Datum']
 ];
+// „Heute“ und „Morgen“ bleiben sichtbar, auch wenn dort nichts ansteht – sonst wirkt die Seite
+// je nach Datenlage anders aufgebaut.
+const IMMER = { today:'Für heute ist nichts geplant.', tomorrow:'Für morgen ist nichts geplant.' };
 function bucketGroups(list, only){
-  return buckets().filter(b => !only || only.includes(b[0])).map(([k, title, cls]) => ({ title, cls, items: list.filter(t => bucket(t) === k).sort(sortByDue) }));
+  return buckets().filter(b => !only || only.includes(b[0]))
+    .map(([k, title, cls]) => ({ title, cls, leer:IMMER[k], items: list.filter(t => bucket(t) === k).sort(sortByDue) }));
 }
 const daysSince = s => Math.round((TODAY - P(s)) / DAY);
 function autoArchive(){
@@ -1498,8 +1502,8 @@ function viewRecs(){
   const groups = [
     ...(tagGewaehlt ? [{ title:longDate(tagGewaehlt), items:list.filter(amTag).sort(nachRang), leer:'Keine Tasks an diesem Tag.' }] : []),
     ...(ueberfaellig.length ? [{ title:'Überfällig', items:ueberfaellig, cls:'sec-over' }] : []),
-    ...(heute.length ? [{ title:'Heute fällig', items:heute, cls:'sec-today' }] : []),
-    ...(morgen.length ? [{ title:'Morgen fällig', items:morgen, cls:'sec-tomorrow' }] : []),
+    { title:'Heute fällig', items:heute, cls:'sec-today', leer:'Für heute ist nichts geplant.' },
+    { title:'Morgen fällig', items:morgen, cls:'sec-tomorrow', leer:'Für morgen ist nichts geplant.' },
     ...(spaeter.length ? [{ title:'Reihenfolge zum Abarbeiten', items:spaeter }] : []),
     ...(ohneFrist.length ? [{ title:'Ohne Frist – selbst einplanen', items:ohneFrist }] : [])
   ];
@@ -2920,7 +2924,21 @@ async function boot(){
   registerSW();
   sync();
   setInterval(sync, 60000);
+  versionPruefen();
 }
+// Vergleicht die laufende Fassung mit der auf dem Server – unabhängig vom Service Worker,
+// damit ein Gerät nicht unbemerkt eine alte Oberfläche zeigt.
+let versionGeprueft = 0;
+async function versionPruefen(){
+  if (Date.now() - versionGeprueft < 300000) return;
+  versionGeprueft = Date.now();
+  try {
+    const r = await fetch('sw.js?v=' + Date.now(), { cache:'no-store' });
+    const m = (await r.text()).match(/brain72-(v\d+)/);
+    if (m && m[1] !== APP_VERSION) toast(`Neue Fassung ${m[1]} verfügbar – diese ist ${APP_VERSION}`, { act:'app-update', label:'Jetzt laden' }, true);
+  } catch (e) {}
+}
+addEventListener('focus', () => versionPruefen());
 function registerSW(){
   if (!('serviceWorker' in navigator)) return;
   if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
