@@ -643,9 +643,10 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 }
 @media (max-height:520px) and (pointer:coarse){
   .main-inner{padding:calc(10px + env(safe-area-inset-top)) 18px calc(74px + env(safe-area-inset-bottom))}
-  .hdr{margin-bottom:4px}
-  h1{font-size:21px}
-  .hdr .sub{font-size:12px}
+  .hdr{margin-bottom:2px}
+  h1{font-size:20px}
+  .hdr > div:first-child{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .hdr .sub{font-size:12px;margin:0}
   .toolbar{margin-bottom:4px;gap:8px}
   .tb-group{flex-direction:row;align-items:center;gap:8px;margin-bottom:4px}
   .tb-group .tb-label{display:none}
@@ -655,8 +656,16 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .tab{font-size:10px;gap:1px}
   .fab{width:42px;height:42px;margin-top:-8px}
   .fab svg.i{width:19px;height:19px}
-  .wstrip{display:none}
   .toast{bottom:calc(64px + env(safe-area-inset-bottom))}
+  /* Querformat: die Wochenzeile flacher, damit von der Liste etwas übrig bleibt */
+  .cal-wk .wk{min-height:58px}
+  .cal-wk .cnum{padding:3px 5px 0;font-size:11px}
+  .cal-wk .cnum span{min-width:19px;height:19px}
+  .cal-wk .cwd{font-size:9px;margin-bottom:0}
+  .cal-wk .citems{padding-bottom:2px;gap:2px}
+  .wk-head.wk-head-sm{margin:2px 4px 2px}
+  .calle-l{padding-top:5px;font-size:10px}
+  .rec-note,.park-note{display:none}          /* die Erklärtexte füllen sonst den ganzen Schirm */
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -676,7 +685,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v65';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v66';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
