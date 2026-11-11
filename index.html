@@ -234,15 +234,17 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .rowdel:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent)}
 .fmt{display:flex;gap:4px;margin:0 0 4px auto}
 .fmt button{min-width:26px;height:24px;padding:0 5px;border-radius:6px;font-size:12.5px;color:var(--text-2);background:var(--surface-2)}
-.md-chk{display:inline-flex;align-items:flex-start;gap:7px;cursor:pointer;border-radius:6px;padding:1px 4px 1px 2px;margin-left:-2px}
-.md-chk:hover{background:var(--surface-3)}
-.md-chk .chkbox{flex:none;width:16px;height:16px;margin-top:2px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line-2);display:grid;place-items:center;font-size:11px;font-style:normal;color:var(--on-accent);background:transparent}
+.md-l{display:block;min-height:1.5em}
+.md-chk{display:flex;align-items:flex-start;gap:8px}
+.md-chk .chkbox{flex:none;position:relative;width:16px;height:16px;margin-top:.2em;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line-2);display:grid;place-items:center;font-size:11px;line-height:1;font-style:normal;color:var(--on-accent);background:transparent;cursor:pointer}
+.md-chk .chkbox::after{content:"";position:absolute;inset:-8px}          /* größere Trefferfläche, ohne die Zeile zu verschieben */
+.md-chk .chkbox:hover{box-shadow:inset 0 0 0 1.5px var(--accent)}
 .md-chk.on .chkbox{background:var(--accent);box-shadow:none}
 .md-chk.on .chk-t{color:var(--text-3);text-decoration:line-through;text-decoration-color:var(--line-2)}
 .fmt button:hover{background:var(--surface-3);color:var(--text)}
 .d-head{display:flex;align-items:center;gap:8px}
 .d-head .d-lab{margin:0}
-.d-md{padding:7px 9px;border-radius:9px;font-size:14.5px;line-height:1.45;cursor:text;white-space:pre-wrap;word-break:break-word;background:var(--surface-2)}
+.d-md{padding:10px 12px;border-radius:10px;font-size:14.5px;line-height:1.5;min-height:44px;cursor:text;white-space:pre-wrap;word-break:break-word;background:var(--surface-2)}
 .d-md:hover{background:var(--surface-3)}
 .d-field.md > .d-in{display:none}
 .d-field:not(.md) > .d-md{display:none}
@@ -635,8 +637,9 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .toast{bottom:calc(80px + env(safe-area-inset-bottom))}
   .hide-m{display:none}
   .search input,.sb-new input,.add-in,.opt-new input,.opt-new.sm input,.date-in,.ren,.d-in{font-size:16px}
-  .md-chk{padding:5px 6px 5px 4px}
-  .md-chk .chkbox{width:19px;height:19px;margin-top:1px}
+  .d-md{font-size:16px}
+  .md-chk .chkbox{width:18px;height:18px}
+  .md-chk .chkbox::after{inset:-11px}
   .fmt button{min-width:30px;height:28px}
   .row{gap:5px;padding:5px 6px}
   .row-title{min-width:56px}
@@ -699,7 +702,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v69';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v70';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -988,6 +991,7 @@ function applyRemote(row){
   if ((TOMB.get(row.id) || 0) >= row.updated_at) return false;      // lokal gelöscht und neuer
   const local = arr.find(x => x.id === row.id);
   if (local && local.updatedAt >= row.updated_at) return false;     // lokal ist neuer
+  if (local && pendingSave.has(row.id)) return false;               // wird gerade bearbeitet: Getipptes hat Vorrang
   if (row.deleted){
     if (local) arr.splice(arr.indexOf(local), 1);
     TOMB.set(row.id, row.updated_at);
@@ -1016,6 +1020,7 @@ async function sync(){
   if (syncing || !sess || !navigator.onLine || !idb) return;
   syncing = true; S.syncState = 'busy'; renderSidebar();
   try {
+    flushSaves();                                   // noch nicht gespeicherte Eingaben zuerst sichern
     const tok = await token();
     if (!tok){ S.syncState = 'auth'; renderSidebar(); toast('Bitte neu anmelden.'); return; }
     await pushChanges(tok);
@@ -1106,12 +1111,14 @@ const hatCheckliste = s => String(s ?? '').split('\n').some(z => CHECK_ZEILE.tes
 // Abhakbare Zeilen („- [ ] …“) werden als Kästchen dargestellt, der Rest wie bisher.
 function mdBlock(text){
   const zeilen = String(text ?? '').split('\n');
+  // Jede Zeile bleibt eine eigene Zeile mit ihrer Nummer – so landet der Cursor beim Antippen
+  // in derselben Zeile, statt ans Textende zu springen.
   return zeilen.map((z, i) => {
     const m = CHECK_ZEILE.exec(z);
-    if (!m) return mdInline(z);
+    if (!m) return `<span class="md-l" data-l="${i}">${mdInline(z)}</span>`;
     const an = m[2].toLowerCase() === 'x';
-    return `<span class="md-chk ${an ? 'on' : ''}" data-md-line="${i}" role="checkbox" aria-checked="${an}" tabindex="0"><i class="chkbox">${an ? '✓' : ''}</i><span class="chk-t">${mdInline(m[3])}</span></span>`;
-  }).join('<br>');
+    return `<span class="md-l md-chk ${an ? 'on' : ''}" data-l="${i}"><i class="chkbox" data-md-line="${i}" role="checkbox" aria-checked="${an}" tabindex="0">${an ? '✓' : ''}</i><span class="chk-t">${mdInline(m[3])}</span></span>`;
+  }).join('');
 }
 const mdRoh = s => String(s ?? '').replace(FETTKURSIV, '$1').replace(FETT, '$1').replace(KURSIV, '$1$2');   // für Listen: Zeichen raus
 const fmtBar = () => `<div class="fmt">
@@ -1775,21 +1782,45 @@ function renderMain(){
 /* ============ Detail ============ */
 /* Detail = Bearbeiten: jede Änderung wird sofort gespeichert. */
 function renderDetail(){
+  const det = $('#detail');
   const t = T.find(x => x.id === S.sel);
-  if (!t){ $('#app').classList.remove('has-detail'); $('#detail').innerHTML = ''; return; }
+  if (!t){ $('#app').classList.remove('has-detail'); det.innerHTML = ''; delete det.dataset.tid; return; }
+  // Ein Neuaufbau (z. B. nach dem Abgleich) darf beim Schreiben nicht stören: Rollposition,
+  // Fokus und Cursor des gerade bearbeiteten Feldes werden gemerkt und wiederhergestellt.
+  const gleich = det.dataset.tid === t.id, rollen = det.scrollTop;
+  const akt = document.activeElement;
+  const merk = gleich && akt && det.contains(akt) && akt.dataset?.ef
+    ? { ef:akt.dataset.ef, a:akt.selectionStart, b:akt.selectionEnd } : null;
   let html;
   try { html = detailHTML(t); }
   catch (err){
     console.error(err);
-    S.sel = null; $('#app').classList.remove('has-detail'); $('#detail').innerHTML = '';
+    S.sel = null; $('#app').classList.remove('has-detail'); det.innerHTML = ''; delete det.dataset.tid;
     toast('Dieses To-do lässt sich gerade nicht öffnen.');
     return;
   }
-  $('#detail').innerHTML = `<div class="d-resize" title="Ziehen, um die Breite zu ändern · Doppelklick setzt zurück"></div>` + html;
+  det.innerHTML = `<div class="d-resize" title="Ziehen, um die Breite zu ändern · Doppelklick setzt zurück"></div>` + html;
+  det.dataset.tid = t.id;
   $('#app').classList.add('has-detail');
-  $('#detail').querySelectorAll('textarea.grow').forEach(grow);
+  if (merk){
+    const el = det.querySelector(`[data-ef="${merk.ef}"]`);
+    if (el){
+      el.closest('.d-field')?.classList.remove('md');
+      el.focus({ preventScroll:true });
+      try { el.setSelectionRange(merk.a, merk.b); } catch (e) {}
+    }
+  }
+  det.querySelectorAll('textarea.grow').forEach(grow);
+  if (gleich) det.scrollTop = rollen;
 }
-function grow(el){ el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+// Höhe an den Inhalt anpassen. Das kurze Zusammenfallen auf „auto“ ließ das umgebende Fenster
+// springen, sobald es weit nach unten gerollt war – darum wird die Rollposition festgehalten.
+function grow(el){
+  if (!el || !el.offsetParent) return;                       // unsichtbare Felder nicht anfassen
+  const sc = el.closest('#detail, .sheet'), top = sc ? sc.scrollTop : 0;
+  el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px';
+  if (sc && sc.scrollTop !== top) sc.scrollTop = top;
+}
 // Textfeld mit Formatierleiste: beim Verlassen zeigt es den Text gesetzt, beim Antippen wieder roh.
 /* Rückgängig für die Textfelder: Vor jeder größeren Änderung wird der Stand gemerkt.
    Das Gedächtnis lebt nur in dieser Sitzung und fasst nichts an, was gespeichert ist. */
@@ -1812,21 +1843,52 @@ function undoZurueck(ta){
   ta.value = vorher;
   LETZT.set(k, vorher);
   ta.dispatchEvent(new Event('input', { bubbles:true }));
-  grow(ta); ta.focus();
+  grow(ta); ta.focus({ preventScroll:true });
   toast('Zurückgenommen');
 }
-// Eine Zeile zur abhakbaren Zeile machen – oder die Markierung wieder entfernen.
+// Abhakbare Zeilen setzen oder entfernen – für die Zeile am Cursor oder für alle markierten Zeilen.
+// Geändert wird nur das Zeichen am Zeilenanfang; der Text der Zeilen bleibt Zeichen für Zeichen stehen.
 function checkZeile(ta){
   if (!ta) return;
-  undoMerken(ta, ta.value);
-  const v = ta.value, pos = ta.selectionStart;
-  let a = v.lastIndexOf('\n', Math.max(0, pos - 1)) + 1;
-  let b = v.indexOf('\n', pos); if (b < 0) b = v.length;
-  const zeile = v.slice(a, b), m = CHECK_ZEILE.exec(zeile);
-  const neu = m ? m[1] + m[3] : '- [ ] ' + zeile;
-  ta.setRangeText(neu, a, b, 'end');
+  const v = ta.value, s0 = ta.selectionStart;
+  let e0 = ta.selectionEnd;
+  if (e0 > s0 && v[e0 - 1] === '\n') e0--;                    // Auswahl endet am Anfang der Folgezeile: die nicht mitnehmen
+  const a = s0 === 0 ? 0 : v.lastIndexOf('\n', s0 - 1) + 1;
+  let b = v.indexOf('\n', e0); if (b < 0) b = v.length;
+  const zeilen = v.slice(a, b).split('\n'), mehrere = zeilen.length > 1;
+  const mitText = zeilen.filter(z => z.trim());
+  const alleAbhakbar = mitText.length > 0 && mitText.every(z => CHECK_ZEILE.test(z));
+  const neu = zeilen.map(z => {
+    const m = CHECK_ZEILE.exec(z);
+    if (alleAbhakbar) return m ? m[1] + m[3] : z;             // alle sind es schon: Markierung wieder weg
+    if (m || (mehrere && !z.trim())) return z;                // schon abhakbar, oder Leerzeile im Block
+    const einzug = /^\s*/.exec(z)[0];
+    return einzug + '- [ ] ' + z.slice(einzug.length);
+  }).join('\n');
+  if (neu === v.slice(a, b)) return;
+  undoMerken(ta, v);
+  ta.setRangeText(neu, a, b, mehrere ? 'select' : 'end');
+  LETZT.set(undoKey(ta), ta.value);
   ta.dispatchEvent(new Event('input', { bubbles:true }));
-  grow(ta); ta.focus();
+  grow(ta); ta.focus({ preventScroll:true });
+}
+// Eingabetaste in einer abhakbaren Zeile: nächste Zeile bekommt wieder ein Kästchen;
+// auf einer leeren Kästchenzeile endet die Liste.
+function checkEnter(ta){
+  if (ta.selectionStart !== ta.selectionEnd) return false;
+  const v = ta.value, pos = ta.selectionStart;
+  const a = pos === 0 ? 0 : v.lastIndexOf('\n', pos - 1) + 1;
+  let b = v.indexOf('\n', pos); if (b < 0) b = v.length;
+  const m = CHECK_ZEILE.exec(v.slice(a, b));
+  if (!m) return false;
+  undoMerken(ta, v);
+  if (!m[3].trim()) ta.setRangeText(m[1], a, b, 'end');       // leeres Kästchen: Liste beenden
+  else if (pos < a + m[1].length + 6) return false;           // Cursor steht vor dem Text: normaler Umbruch
+  else ta.setRangeText('\n' + m[1] + '- [ ] ', pos, pos, 'end');
+  LETZT.set(undoKey(ta), ta.value);
+  ta.dispatchEvent(new Event('input', { bubbles:true }));
+  grow(ta);
+  return true;
 }
 // Häkchen in der gesetzten Ansicht umschalten
 function checkUmschalten(feld, zeilenNr){
@@ -1841,12 +1903,29 @@ function checkUmschalten(feld, zeilenNr){
   ta.dispatchEvent(new Event('input', { bubbles:true }));
   const md = feld.querySelector('.d-md'); if (md) md.innerHTML = mdBlock(ta.value);
 }
+// Abgehakt wird nur über das Kästchen selbst – ein Tipp auf den Text führt in die Bearbeitung.
 document.addEventListener('click', e => {
-  const chk = e.target.closest('.md-chk'); if (!chk) return;
+  const chk = e.target.closest('.chkbox[data-md-line]'); if (!chk) return;
   const feld = chk.closest('.d-field'); if (!feld) return;
   e.preventDefault(); e.stopPropagation();
   checkUmschalten(feld, +chk.dataset.mdLine);
 }, true);
+// Knöpfe der Leiste nehmen dem Textfeld weder Fokus noch Markierung weg
+document.addEventListener('mousedown', e => { if (e.target.closest('.fmt button')) e.preventDefault(); });
+// Feld aus der gesetzten Ansicht in die Bearbeitung holen; der Cursor kommt in die angetippte Zeile
+function feldBearbeiten(feld, zeilenNr){
+  const ta = feld.querySelector('textarea'); if (!ta) return null;
+  const sc = feld.closest('#detail'), top = sc ? sc.scrollTop : 0;
+  feld.classList.remove('md');
+  grow(ta);
+  const zeilen = ta.value.split('\n');
+  let pos = ta.value.length;
+  if (zeilenNr != null && zeilenNr < zeilen.length) pos = zeilen.slice(0, zeilenNr + 1).join('\n').length;
+  ta.focus({ preventScroll:true });
+  ta.setSelectionRange(pos, pos);
+  if (sc) sc.scrollTop = top;
+  return ta;
+}
 function formatiere(ta, f){
   if (!ta) return;
   undoMerken(ta, ta.value);
@@ -1875,9 +1954,8 @@ function formatiere(ta, f){
 document.addEventListener('click', e => {
   const md = e.target.closest('.d-md'), feld = md?.closest('.d-field');
   if (!feld) return;
-  feld.classList.remove('md');
-  const ta = feld.querySelector('textarea');
-  grow(ta); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+  const zeile = e.target.closest('[data-l]');
+  feldBearbeiten(feld, zeile ? +zeile.dataset.l : null);
 });
 // Feld verlassen → Text gesetzt zeigen, sofern Formatierung drin ist
 document.addEventListener('focusout', e => {
@@ -2631,11 +2709,19 @@ document.addEventListener('click', e => {
     case 'e-prog': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.progress = Number(el.dataset.v); }); break; }
     case 'fmt': {
       e.preventDefault();
+      const feld = el.closest('.d-field');
+      if (feld?.classList.contains('md')){ feldBearbeiten(feld, null); break; }   // erst Stelle wählen, dann formatieren
       const ta = el.closest('.d-field, .fmt-wrap')?.querySelector('textarea');
       if (el.dataset.f === 'c') checkZeile(ta); else formatiere(ta, el.dataset.f);
       break;
     }
-    case 'fmt-undo': { e.preventDefault(); undoZurueck(el.closest('.d-field, .fmt-wrap')?.querySelector('textarea')); break; }
+    case 'fmt-undo': {
+      e.preventDefault();
+      const feld = el.closest('.d-field');
+      if (feld?.classList.contains('md')) feldBearbeiten(feld, null);
+      undoZurueck(el.closest('.d-field, .fmt-wrap')?.querySelector('textarea'));
+      break;
+    }
     case 'del': S.confirmDel = id; render(); break;
     case 'del-no': S.confirmDel = null; render(); break;
     case 'swipe-del': { const t = T.find(x => x.id === id); if (t) deleteTodo(t); break; }
@@ -2763,6 +2849,9 @@ document.addEventListener('keydown', e => {
     if (addE === 'project'){ const prev = S.newProjArea; S.newProjArea = a; o = addEntity('project', e.target.value); S.newProjArea = prev; if (o) editTodo(t, t => { t.project = o.id; if (!t.area) t.area = o.area; }); }
     return;
   }
+  if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey && !e.altKey && tag === 'TEXTAREA'
+      && (['desc', 'ctx'].includes(e.target.dataset.ef) || ['desc', 'ctx'].includes(e.target.dataset.f))
+      && checkEnter(e.target)){ e.preventDefault(); return; }
   if ((e.metaKey || e.ctrlKey) && tag === 'TEXTAREA' && /^[biBI]$/.test(e.key)){ e.preventDefault(); formatiere(e.target, e.key.toLowerCase()); return; }
   if (e.target.dataset?.ef === 'title' && e.key === 'Enter'){ e.preventDefault(); e.target.blur(); return; }
   const add = e.target.dataset?.add;
