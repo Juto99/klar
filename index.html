@@ -233,7 +233,12 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .rowdel{color:var(--text-3);flex:none}
 .rowdel:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent)}
 .fmt{display:flex;gap:4px;margin:0 0 4px auto}
-.fmt button{width:26px;height:24px;border-radius:6px;font-size:12.5px;color:var(--text-2);background:var(--surface-2)}
+.fmt button{min-width:26px;height:24px;padding:0 5px;border-radius:6px;font-size:12.5px;color:var(--text-2);background:var(--surface-2)}
+.md-chk{display:inline-flex;align-items:flex-start;gap:7px;cursor:pointer;border-radius:6px;padding:1px 4px 1px 2px;margin-left:-2px}
+.md-chk:hover{background:var(--surface-3)}
+.md-chk .chkbox{flex:none;width:16px;height:16px;margin-top:2px;border-radius:5px;box-shadow:inset 0 0 0 1.5px var(--line-2);display:grid;place-items:center;font-size:11px;font-style:normal;color:var(--on-accent);background:transparent}
+.md-chk.on .chkbox{background:var(--accent);box-shadow:none}
+.md-chk.on .chk-t{color:var(--text-3);text-decoration:line-through;text-decoration-color:var(--line-2)}
 .fmt button:hover{background:var(--surface-3);color:var(--text)}
 .d-head{display:flex;align-items:center;gap:8px}
 .d-head .d-lab{margin:0}
@@ -630,6 +635,9 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .toast{bottom:calc(80px + env(safe-area-inset-bottom))}
   .hide-m{display:none}
   .search input,.sb-new input,.add-in,.opt-new input,.opt-new.sm input,.date-in,.ren,.d-in{font-size:16px}
+  .md-chk{padding:5px 6px 5px 4px}
+  .md-chk .chkbox{width:19px;height:19px;margin-top:1px}
+  .fmt button{min-width:30px;height:28px}
   .row{gap:5px;padding:5px 6px}
   .row-title{min-width:56px}
   .wk.wk-wahl{grid-template-columns:repeat(7,minmax(0,1fr)) 52px}
@@ -691,7 +699,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v68';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v69';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1093,9 +1101,24 @@ const hatFormat = s => FORMAT_TEST.test(String(s || ''));
 function mdInline(text){
   return esc(text).replace(FETTKURSIV, '<strong><em>$1</em></strong>').replace(FETT, '<strong>$1</strong>').replace(KURSIV, '$1<em>$2</em>');
 }
-const mdBlock = text => mdInline(text).replace(/\n/g, '<br>');
+const CHECK_ZEILE = /^(\s*)-\s\[( |x|X)\]\s?(.*)$/;
+const hatCheckliste = s => String(s ?? '').split('\n').some(z => CHECK_ZEILE.test(z));
+// Abhakbare Zeilen („- [ ] …“) werden als Kästchen dargestellt, der Rest wie bisher.
+function mdBlock(text){
+  const zeilen = String(text ?? '').split('\n');
+  return zeilen.map((z, i) => {
+    const m = CHECK_ZEILE.exec(z);
+    if (!m) return mdInline(z);
+    const an = m[2].toLowerCase() === 'x';
+    return `<span class="md-chk ${an ? 'on' : ''}" data-md-line="${i}" role="checkbox" aria-checked="${an}" tabindex="0"><i class="chkbox">${an ? '✓' : ''}</i><span class="chk-t">${mdInline(m[3])}</span></span>`;
+  }).join('<br>');
+}
 const mdRoh = s => String(s ?? '').replace(FETTKURSIV, '$1').replace(FETT, '$1').replace(KURSIV, '$1$2');   // für Listen: Zeichen raus
-const fmtBar = () => `<div class="fmt"><button type="button" data-act="fmt" data-f="b" title="Fett (⌘B)" aria-label="Fett"><b>F</b></button><button type="button" data-act="fmt" data-f="i" title="Kursiv (⌘I)" aria-label="Kursiv"><i>K</i></button></div>`;
+const fmtBar = () => `<div class="fmt">
+  <button type="button" data-act="fmt" data-f="b" title="Fett (⌘B)" aria-label="Fett"><b>F</b></button>
+  <button type="button" data-act="fmt" data-f="i" title="Kursiv (⌘I)" aria-label="Kursiv"><i>K</i></button>
+  <button type="button" data-act="fmt" data-f="c" title="Abhakbare Zeile" aria-label="Abhakbare Zeile">☑</button>
+  <button type="button" data-act="fmt-undo" title="Letzte Änderung zurücknehmen" aria-label="Rückgängig">↶</button></div>`;
 
 /* Fortschritt: 0–100 % je To-do; Erledigtes zählt als 100 %. */
 const progOf = t => (t.status === 'done' || t.status === 'archived') ? 100 : Math.max(0, Math.min(100, Math.round(+t.progress || 0)));
@@ -1347,7 +1370,7 @@ function viewListe(){
 function viewInbox(){
   const items = T.filter(t => t.status === 'inbox').sort((a, b) => (b.createdTs || 0) - (a.createdTs || 0));
   return header('Eingang', 'Per Sprache erfasst. Kurz prüfen, ergänzen, einsortieren.') +
-    (items.length ? `<div>${items.map(t => rowHTML(t, { noPark:true, del:true, right:`<button class="btn btn-g btn-s" data-act="review" data-id="${t.id}">Prüfen</button>` })).join('')}</div>`
+    (items.length ? `<div>${items.map(t => rowHTML(t, { del:true, right:`<button class="btn btn-g btn-s" data-act="review" data-id="${t.id}">Prüfen</button>` })).join('')}</div>`
       : `<div class="empty">Eingang leer.</div>`) +
     `<div class="note">${ic('wave')}<div><h4>So kommen To-dos hierher</h4>
       <p>Action-Button am iPhone drücken, sprechen, fertig: Der Kurzbefehl schickt das Diktat an Brain72, die KI erkennt Titel, Frist, Dringlichkeit, Wichtigkeit und Aufwand. Einrichtung unter Einstellungen → iPhone-Kurzbefehl.</p>
@@ -1768,8 +1791,65 @@ function renderDetail(){
 }
 function grow(el){ el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
 // Textfeld mit Formatierleiste: beim Verlassen zeigt es den Text gesetzt, beim Antippen wieder roh.
+/* Rückgängig für die Textfelder: Vor jeder größeren Änderung wird der Stand gemerkt.
+   Das Gedächtnis lebt nur in dieser Sitzung und fasst nichts an, was gespeichert ist. */
+const UNDO = new Map(), LETZT = new Map(), LETZT_ZEIT = new Map();
+const undoKey = ta => ta.dataset.ef ? `${ta.dataset.ef}:${ta.dataset.id}` : `w:${ta.dataset.f || ''}`;
+function undoMerken(ta, wert){
+  if (wert == null) return;
+  const k = undoKey(ta), stapel = UNDO.get(k) || [];
+  if (stapel[stapel.length - 1] === wert) return;
+  stapel.push(wert);
+  if (stapel.length > 50) stapel.shift();
+  UNDO.set(k, stapel);
+}
+function undoZurueck(ta){
+  if (!ta) return;
+  const k = undoKey(ta), stapel = UNDO.get(k) || [];
+  if (!stapel.length){ toast('Nichts zum Zurücknehmen'); return; }
+  const vorher = stapel.pop();
+  UNDO.set(k, stapel);
+  ta.value = vorher;
+  LETZT.set(k, vorher);
+  ta.dispatchEvent(new Event('input', { bubbles:true }));
+  grow(ta); ta.focus();
+  toast('Zurückgenommen');
+}
+// Eine Zeile zur abhakbaren Zeile machen – oder die Markierung wieder entfernen.
+function checkZeile(ta){
+  if (!ta) return;
+  undoMerken(ta, ta.value);
+  const v = ta.value, pos = ta.selectionStart;
+  let a = v.lastIndexOf('\n', Math.max(0, pos - 1)) + 1;
+  let b = v.indexOf('\n', pos); if (b < 0) b = v.length;
+  const zeile = v.slice(a, b), m = CHECK_ZEILE.exec(zeile);
+  const neu = m ? m[1] + m[3] : '- [ ] ' + zeile;
+  ta.setRangeText(neu, a, b, 'end');
+  ta.dispatchEvent(new Event('input', { bubbles:true }));
+  grow(ta); ta.focus();
+}
+// Häkchen in der gesetzten Ansicht umschalten
+function checkUmschalten(feld, zeilenNr){
+  const ta = feld.querySelector('textarea'); if (!ta) return;
+  undoMerken(ta, ta.value);
+  const zeilen = ta.value.split('\n'), m = CHECK_ZEILE.exec(zeilen[zeilenNr] || '');
+  if (!m) return;
+  const an = m[2].toLowerCase() === 'x';
+  zeilen[zeilenNr] = `${m[1]}- [${an ? ' ' : 'x'}] ${m[3]}`;
+  ta.value = zeilen.join('\n');
+  LETZT.set(undoKey(ta), ta.value);
+  ta.dispatchEvent(new Event('input', { bubbles:true }));
+  const md = feld.querySelector('.d-md'); if (md) md.innerHTML = mdBlock(ta.value);
+}
+document.addEventListener('click', e => {
+  const chk = e.target.closest('.md-chk'); if (!chk) return;
+  const feld = chk.closest('.d-field'); if (!feld) return;
+  e.preventDefault(); e.stopPropagation();
+  checkUmschalten(feld, +chk.dataset.mdLine);
+}, true);
 function formatiere(ta, f){
   if (!ta) return;
+  undoMerken(ta, ta.value);
   const z = f === 'b' ? '**' : '*', v = ta.value;
   let a = ta.selectionStart, b = ta.selectionEnd;
   if (a === b){                                   // ohne Auswahl: das Wort unter dem Cursor nehmen
@@ -1807,12 +1887,12 @@ document.addEventListener('focusout', e => {
     if (feld.contains(document.activeElement)) return;
     const md = feld.querySelector('.d-md');
     if (md) md.innerHTML = mdBlock(ta.value);
-    feld.classList.toggle('md', hatFormat(ta.value));
+    feld.classList.toggle('md', hatFormat(ta.value) || hatCheckliste(ta.value));
   }, 120);
 });
 function textFeld(t, f, label, ph, style = ''){
   const wert = t[f] || '';
-  return `<div class="d-sec d-field ${hatFormat(wert) ? 'md' : ''}" data-field="${f}"${style ? ` style="${style}"` : ''}>
+  return `<div class="d-sec d-field ${hatFormat(wert) || hatCheckliste(wert) ? 'md' : ''}" data-field="${f}"${style ? ` style="${style}"` : ''}>
     <div class="d-head"><div class="d-lab">${label}</div>${fmtBar()}</div>
     <textarea class="d-in grow" data-ef="${f}" data-id="${t.id}" rows="2" placeholder="${ph}">${esc(wert)}</textarea>
     <div class="d-md" data-md role="button" tabindex="0" title="Antippen zum Ändern">${mdBlock(wert)}</div>
@@ -2549,7 +2629,13 @@ document.addEventListener('click', e => {
       break; }
     case 'row-del': { e.stopPropagation(); const t = T.find(x => x.id === id); if (t) deleteTodo(t); break; }
     case 'e-prog': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.progress = Number(el.dataset.v); }); break; }
-    case 'fmt': { e.preventDefault(); formatiere(el.closest('.d-field, .fmt-wrap')?.querySelector('textarea'), el.dataset.f); break; }
+    case 'fmt': {
+      e.preventDefault();
+      const ta = el.closest('.d-field, .fmt-wrap')?.querySelector('textarea');
+      if (el.dataset.f === 'c') checkZeile(ta); else formatiere(ta, el.dataset.f);
+      break;
+    }
+    case 'fmt-undo': { e.preventDefault(); undoZurueck(el.closest('.d-field, .fmt-wrap')?.querySelector('textarea')); break; }
     case 'del': S.confirmDel = id; render(); break;
     case 'del-no': S.confirmDel = null; render(); break;
     case 'swipe-del': { const t = T.find(x => x.id === id); if (t) deleteTodo(t); break; }
@@ -2627,6 +2713,11 @@ $('#scrim').addEventListener('click', () => { document.body.classList.remove('sb
 $('#modal').addEventListener('click', e => { if (e.target.id === 'modal'){ S.authOpen ? closeAuth() : closeModal(); } });
 $('#modal').addEventListener('input', e => {
   const f = e.target.dataset.f; if (!A || !f) return;
+  if (['desc', 'ctx', 'capture'].includes(f)){                 // Stand für „Rückgängig“ sichern
+    const k = undoKey(e.target), jetzt = Date.now();
+    if (jetzt - (LETZT_ZEIT.get(k) || 0) > 700) undoMerken(e.target, LETZT.get(k));
+    LETZT.set(k, e.target.value); LETZT_ZEIT.set(k, jetzt);
+  }
   if (['title', 'desc', 'ctx'].includes(f)) A.draft[f] = e.target.value;
   if (f === 'capture') A.capture = e.target.value;
 });
@@ -2716,6 +2807,11 @@ document.addEventListener('input', e => {
     t.progress = Number(e.target.value);
     const l = document.querySelector('[data-prg-l]'); if (l) l.textContent = t.progress + ' %';
     saveSoon(t); return;
+  }
+  if (f === 'desc' || f === 'ctx'){
+    const k = undoKey(e.target), jetzt = Date.now();
+    if (jetzt - (LETZT_ZEIT.get(k) || 0) > 700) undoMerken(e.target, LETZT.get(k) ?? t[f]);
+    LETZT.set(k, e.target.value); LETZT_ZEIT.set(k, jetzt);
   }
   t[f] = f === 'title' ? e.target.value.replace(/\n/g, ' ') : e.target.value;
   if (e.target.classList.contains('grow')) grow(e.target);
