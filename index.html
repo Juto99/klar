@@ -518,6 +518,9 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .opt-new.sm{height:32px}
 .opt-new.sm input{width:120px;font-size:13.5px}
 .date-in.sm{height:32px}
+.date-opt{position:relative;cursor:pointer}
+.date-opt.on{font-weight:550}
+.date-nat{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;opacity:0;font-size:16px;cursor:pointer;-webkit-appearance:none;appearance:none}
 .over-t{color:var(--danger)}
 .d-foot{display:flex;justify-content:space-between}
 .d-chips{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 20px 36px}
@@ -702,7 +705,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v70';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v71';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1789,7 +1792,7 @@ function renderDetail(){
   // Fokus und Cursor des gerade bearbeiteten Feldes werden gemerkt und wiederhergestellt.
   const gleich = det.dataset.tid === t.id, rollen = det.scrollTop;
   const akt = document.activeElement;
-  const merk = gleich && akt && det.contains(akt) && akt.dataset?.ef
+  const merk = gleich && akt && det.contains(akt) && ['title', 'desc', 'ctx'].includes(akt.dataset?.ef)
     ? { ef:akt.dataset.ef, a:akt.selectionStart, b:akt.selectionEnd } : null;
   let html;
   try { html = detailHTML(t); }
@@ -1910,6 +1913,10 @@ document.addEventListener('click', e => {
   e.preventDefault(); e.stopPropagation();
   checkUmschalten(feld, +chk.dataset.mdLine);
 }, true);
+document.addEventListener('click', e => {
+  const n = e.target.closest?.('.date-nat');
+  if (n && n.showPicker && matchMedia('(pointer:fine)').matches){ try { n.showPicker(); } catch (err) {} }
+});
 // Knöpfe der Leiste nehmen dem Textfeld weder Fokus noch Markierung weg
 document.addEventListener('mousedown', e => { if (e.target.closest('.fmt button')) e.preventDefault(); });
 // Feld aus der gesetzten Ansicht in die Bearbeitung holen; der Cursor kommt in die angetippte Zeile
@@ -2008,7 +2015,7 @@ function detailHTML(t){
       <div class="chips">${[0, 25, 50, 75, 100].map(v => chip('e-prog', v, progOf(t) === v, v + ' %')).join('')}</div>`}
     </div>
     <div class="d-sec"><div class="d-lab">Frist${dueInfo}</div>
-      <div class="chips">${DUE_OPTS().map(([k, l, v]) => chip('e-due', k, sameDue(t.due, v), l)).join('')}<input type="date" class="date-in sm" data-ef="date" data-id="${t.id}" value="${t.due?.type === 'day' ? t.due.date : ''}" aria-label="Bestimmtes Datum"></div>
+      <div class="chips">${DUE_OPTS().map(([k, l, v]) => chip('e-due', k, sameDue(t.due, v), l)).join('')}${datumsKnopf(`data-ef="date" data-id="${t.id}"`, t.due?.type === 'day' ? t.due.date : '', 'sm')}</div>
     </div>
     <div class="d-sec"><div class="d-lab">Personen</div>
       <div class="chips">${[...PEOPLE].sort(byName).map(p => chip('e-person', p.id, t.persons.includes(p.id), `<span class="av">${esc(initials(p.name))}</span>${esc(p.name)}`)).join('')}${newIn('person', 'Neue Person')}</div>
@@ -2397,6 +2404,10 @@ const DUE_OPTS = () => [
   ['tw', 'Diese Woche', week(iso(THIS_MON))], ['nw', 'Nächste Woche', week(iso(NEXT_MON))],
   ['nm', 'Nächster Monat', month(nextMonthKey())], ['none', 'Ohne Frist', null]
 ];
+// Genaues Datum wählen. Ein leeres <input type="date"> zeigt das iPhone als schmalen, leeren Kasten
+// ohne Beschriftung – deshalb steht hier ein beschrifteter Knopf, und das native Feld liegt
+// unsichtbar über seiner ganzen Fläche: Ein Tipp öffnet direkt den Kalender des Geräts.
+const datumsKnopf = (attr, wert, sm = '') => `<label class="opt ${sm} date-opt ${wert ? 'on' : ''}">${ic('cal')}<span>${wert ? esc(dueLabel({ due:day(wert), status:'open' }).txt) : 'Datum wählen'}</span><input type="date" class="date-nat" ${attr} value="${wert}" aria-label="Genaues Datum wählen"></label>`;
 const sameDue = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 function stepHTML(k){
   const d = A.draft;
@@ -2429,7 +2440,7 @@ function stepHTML(k){
       <label class="opt-new">${ic('plus')}<input data-f="newproject" placeholder="Neues Projekt" enterkeyhint="done"></label></div>
       <div class="grp-l">Frist</div>
       <div class="chips">${DUE_OPTS().map(([k, l, v]) => `<button class="opt ${sameDue(d.due, v) ? 'on' : ''}" data-act="a-due" data-v="${k}">${l}</button>`).join('')}
-      <input type="date" class="date-in" data-f="date" value="${dateVal}" aria-label="Bestimmtes Datum"></div>`;
+      ${datumsKnopf('data-f="date"', dateVal)}</div>`;
     }
     case 'prioload': return `<h2 class="q">Dringlich, wichtig, wie groß?</h2><p class="q-help">Daraus berechnet Brain72 später, wann du anfangen solltest. Alles optional.</p>
       <div class="grp-l">Dringlichkeit</div>
