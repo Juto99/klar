@@ -251,6 +251,68 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .prg{width:100%;accent-color:var(--accent);height:26px}
 .sec-done h3{color:var(--text-2)}
 .sec-park h3{color:var(--warn)}
+/* Zeiterfassung */
+.d-zeit .z-zeile{display:flex;align-items:center;gap:12px}
+.btn-fokus{background:var(--ok);color:#fff}
+.btn-fokus:hover{filter:brightness(1.08)}
+.btn-stopp{background:var(--danger);color:#fff}
+.btn-fokus svg.i,.btn-stopp svg.i{stroke:#fff;fill:#fff;width:14px;height:14px}
+.z-uhr{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.z-info{margin-top:8px;font-size:12.5px;color:var(--text-2)}
+.z-info b{color:var(--text);font-weight:600}
+.d-zeit.laeuft{background:color-mix(in srgb,var(--ok) 9%,var(--surface));border-radius:12px;padding:12px 14px;margin-left:-14px;margin-right:-14px}
+.fokus{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:70;display:flex;align-items:center;gap:12px;max-width:min(560px,calc(100vw - 32px));padding:8px 8px 8px 16px;border-radius:999px;background:var(--surface);box-shadow:var(--shadow-lg),inset 0 0 0 1.5px var(--ok)}
+.fk-punkt{flex:none;width:9px;height:9px;border-radius:50%;background:var(--ok);animation:fkpuls 1.6s ease-in-out infinite}
+@keyframes fkpuls{50%{opacity:.35}}
+.fk-titel{flex:1 1 auto;min-width:0;font-size:14px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.fk-uhr{flex:none;font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}
+.fk-stopp{flex:none;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:999px;background:var(--danger);color:#fff;font-size:13.5px;font-weight:600}
+.fk-stopp svg.i{stroke:#fff;fill:#fff;width:12px;height:12px}
+body.fokus-an .toast{bottom:84px}
+body.sb-open .fokus{display:none}
+body.fokus-an .main-inner{padding-bottom:150px}
+.row.is-fokus .row-title .tt::before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:50%;background:var(--ok);vertical-align:1px;animation:fkpuls 1.6s ease-in-out infinite}
+/* Analyse */
+.az-kacheln{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0 4px}
+.az-k{background:var(--surface-2);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;box-shadow:inset 0 0 0 1px var(--line)}
+.az-kl{font-size:11.5px;font-weight:600;color:var(--text-3);letter-spacing:.04em;text-transform:uppercase}
+.az-k b{font-size:20px;font-weight:650;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.az-ks{font-size:12px;color:var(--text-2)}
+.az-liste{display:flex;flex-direction:column}
+.az-kopf,.az-zeile{display:grid;grid-template-columns:minmax(0,1fr) 170px 250px;gap:14px;align-items:center;padding:0 10px}
+.az-kopf{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);padding-bottom:4px}
+.az-zeile{text-align:left;min-height:42px;border-radius:9px;border-bottom:1px solid var(--line)}
+.az-zeile:hover{background:var(--surface-2)}
+.az-zeile.laeuft{background:color-mix(in srgb,var(--ok) 8%,var(--surface))}
+.az-t{display:flex;align-items:center;gap:9px;min-width:0}
+.az-nr{flex:none;min-width:20px;height:18px;padding:0 5px;border-radius:6px;background:var(--surface-3);color:var(--text-2);font-size:11px;font-weight:650;display:inline-grid;place-items:center;font-variant-numeric:tabular-nums}
+.az-titel{flex:0 1 auto;min-width:0;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.az-balken{flex:1 1 60px;min-width:40px;max-width:220px;height:6px;border-radius:6px;background:var(--surface-3);overflow:hidden;margin-left:auto}
+.az-balken i{display:block;height:100%;border-radius:6px;background:var(--c)}
+.az-ges{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;display:flex;align-items:center;justify-content:flex-end;gap:7px}
+.az-lauf{font-size:10.5px;font-weight:650;color:var(--ok);text-transform:uppercase;letter-spacing:.05em}
+.az-letzte{font-size:12.5px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.az-sec-cal{margin-top:34px}
+.az-cal-head{margin-top:2px}
+.az-cal{border-radius:14px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
+.az-dow,.az-woche{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.az-dow{background:var(--surface-2)}
+.az-dow span{padding:5px 8px;font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:.05em;text-transform:uppercase}
+.az-woche{border-top:1px solid var(--line)}
+.az-tag{display:flex;flex-direction:column;align-items:stretch;gap:3px;min-height:96px;padding:6px 7px;text-align:left;border-left:1px solid var(--line);min-width:0}
+.az-tag:first-child{border-left:0}
+.az-tag.we{background:var(--pastel)}
+.az-tag.aus{background:var(--surface-2);opacity:.45;pointer-events:none}
+.az-tag:hover{background:var(--surface-2)}
+.az-tag.sel{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.az-dn{font-size:12.5px;color:var(--text-2);font-variant-numeric:tabular-nums}
+.az-tag.heute .az-dn{display:inline-grid;place-items:center;align-self:flex-start;min-width:22px;height:22px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:650}
+.az-dsum{font-size:13px;font-weight:650;font-variant-numeric:tabular-nums}
+.az-de{display:flex;align-items:center;gap:5px;min-width:0;font-size:11.5px;color:var(--text-2)}
+.az-de .dot{width:6px;height:6px;flex:none}
+.az-det{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.az-dem{flex:none;font-variant-numeric:tabular-nums}
+.az-mehr{font-size:11px;color:var(--text-3)}
 .sec-over h3{color:var(--danger)}
 .sec-today h3{color:var(--accent)}
 .sec-tomorrow h3{color:var(--text)}
@@ -602,6 +664,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .app.has-detail{grid-template-columns:260px minmax(0,1fr)}
   .detail{position:fixed;top:0;right:0;bottom:0;width:min(var(--dw,400px),100%);z-index:50;box-shadow:var(--shadow-lg)}
   .app.has-detail .detail{animation:slidein .22s ease}
+  .app.has-detail ~ .fokus{display:none}
 }
 @keyframes slidein{from{transform:translateX(28px);opacity:.5}}
 @media (max-width:760px), (max-height:520px) and (pointer:coarse){
@@ -648,6 +711,16 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .row-title{min-width:56px}
   .wk.wk-wahl{grid-template-columns:repeat(7,minmax(0,1fr)) 52px}
   .calle-l{font-size:9.5px}
+  .fokus{bottom:calc(84px + env(safe-area-inset-bottom))}
+  body.fokus-an .toast{bottom:calc(140px + env(safe-area-inset-bottom))}
+  .az-kacheln{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .az-kopf{display:none}
+  .az-zeile{grid-template-columns:minmax(0,1fr) auto;row-gap:2px;padding:8px 6px}
+  .az-letzte{grid-column:1 / -1;font-size:11.5px}
+  .az-balken{display:none}
+  .az-tag{min-height:64px;padding:4px}
+  .az-de{display:none}
+  .az-dsum{font-size:11px}
   .row-note,.row-proj{display:none}
   .row-people{flex:0 0 46px;padding-left:4px}
   .row-pct{display:none}
@@ -701,11 +774,12 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 <div class="scrim" id="scrim" hidden></div>
 <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-label="To-do"></div>
 <div class="toast" id="toast" hidden role="status"></div>
+<div class="fokus" id="fokus" hidden role="status" aria-live="polite"></div>
 <input type="file" id="importfile" accept="application/json,.json" hidden>
 
 <script>
 'use strict';
-const APP_VERSION = 'v71';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v72';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -760,6 +834,8 @@ const ICONS = {
   menu:'<path d="M4.5 7h15M4.5 12h15M4.5 17h15"/>',
   diamond:'<path d="M12 4.5l7.5 7.5-7.5 7.5L4.5 12z"/>',
   wave:'<path d="M4 12h.5M7.5 9.5v5M11 6.5v11M14.5 8.5v7M18 10.5v3"/>',
+  stop:'<rect x="6.5" y="6.5" width="11" height="11" rx="2"/>',
+  chart:'<path d="M5 19.5V11M10 19.5V5M15 19.5v-6M20 19.5V8"/>',
   spark:'<path d="M12 4.5l1.7 4.6 4.8 1.6-4.8 1.6L12 17l-1.7-4.7-4.8-1.6 4.8-1.6z"/><path d="M18.5 16v3M17 17.5h3"/>',
   edit:'<path d="M5 19h3.5L18.5 9a2.1 2.1 0 0 0-3-3L5.5 16z"/>',
   work:'<rect x="3.5" y="7.5" width="17" height="11.5" rx="2"/><path d="M9 7.5V6.2A1.7 1.7 0 0 1 10.7 4.5h2.6A1.7 1.7 0 0 1 15 6.2v1.3M3.5 12.5h17"/>',
@@ -1049,6 +1125,7 @@ function relTime(ts){
 const S = {
   view:'bydeadline', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
   calSel:{ art:'day', wert:iso(TODAY) },
+  azMonat:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), azTag:iso(TODAY),
   sort:'due', area:'work', q:'', qDone:false, allView:'list', reorder:false, weekOff:0, online:navigator.onLine, memOnly:false,
   addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
   syncState:'', syncError:'', lastSync:0, authOpen:false, authMode:'in', authBusy:false, authErr:'', inboxTokens:null,
@@ -1204,7 +1281,7 @@ function rowHTML(t, o = {}){
   const bar = pct ? `<i class="rowprog" style="--p:${pct}%;--c:${areaColor(a) || 'var(--accent)'}" aria-hidden="true"></i>` : '';
   const pctTxt = `<span class="row-pct"${pct ? ` title="${pct} % erledigt"` : ''}>${pct ? pct + ' %' : ''}</span>`;
   const del = o.del ? `<button class="icon-btn rowdel" data-act="row-del" data-id="${t.id}" title="Löschen" aria-label="To-do löschen">${ic('trash')}</button>` : '';
-  return `<div class="swipe" data-swipe="${t.id}"><div class="swipe-act"><button data-act="swipe-del" data-id="${t.id}">${ic('trash')}Löschen</button></div><div class="row ${done ? 'is-done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}">
+  return `<div class="swipe" data-swipe="${t.id}"><div class="swipe-act"><button data-act="swipe-del" data-id="${t.id}">${ic('trash')}Löschen</button></div><div class="row ${done ? 'is-done' : ''} ${S.sel === t.id ? 'is-sel' : ''} ${t.timerStart ? 'is-fokus' : ''}" data-act="open" data-id="${t.id}">
     <button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="${done ? 'Wieder öffnen' : 'Als erledigt markieren'}"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button>${park}
     <span class="row-title" title="${esc(t.title)}">${bar}<span class="tt">${o.rang ? `<span class="rnum">${o.rang}</span>` : ''}${hl(t.title)}</span></span>
     ${pctTxt}
@@ -1295,7 +1372,7 @@ function renderSidebar(){
     <div class="brand"><div class="brand-txt"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span><span class="brand-wort">Brain<span class="brand-72">72</span></span><span class="brand-app">ToDo</span></span><span class="brand-tag">copyright THS 2026</span></div></div>
     <label class="search ${S.q ? 'on' : ''}">${ic('search')}<input id="sbq" placeholder="Suchen" value="${esc(S.q)}" aria-label="To-dos durchsuchen" enterkeyhint="search">${S.q ? `<button class="sq-x" data-act="q-clear" aria-label="Suche leeren" title="Suche leeren">${ic('close')}</button>` : ''}</label>
     ${S.q.trim() ? `<button class="switch2 sq-sw ${S.qDone ? 'on' : ''}" data-act="q-done" aria-pressed="${S.qDone}"><span class="sw2"></span>auch Erledigte</button>` : ''}
-    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('calendar', 'cal', 'Kalender', '')}${tile('bydeadline', 'clock', 'Nach Frist', cnt.mitFrist)}${tile('byperson', 'person', 'Nach Person', PEOPLE.length)}${tile('byproject', 'folder', 'Nach Projekt', PROJECTS.length)}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}</div>
+    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('calendar', 'cal', 'Kalender', '')}${tile('bydeadline', 'clock', 'Nach Frist', cnt.mitFrist)}${tile('byperson', 'person', 'Nach Person', PEOPLE.length)}${tile('byproject', 'folder', 'Nach Projekt', PROJECTS.length)}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}${tile('analyse', 'chart', 'Analyse', '')}</div>
     <div class="sb-group">${item('done', 'Erledigt', T.filter(t => t.status === 'done').length, ic('done'))}${item('archive', 'Archiv', T.filter(t => t.status === 'archived').length, ic('archive'))}${item('parked', 'Parkliste', T.filter(t => t.status === 'parked').length, ic('pause'))}${item('settings', 'Einstellungen', '', ic('gear'))}</div>
     <div class="sb-foot">
       <div class="sync"><i class="dot" style="--c:${syncCol}"></i><span>${syncTxt}</span>${syncBtn}<span class="ver" title="Laufende Fassung – Einstellungen → Fassung lädt die neueste">${APP_VERSION}</span></div>
@@ -1501,6 +1578,67 @@ function parkVorschlaege(list){
       && (() => { const r = range(t); return !r || Math.round((r[1] - TODAY) / DAY) > 21; })())
     .sort((a, b) => String(a.created || '').localeCompare(String(b.created || '')))
     .slice(0, 5);
+}
+/* Analyse: Wo ist die Zeit hingegangen? Oben Kennzahlen, dann alle To-dos mit erfasster Zeit
+   (meiste zuerst), darunter ein Monatskalender mit der Zeit je Tag und To-do. Gezählt wird über
+   alle Zustände – auch Erledigtes, Geparktes und Archiviertes. */
+function viewAnalyse(){
+  const mitZeit = T.filter(t => (sitzungen(t).length || t.timerStart) && (S.area === 'all' || areaOf(t) === S.area));
+  const tagStart = d => d.getTime(), tagEnde = d => addD(d, 1).getTime();
+  const summe = (von, bis) => mitZeit.reduce((a, t) => a + zeitIn(t, von, bis), 0);
+  const wo = mondayOf(TODAY), mo = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+  const kachel = (l, ms, sub = '') => `<div class="az-k"><span class="az-kl">${l}</span><b>${dauerTxt(ms)}</b>${sub ? `<span class="az-ks">${sub}</span>` : ''}</div>`;
+  const kacheln = `<div class="az-kacheln">
+    ${kachel('Heute', summe(tagStart(TODAY), tagEnde(TODAY)))}
+    ${kachel('Diese Woche', summe(tagStart(wo), tagEnde(addD(wo, 6))), `KW ${kw(wo)}`)}
+    ${kachel(MON[mo.getMonth()], summe(mo.getTime(), new Date(mo.getFullYear(), mo.getMonth() + 1, 1).getTime()))}
+    ${kachel('Insgesamt', summe(0, Infinity), `${mitZeit.length} ${mitZeit.length === 1 ? 'To-do' : 'To-dos'}`)}</div>`;
+
+  // Rangliste
+  const rang = mitZeit.map(t => ({ t, ges:zeitGesamt(t), letzte:letzteSitzung(t) })).sort((a, b) => b.ges - a.ges);
+  const max = rang[0]?.ges || 1;
+  const liste = rang.length ? `<div class="az-liste">
+    <div class="az-kopf"><span>To-do</span><span>Gesamt</span><span>Letzte Erfassung</span></div>
+    ${rang.map(({ t, ges, letzte }, i) => `<button class="az-zeile ${t.timerStart ? 'laeuft' : ''}" data-act="open" data-id="${t.id}">
+      <span class="az-t"><span class="az-nr">${i + 1}</span><i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span class="az-titel">${esc(t.title)}</span>
+        <span class="az-balken"><i style="width:${Math.max(2, Math.round(ges / max * 100))}%;--c:${areaColor(areaOf(t))}"></i></span></span>
+      <span class="az-ges">${t.timerStart ? `<span class="az-lauf">läuft</span>` : ''}${dauerTxt(ges)}</span>
+      <span class="az-letzte">${letzte ? `${tagKurz(letzte.start)} · ${uhrzeit(letzte.start)}–${uhrzeit(letzte.ende)} · ${dauerTxt(letzte.ende - letzte.start)}` : t.timerStart ? 'läuft gerade' : '—'}</span>
+    </button>`).join('')}</div>`
+    : `<div class="empty-big"><strong>Noch keine Zeit erfasst.</strong>Öffne ein To-do und tippe auf „Fokus starten“. Sobald du stoppst, erscheint es hier.</div>`;
+
+  // Monatskalender
+  const m = S.azMonat, ersterTag = new Date(m.getFullYear(), m.getMonth(), 1), letzterTag = new Date(m.getFullYear(), m.getMonth() + 1, 0);
+  const proTag = d => mitZeit.map(t => ({ t, ms:zeitIn(t, tagStart(d), tagEnde(d)) })).filter(x => x.ms >= 30000).sort((a, b) => b.ms - a.ms);
+  let wochen = '';
+  for (let ws = mondayOf(ersterTag); ws <= letzterTag; ws = addD(ws, 7)){
+    let zellen = '';
+    for (let i = 0; i < 7; i++){
+      const d = addD(ws, i), aus = d.getMonth() !== m.getMonth(), eintraege = aus ? [] : proTag(d);
+      const ges = eintraege.reduce((a, x) => a + x.ms, 0);
+      zellen += `<button class="az-tag ${i >= 5 ? 'we' : ''} ${aus ? 'aus' : ''} ${same(d, TODAY) ? 'heute' : ''} ${iso(d) === S.azTag ? 'sel' : ''}" data-act="az-tag" data-d="${iso(d)}" ${aus ? 'tabindex="-1"' : ''}>
+        <span class="az-dn">${d.getDate()}</span>${ges ? `<span class="az-dsum">${dauerKurz(ges)}</span>` : ''}
+        ${eintraege.slice(0, 3).map(x => `<span class="az-de"><i class="dot" style="--c:${areaColor(areaOf(x.t))}"></i><span class="az-det">${esc(x.t.title)}</span><span class="az-dem">${dauerKurz(x.ms)}</span></span>`).join('')}
+        ${eintraege.length > 3 ? `<span class="az-mehr">+${eintraege.length - 3}</span>` : ''}</button>`;
+    }
+    wochen += `<div class="az-woche">${zellen}</div>`;
+  }
+  const gewTag = P(S.azTag), tagListe = proTag(gewTag), tagSumme = tagListe.reduce((a, x) => a + x.ms, 0);
+  const kalender = `<div class="cal-head az-cal-head"><h2>${MON[m.getMonth()]} ${m.getFullYear()}</h2>
+      <button class="icon-btn" data-act="az-monat" data-v="-1" aria-label="Vorheriger Monat">${ic('chevL')}</button><button class="btn btn-g btn-s" data-act="az-heute">Heute</button><button class="icon-btn" data-act="az-monat" data-v="1" aria-label="Nächster Monat">${ic('chevR')}</button></div>
+    <div class="az-cal"><div class="az-dow">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(x => `<span>${x}</span>`).join('')}</div>${wochen}</div>
+    <div class="sec"><h3>${esc(longDate(gewTag))}</h3><span class="n">${dauerTxt(tagSumme)}</span></div>
+    ${tagListe.length ? `<div class="az-liste az-tagliste">${tagListe.map(({ t, ms }) => `<button class="az-zeile" data-act="open" data-id="${t.id}">
+      <span class="az-t"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span class="az-titel">${esc(t.title)}</span>
+        <span class="az-balken"><i style="width:${Math.max(2, Math.round(ms / (tagListe[0].ms || 1) * 100))}%;--c:${areaColor(areaOf(t))}"></i></span></span>
+      <span class="az-ges">${dauerTxt(ms)}</span>
+      <span class="az-letzte">${sitzungen(t).filter(z => z.ende > tagStart(gewTag) && z.start < tagEnde(gewTag)).map(z => `${uhrzeit(z.start)}–${uhrzeit(z.ende)}`).join(', ') || (t.timerStart ? 'läuft gerade' : '')}</span>
+    </button>`).join('')}</div>` : `<div class="empty">An diesem Tag wurde keine Zeit erfasst.</div>`}`;
+
+  return header('Analyse', 'Wie viel Zeit du an welchem To-do gearbeitet hast.') +
+    `<div class="tb-group filterbar"><span class="tb-label">Filter</span><div class="toolbar">${seg('area', AREA_SEG)}</div></div>` +
+    kacheln + `<div class="sec"><h3>Nach Zeitaufwand</h3><span class="n">${rang.length}</span></div>` + liste +
+    `<div class="sec az-sec-cal"><h3>Kalender</h3></div>` + kalender;
 }
 function viewRecs(){
   let list = T.filter(isOpen);
@@ -1774,7 +1912,7 @@ function renderMain(){
   if (S.view !== 'byproject') S.proj = 'all';
   const [kind, id] = S.view.includes(':') ? S.view.split(/:(.+)/) : [S.view];
   const views = { bydeadline:viewListe, byperson:viewListe, byproject:viewListe,
-    inbox:viewInbox, recs:viewRecs, calendar:viewCalendar, done:viewDone, archive:viewArchive, parked:viewParked, settings:viewSettings };
+    inbox:viewInbox, recs:viewRecs, analyse:viewAnalyse, calendar:viewCalendar, done:viewDone, archive:viewArchive, parked:viewParked, settings:viewSettings };
   const html = views[kind] ? views[kind]() : viewFiltered(kind, id);
   const scroll = $('#main').scrollTop;
   $('#main').innerHTML = `<div class="main-inner">${html}</div>`;
@@ -1996,7 +2134,8 @@ function detailHTML(t){
     <div class="d-title"><button class="check ${done ? 'on' : ''}" style="--c:${areaColor(a)}" data-act="check" data-id="${t.id}" aria-label="Erledigt umschalten"><svg viewBox="0 0 24 24"><path d="M6.5 12.5l3.5 3.5 7.5-8"/></svg></button><textarea class="d-title-in grow" data-ef="title" data-id="${t.id}" data-orig="${esc(t.title)}" rows="1" placeholder="Was ist zu tun?" aria-label="To-do-Titel" title="Antippen zum Ändern">${esc(t.title)}</textarea></div>
     ${suchBegriff() && (trifft(t.desc) || trifft(t.ctx) || trifft(t.title)) ? `<div class="d-hits"><div class="d-lab">${ic('search')}Treffer für „${esc(suchBegriff())}“</div>
       ${[['Titel', t.title], ['Beschreibung', t.desc], ['Kontext', t.ctx]].filter(([, v]) => trifft(v)).map(([l, v]) => `<div class="hit-row"><span class="hit-l">${l}</span><span class="hit-t">${hl(v)}</span></div>`).join('')}</div>` : ''}
-    ${textFeld(t, 'desc', 'Beschreibung', 'Details, Teilschritte …', 'margin-top:16px')}
+    ${zeitBlock(t)}
+    ${textFeld(t, 'desc', 'Beschreibung', 'Details, Teilschritte …')}
     ${textFeld(t, 'ctx', 'Kontext', 'Hintergrund, Absprachen …')}
     <div class="d-sec"><div class="d-lab">Bereich</div>
       <div class="chips">${Object.entries(AREAS).map(([k, v]) => chip('e-area', k, a === k, `<i class="dot" style="--c:${v.color}"></i>${v.name}`)).join('')}</div>
@@ -2064,7 +2203,7 @@ function syncScrim(){
   const narrowDetail = S.sel && innerWidth <= 1100;
   $('#scrim').hidden = !(document.body.classList.contains('sb-open') || narrowDetail);
 }
-function render(){ document.body.classList.toggle('reorder-on', S.reorder); renderSidebar(); renderMain(); renderDetail(); renderTabbar(); syncScrim(); }
+function render(){ document.body.classList.toggle('reorder-on', S.reorder); renderSidebar(); renderMain(); renderDetail(); renderTabbar(); renderFokus(); syncScrim(); }
 
 /* ============ Sprach-Parser (regelbasiert; KI folgt in Etappe 4) ============ */
 const L = '[a-zäöüß]';   // Buchstabe – für Wortgrenzen mit Umlauten
@@ -2572,6 +2711,87 @@ async function appUpdate(){
   try { const ks = await caches.keys(); for (const k of ks) await caches.delete(k); } catch (e) {}
   location.reload();
 }
+/* ============ Zeiterfassung ============
+   Jede Sitzung wird als {id, start, ende} (Millisekunden) im To-do unter „zeit“ abgelegt, eine
+   laufende Messung als „timerStart“. Beides wandert mit dem To-do durch den Abgleich. Gezählt wird
+   über Zeitstempel – die Uhr läuft also auch weiter, wenn die App geschlossen ist.
+   Wichtig: timerStart wird beim Stoppen auf null gesetzt, nicht gelöscht – sonst bliebe das Feld
+   auf anderen Geräten stehen (der Abgleich übernimmt Felder, entfernt aber keine). */
+const sitzungen = t => Array.isArray(t.zeit) ? t.zeit : [];
+const laufend = () => T.find(t => t.timerStart);
+const MIN_SITZUNG = 10000;                                    // unter 10 Sekunden: versehentlich, nicht erfassen
+function zeitIn(t, von = 0, bis = Infinity){
+  const jetzt = Date.now();
+  const alle = t.timerStart ? [...sitzungen(t), { start:t.timerStart, ende:jetzt }] : sitzungen(t);
+  return alle.reduce((a, z) => a + Math.max(0, Math.min(z.ende, bis) - Math.max(z.start, von)), 0);
+}
+const zeitGesamt = t => zeitIn(t);
+function dauerTxt(ms){
+  const m = Math.round(ms / 60000);
+  if (m < 1) return ms > 0 ? '< 1 Min.' : '0 Min.';
+  const h = Math.floor(m / 60), r = m % 60;
+  return h ? `${h} Std.${r ? ' ' + r + ' Min.' : ''}` : `${r} Min.`;
+}
+const dauerKurz = ms => { const m = Math.round(ms / 60000); return m < 60 ? `${m}′` : `${Math.floor(m / 60)}:${pad(m % 60)} h`; };
+function uhrTxt(ms){
+  const sek = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(sek / 3600), m = Math.floor(sek % 3600 / 60), x = sek % 60;
+  return h ? `${h}:${pad(m)}:${pad(x)}` : `${pad(m)}:${pad(x)}`;
+}
+const uhrzeit = ms => { const d = new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const tagKurz = ms => { const d = new Date(ms); return `${WD[d.getDay()]} ${d.getDate()}. ${MONS[d.getMonth()]}`; };
+function letzteSitzung(t){
+  const l = sitzungen(t); if (!l.length) return null;
+  return l.reduce((a, z) => z.ende > a.ende ? z : a, l[0]);
+}
+function timerStarten(t){
+  if (!t || t.timerStart) return;
+  const alt = laufend();
+  if (alt) timerStoppen(alt, true);                         // immer nur ein Fokus gleichzeitig
+  t.timerStart = Date.now();
+  save('todos', t);
+  render();
+  toast(alt ? `„${alt.title}“ gestoppt – Fokus auf „${t.title}“` : `Fokus auf „${t.title}“ gestartet`);
+}
+function timerStoppen(t, still = false){
+  if (!t?.timerStart) return;
+  const start = t.timerStart, ende = Date.now(), dauer = ende - start;
+  if (dauer >= MIN_SITZUNG) t.zeit = [...sitzungen(t), { id:uid(), start, ende }];
+  t.timerStart = null;
+  save('todos', t);
+  if (!still){
+    render();
+    toast(dauer >= MIN_SITZUNG ? `${dauerTxt(dauer)} erfasst · insgesamt ${dauerTxt(zeitGesamt(t))}` : 'Weniger als 10 Sekunden – nicht erfasst');
+  }
+}
+// Leiste, die während einer Messung in jeder Ansicht sichtbar bleibt
+function renderFokus(){
+  const t = laufend(), el = $('#fokus');
+  document.body.classList.toggle('fokus-an', !!t);
+  if (!t){ el.hidden = true; el.innerHTML = ''; return; }
+  el.hidden = false;
+  el.innerHTML = `<i class="fk-punkt"></i><button class="fk-titel" data-act="open" data-id="${t.id}" title="${esc(t.title)}">${esc(t.title)}</button>
+    <span class="fk-uhr" data-tick="lauf">${uhrTxt(Date.now() - t.timerStart)}</span>
+    <button class="fk-stopp" data-act="timer-stop" data-id="${t.id}">${ic('stop')}Stopp</button>`;
+}
+// Sekundentakt: nur die Zahlen werden erneuert, nichts wird neu aufgebaut
+setInterval(() => {
+  const t = laufend(); if (!t) return;
+  const jetzt = Date.now();
+  document.querySelectorAll('[data-tick="lauf"]').forEach(el => { el.textContent = uhrTxt(jetzt - t.timerStart); });
+  document.querySelectorAll(`[data-tick="ges"][data-id="${t.id}"]`).forEach(el => { el.textContent = dauerTxt(zeitGesamt(t)); });
+}, 1000);
+function zeitBlock(t){
+  const l = sitzungen(t), letzte = letzteSitzung(t), laeuft = !!t.timerStart;
+  const fertig = t.status === 'done' || t.status === 'archived';
+  const knopf = laeuft
+    ? `<button class="btn btn-stopp" data-act="timer-stop" data-id="${t.id}">${ic('stop')}Stopp</button><span class="z-uhr" data-tick="lauf">${uhrTxt(Date.now() - t.timerStart)}</span>`
+    : fertig ? '' : `<button class="btn btn-fokus" data-act="timer-start" data-id="${t.id}">${ic('play')}Fokus starten</button>`;
+  const info = l.length || laeuft
+    ? `Insgesamt <b data-tick="ges" data-id="${t.id}">${dauerTxt(zeitGesamt(t))}</b> · ${l.length} ${l.length === 1 ? 'Sitzung' : 'Sitzungen'}${letzte ? ` · zuletzt ${tagKurz(letzte.start)}, ${dauerTxt(letzte.ende - letzte.start)}` : ''}`
+    : 'Noch keine Zeit erfasst.';
+  return `<div class="d-sec d-zeit ${laeuft ? 'laeuft' : ''}"><div class="d-lab">Zeiterfassung</div>
+    <div class="z-zeile">${knopf}</div><div class="z-info">${info}</div></div>`;
+}
 function deleteTodo(t){
   const copy = JSON.parse(JSON.stringify(t));
   tomb('todos', t);
@@ -2585,7 +2805,7 @@ function toggleDone(id){
   const prev = { status:t.status, doneAt:t.doneAt, archivedAt:t.archivedAt };
   const finish = () => {
     if (t.status === 'done' || t.status === 'archived'){ t.status = 'open'; t.doneAt = null; t.archivedAt = null; }
-    else { t.status = 'done'; t.doneAt = iso(TODAY); }
+    else { if (t.timerStart) timerStoppen(t, true); t.status = 'done'; t.doneAt = iso(TODAY); }
     save('todos', t);
     undo = () => { Object.assign(t, prev); save('todos', t); };
     render();
@@ -2716,6 +2936,11 @@ document.addEventListener('click', e => {
       render();
       toast(t.status === 'parked' ? 'Geparkt – liegt in der Parkliste' : 'Wieder aufgenommen', { act:'undo', label:'Rückgängig' });
       break; }
+    case 'timer-start': { e.stopPropagation(); timerStarten(T.find(x => x.id === id)); break; }
+    case 'timer-stop': { e.stopPropagation(); timerStoppen(T.find(x => x.id === id)); break; }
+    case 'az-tag': S.azTag = el.dataset.d; renderMain(); break;
+    case 'az-monat': { const m = S.azMonat; S.azMonat = new Date(m.getFullYear(), m.getMonth() + Number(el.dataset.v), 1); renderMain(); break; }
+    case 'az-heute': S.azMonat = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); S.azTag = iso(TODAY); renderMain(); break;
     case 'row-del': { e.stopPropagation(); const t = T.find(x => x.id === id); if (t) deleteTodo(t); break; }
     case 'e-prog': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.progress = Number(el.dataset.v); }); break; }
     case 'fmt': {
