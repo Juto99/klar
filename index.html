@@ -431,35 +431,6 @@ body.pl-ziehen,body.pl-ziehen *{cursor:grabbing!important;user-select:none!impor
 .pl-ghost span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .z-plan{display:flex;align-items:center;gap:6px;color:var(--sel-line)}
 .z-plan svg.i{width:13px;height:13px;flex:none}
-/* Plan: Stundenraster (Computer) */
-.pl-raster{border-radius:14px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line);background:var(--surface)}
-.pl-raster .pl-wkopf{grid-template-columns:48px repeat(7,minmax(0,1fr));border-radius:0;box-shadow:none;overflow:visible}
-.pl-ecke{display:block}
-.pl-tag.pl-kopf{min-height:0;padding-bottom:8px}
-.pl-kopf .pl-bloecke{min-height:24px}
-.pl-kopf .pl-leer{padding:3px 2px}
-.pl-rscroll{height:clamp(260px,48vh,560px);overflow-y:auto;border-top:1px solid var(--line);overscroll-behavior:contain}
-.pl-rinnen{position:relative;display:grid;grid-template-columns:48px repeat(7,minmax(0,1fr))}
-.pl-std{position:relative}
-.pl-std span{position:absolute;right:7px;transform:translateY(-50%);font-size:10.5px;color:var(--text-3);font-variant-numeric:tabular-nums}
-.pl-spalte{position:relative;border-left:1px solid var(--line);min-width:0;cursor:pointer;background-image:repeating-linear-gradient(to bottom,var(--line) 0 1px,transparent 1px var(--ph))}
-.pl-spalte.we{background-color:var(--pastel)}
-.pl-spalte.sel{background-color:color-mix(in srgb,var(--sel-line) 5%,var(--surface))}
-.pl-spalte.drop{background-color:color-mix(in srgb,var(--sel-line) 7%,var(--surface))}
-.pl-block.pl-zb{position:absolute;z-index:1;display:flex;flex-direction:column;align-items:stretch;gap:1px;padding:3px 6px 4px 8px;border-radius:6px;overflow:hidden;background:color-mix(in srgb,var(--c) 15%,var(--surface));box-shadow:inset 3px 0 0 var(--c),0 0 0 1px color-mix(in srgb,var(--c) 28%,transparent);font-size:12px;line-height:1.25}
-.pl-block.pl-zb:hover{box-shadow:inset 3px 0 0 var(--c),0 0 0 1px color-mix(in srgb,var(--c) 45%,transparent),0 2px 6px rgba(20,24,33,.1);z-index:2}
-.pl-block.pl-zb.is-sel{background:var(--sel-bg);box-shadow:inset 3px 0 0 var(--sel-line),0 0 0 1.5px var(--sel-line)}
-.pl-zb .pl-bt{flex:none;white-space:normal;overflow:hidden;overflow-wrap:break-word;hyphens:auto;-webkit-hyphens:auto;font-weight:550}
-.pl-zb .pl-bm{font-size:10.5px;font-weight:500}
-.pl-block.pl-zb.kurz{flex-direction:row;align-items:center;gap:6px;padding-top:0;padding-bottom:0}
-.pl-zb.kurz .pl-bt{flex:1;min-width:0;white-space:nowrap;text-overflow:ellipsis}
-.pl-zb.kurz .pl-bm{display:none}
-.pl-zb.done{opacity:.6}
-.pl-dehnen{position:absolute;left:0;right:0;bottom:0;height:7px;cursor:ns-resize}
-body.pl-dehnt,body.pl-dehnt *{cursor:ns-resize!important;user-select:none!important;-webkit-user-select:none!important}
-.pl-jetzt{position:absolute;left:0;right:0;height:2px;margin-top:-1px;background:var(--danger);z-index:3;pointer-events:none}
-.pl-jetzt::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--danger)}
-.pl-vorschau{position:absolute;left:2px;right:2px;z-index:4;pointer-events:none;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:650;color:var(--sel-line);background:color-mix(in srgb,var(--sel-line) 16%,var(--surface));box-shadow:inset 0 0 0 1.5px var(--sel-line);font-variant-numeric:tabular-nums}
 .pl-filter{margin-top:18px}
 /* Plan in der Detailansicht */
 .z-plan-l{margin-top:12px;display:flex;flex-direction:column;gap:6px}
@@ -998,7 +969,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v75';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v76';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1346,7 +1317,7 @@ const S = {
   view:'deadlines', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
   calSel:null,                                   // im Deadlines-Kalender gewählter Tag/Woche/Monat
   dlArt:'monat', dlWoche:THIS_MON,                 // Termine: Kalender als Woche oder Monat
-  planArt:'woche', planScroll:null, planWoche:THIS_MON, planMonat:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), planTag:iso(TODAY),
+  planArt:'woche', planWoche:THIS_MON, planMonat:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), planTag:iso(TODAY),
   azMonat:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), azTag:iso(TODAY), zeitEdit:null,
   sort:'due', area:'work', q:'', qDone:false, allView:'list', reorder:false, weekOff:0, online:navigator.onLine, memOnly:false,
   addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
@@ -1656,6 +1627,13 @@ function inAuswahl(t){
   }
   return t.due.type === 'day' && same(P(t.due.date), P(sel.wert));
 }
+// Liegt ein Tag ('JJJJ-MM-TT') im gewählten Kalenderzeitraum?
+function imZeitraum(tag){
+  const sel = S.calSel; if (!sel) return false;
+  if (sel.art === 'day') return sel.wert === tag;
+  if (sel.art === 'week') return tag >= sel.wert && tag <= iso(addD(P(sel.wert), 6));
+  return tag.slice(0, 7) === sel.wert;
+}
 function auswahlTitel(){
   const sel = S.calSel;
   if (sel.art === 'month'){ const d = P(sel.wert + '-01'); return `${MON[d.getMonth()]} ${d.getFullYear()}`; }
@@ -1743,7 +1721,8 @@ function viewDeadlines(){
     const leerTxt = !sel ? '' : sel.art === 'month' ? 'In diesem Monat ist nichts fällig.' : sel.art === 'week' ? 'In dieser Woche ist nichts fällig.' : 'An diesem Tag ist nichts fällig.';
     const groups = [
       ...(sel ? [{ title:auswahlTitel(), cls:'sec-auswahl', items:offen.filter(inAuswahl).sort((a, b) => order[a.due.type] - order[b.due.type] || sortByDue(a, b)), leer:leerTxt }] : []),
-      ...bucketGroups(rest)
+      // Liegt heute bzw. morgen in der Auswahl, stehen deren To-dos schon oben – kein „nichts geplant“ darunter
+      ...bucketGroups(rest).map(g => g.leer && sel && imZeitraum(iso(addD(TODAY, g.leer === IMMER.tomorrow ? 1 : 0))) ? { ...g, leer:null } : g)
     ];
     const leer = !T.length
       ? `<div class="empty-big"><strong>Willkommen bei Brain72.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Leg links im Menü dein erstes To-do an.'}</div>`
@@ -1763,7 +1742,6 @@ const plaene = t => Array.isArray(t.plan) ? t.plan : [];
 const PLAN_STD = 60;                                   // Minuten für ein neu eingeplantes To-do
 const PLAN_ZIEL = 8 * 60;                              // Richtwert für den Tagesbalken
 const PLAN_DAUERN = [15, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360, 420, 480];
-const PLAN_H = 40;                                     // Pixel je Stunde im Wochenraster
 const minTxt = m => dauerTxt(m * 60000);
 const minKurz = m => dauerKurz(m * 60000);
 const tagTxt = tag => { const d = P(tag); return `${WD[d.getDay()]} ${d.getDate()}. ${MONS[d.getMonth()]}`; };
@@ -1838,26 +1816,6 @@ function planBlock(t, p, art = 'woche'){
   return `<button class="pl-block ${fertig ? 'done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-pl-drag data-act="open" data-id="${t.id}" data-pid="${p.id}" title="${esc(t.title)} · ${v != null ? planZeit(p) + ' · ' : ''}${minTxt(p.min)}">
     <i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span class="pl-bt">${esc(t.title)}</span><span class="pl-bm">${mass}</span></button>`;
 }
-// Block im Stundenraster: Lage nach Uhrzeit, Höhe nach Dauer, überlappende Blöcke nebeneinander
-function planSpuren(e){
-  const s = e.map(x => { const a = planVon(x.p); return { ...x, a, b:Math.min(1440, a + x.p.min) }; }).sort((x, y) => x.a - y.a || y.b - x.b);
-  let gruppe = [], spuren = [], ende = -1;
-  const schliessen = () => { const n = Math.max(1, spuren.length); gruppe.forEach(x => x.n = n); gruppe = []; spuren = []; };
-  for (const x of s){
-    if (gruppe.length && x.a >= ende) schliessen();
-    let i = spuren.findIndex(b => b <= x.a); if (i < 0){ i = spuren.length; spuren.push(0); }
-    spuren[i] = x.b; x.spur = i; gruppe.push(x); ende = Math.max(ende, x.b);
-  }
-  schliessen();
-  return s;
-}
-function planRasterBlock(x){
-  const { t, p } = x, fertig = t.status === 'done' || t.status === 'archived';
-  const top = x.a / 60 * PLAN_H, h = Math.max(PLAN_H / 4, (x.b - x.a) / 60 * PLAN_H);
-  return `<button class="pl-block pl-zb ${p.min <= 30 ? 'kurz' : ''} ${fertig ? 'done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-pl-drag data-act="open" data-id="${t.id}" data-pid="${p.id}"
-      style="top:${top}px;height:${h}px;left:calc(${x.spur / x.n * 100}% + 2px);width:calc(${100 / x.n}% - 4px);--c:${areaColor(areaOf(t))}" title="${esc(t.title)} · ${planZeit(p)}">
-    <span class="pl-bt">${esc(t.title)}</span><span class="pl-bm">${planZeit(p)}</span><span class="pl-dehnen" data-pl-resize title="Ziehen, um die Dauer zu ändern"></span></button>`;
-}
 function viewPlanung(){
   const mob = isMobile(), heuteIso = iso(TODAY);
   planTagAnpassen();
@@ -1883,36 +1841,15 @@ function viewPlanung(){
   } else {
     const ws = S.planWoche, we = addD(ws, 6);
     titel = `KW ${kw(ws)} <span class="pl-sp">${ws.getDate()}. ${ws.getMonth() !== we.getMonth() ? MON[ws.getMonth()] + ' ' : ''}– ${we.getDate()}. ${MON[we.getMonth()]}</span>`;
-    if (mob){
-      // Handy: Tage untereinander, Blöcke mit Uhrzeit
-      let spalten = '';
-      for (let i = 0; i < 7; i++){
-        const d = addD(ws, i), tag = iso(d), e = planAm(tag), sum = e.reduce((a, x) => a + x.p.min, 0);
-        spalten += `<div class="pl-tag ${i >= 5 ? 'we' : ''} ${tag === heuteIso ? 'heute' : ''} ${tag === S.planTag ? 'sel' : ''} ${d < TODAY ? 'vorbei' : ''}" data-plan-tag="${tag}" data-act="pl-tag" data-d="${tag}">
-          <div class="pl-tk"><span class="pl-wd">${WD[d.getDay()]}</span><span class="pl-dn">${d.getDate()}.</span><span class="pl-sum">${sum ? minKurz(sum) : ''}</span></div>
-          ${lastBalken(sum)}
-          <div class="pl-bloecke">${e.map(x => planBlock(x.t, x.p)).join('') || `<span class="pl-leer">frei</span>`}</div></div>`;
-      }
-      raster = `<div class="pl-woche">${spalten}</div>`;
-    } else {
-      // Computer: oben je Tag der Kopf mit allem ohne Uhrzeit, darunter das Stundenraster
-      const jetzt = new Date(), jetztMin = jetzt.getHours() * 60 + jetzt.getMinutes();
-      let koepfe = '', spalten = '';
-      for (let i = 0; i < 7; i++){
-        const d = addD(ws, i), tag = iso(d), e = planAm(tag), sum = e.reduce((a, x) => a + x.p.min, 0);
-        const ohne = e.filter(x => planVon(x.p) == null), mit = e.filter(x => planVon(x.p) != null);
-        const kl = `${i >= 5 ? 'we' : ''} ${tag === heuteIso ? 'heute' : ''} ${tag === S.planTag ? 'sel' : ''} ${d < TODAY ? 'vorbei' : ''}`;
-        koepfe += `<div class="pl-tag pl-kopf ${kl}" data-plan-tag="${tag}" data-plan-ohne="1" data-act="pl-tag" data-d="${tag}">
-          <div class="pl-tk"><span class="pl-wd">${WD[d.getDay()]}</span><span class="pl-dn">${d.getDate()}.</span><span class="pl-sum">${sum ? minKurz(sum) : ''}</span></div>
-          ${lastBalken(sum)}
-          <div class="pl-bloecke">${ohne.map(x => planBlock(x.t, x.p)).join('') || `<span class="pl-leer">ohne Uhrzeit</span>`}</div></div>`;
-        spalten += `<div class="pl-spalte ${kl}" data-plan-tag="${tag}" data-plan-raster="1" data-act="pl-tag" data-d="${tag}">
-          ${planSpuren(mit).map(planRasterBlock).join('')}${tag === heuteIso ? `<i class="pl-jetzt" style="top:${jetztMin / 60 * PLAN_H}px"></i>` : ''}</div>`;
-      }
-      const stunden = Array.from({ length:24 }, (_, h) => h ? `<span style="top:${h * PLAN_H}px">${h}:00</span>` : '').join('');
-      raster = `<div class="pl-raster" style="--ph:${PLAN_H}px"><div class="pl-woche pl-wkopf"><span class="pl-ecke"></span>${koepfe}</div>
-        <div class="pl-rscroll"><div class="pl-rinnen" style="height:${24 * PLAN_H}px"><div class="pl-std">${stunden}</div>${spalten}</div></div></div>`;
+    let spalten = '';
+    for (let i = 0; i < 7; i++){
+      const d = addD(ws, i), tag = iso(d), e = planAm(tag), sum = e.reduce((a, x) => a + x.p.min, 0);
+      spalten += `<div class="pl-tag ${i >= 5 ? 'we' : ''} ${tag === heuteIso ? 'heute' : ''} ${tag === S.planTag ? 'sel' : ''} ${d < TODAY ? 'vorbei' : ''}" data-plan-tag="${tag}" data-act="pl-tag" data-d="${tag}">
+        <div class="pl-tk"><span class="pl-wd">${WD[d.getDay()]}</span><span class="pl-dn">${d.getDate()}.</span><span class="pl-sum">${sum ? minKurz(sum) : ''}</span></div>
+        ${lastBalken(sum)}
+        <div class="pl-bloecke">${e.map(x => planBlock(x.t, x.p)).join('') || `<span class="pl-leer">${mob ? 'frei' : 'hierher ziehen'}</span>`}</div></div>`;
     }
+    raster = `<div class="pl-woche">${spalten}</div>`;
   }
   const kopf = `<div class="cal-head pl-head"><h2>${titel}</h2>
       ${seg('planArt', [['woche', 'Woche'], ['monat', 'Monat']]).replace(/data-act="set" data-k="planArt"/g, 'data-act="pl-art"')}
@@ -1938,21 +1875,10 @@ function viewPlanung(){
     ? gruppen.map(g => `<div class="sec ${g.cls || ''}"><h3>${esc(g.title)}</h3><span class="n">${g.items.length}</span></div><div class="pl-liste">${g.items.map(zeile).join('')}</div>`).join('')
     : `<div class="empty">${S.q.trim() ? `Keine Treffer für „${esc(S.q.trim())}“.` : 'Keine offenen To-dos für diesen Filter.'}</div>`;
 
-  return header('Plan', mob ? 'Wann arbeitest du woran – und wie lange?' : 'Zieh To-dos auf eine Uhrzeit. Die Unterkante eines Blocks ändert die Dauer.') +
+  return header('Plan', mob ? 'Wann arbeitest du woran – und wie lange?' : 'Zieh To-dos in einen Tag. Uhrzeit und Dauer legst du im To-do fest.') +
     `<div class="pl-kal ${S.planArt}">${kopf}${raster}</div>` +
     `<div class="pl-filter">${filterLeiste({ ohneAnsicht:true, ohneErledigt:true })}${suchFeld()}</div>` + liste;
 }
-// Stundenraster nach jedem Aufbau an die alte Stelle rollen; beim ersten Mal kurz vor den Arbeitsbeginn
-function plRasterScroll(){
-  const rs = $('.pl-rscroll'); if (!rs) return;
-  if (S.planScroll == null){
-    let frueh = 8 * 60;
-    for (let i = 0; i < 7; i++) for (const x of planAm(iso(addD(S.planWoche, i)))){ const v = planVon(x.p); if (v != null) frueh = Math.min(frueh, v); }
-    S.planScroll = Math.max(0, (frueh - 60) / 60 * PLAN_H);
-  }
-  rs.scrollTop = S.planScroll;
-}
-document.addEventListener('scroll', e => { if (e.target.classList?.contains('pl-rscroll')) S.planScroll = e.target.scrollTop; }, true);
 // Detailansicht: Einplanungen ab heute mit Uhrzeit, Dauer und Entfernen
 function planInfo(t){
   const k = plaene(t).filter(p => p.tag >= iso(TODAY)).sort((a, b) => a.tag.localeCompare(b.tag) || (planVon(a) ?? 9999) - (planVon(b) ?? 9999));
@@ -1968,63 +1894,26 @@ function planInfo(t){
       <button class="icon-btn pl-weg" data-act="pl-weg" data-id="${t.id}" data-pid="${p.id}" title="Aus dem Plan nehmen" aria-label="Aus dem Plan nehmen">${ic('close')}</button></div>`).join('')}</div>`;
 }
 // Ziehen & Ablegen: Maus an der ganzen Zeile, Finger am Griff (sonst würde jedes Wischen zum Ziehen)
-let plDrag = null, plDehn = null, plKlickBis = 0;
+let plDrag = null, plKlickBis = 0;
 function plZiel(x, y){
   const z = document.elementFromPoint(x, y)?.closest('[data-plan-tag]') || null;
   if (z !== plDrag.ziel){ plDrag.ziel?.classList.remove('drop'); z?.classList.add('drop'); plDrag.ziel = z; }
-  plDrag.von = null;
-  if (z?.dataset.planRaster){
-    // Uhrzeit aus der Höhe im Raster, auf Viertelstunden gerundet
-    const r = z.getBoundingClientRect();
-    let m = Math.round((y - r.top - plDrag.dy) / PLAN_H * 60 / 15) * 15;
-    m = Math.max(0, Math.min(1440 - plDrag.min, m));
-    plDrag.von = alsHM(m);
-    let v = plDrag.vorschau;
-    if (!v){ v = plDrag.vorschau = document.createElement('div'); v.className = 'pl-vorschau'; }
-    if (v.parentNode !== z) z.append(v);
-    v.style.top = m / 60 * PLAN_H + 'px';
-    v.style.height = Math.max(PLAN_H / 4, plDrag.min / 60 * PLAN_H) + 'px';
-    v.textContent = `${uhrMin(m)}–${uhrMin(m + plDrag.min)}`;
-  } else plDrag.vorschau?.remove();
 }
 function plEnde(){
   if (!plDrag) return;
-  clearInterval(plDrag.scroll); plDrag.ghost?.remove(); plDrag.vorschau?.remove(); plDrag.ziel?.classList.remove('drop');
+  clearInterval(plDrag.scroll); plDrag.ghost?.remove(); plDrag.ziel?.classList.remove('drop');
   plDrag.src.classList.remove('pl-quelle'); document.body.classList.remove('pl-ziehen');
   plDrag = null;
 }
 document.addEventListener('pointerdown', e => {
   if (S.view !== 'planung' || e.button > 0) return;
-  // Unterkante eines Blocks im Raster: Dauer ziehen
-  const dh = e.target.closest('[data-pl-resize]');
-  if (dh){
-    const b = dh.closest('.pl-zb'), t = T.find(x => x.id === b?.dataset.id), p = t && plaene(t).find(x => x.id === b.dataset.pid);
-    if (!p) return;
-    e.preventDefault();
-    plDehn = { b, t, p, y0:e.clientY, min:p.min, neu:p.min };
-    document.body.classList.add('pl-dehnt');
-    return;
-  }
   const src = e.target.closest('[data-pl-drag]'); if (!src) return;
   const griff = e.target.closest('.pl-grip');
   if (e.pointerType !== 'mouse' && !griff) return;
   if (!griff && e.target.closest('select, input, .pl-add, .pl-weg, .pl-fokus')) return;
-  const t = T.find(x => x.id === src.dataset.id), p = src.dataset.pid && t ? plaene(t).find(x => x.id === src.dataset.pid) : null;
-  plDrag = { src, id:src.dataset.id, pid:src.dataset.pid || null, x0:e.clientX, y0:e.clientY, an:false, ziel:null,
-    min:p ? p.min : PLAN_STD, dy:src.classList.contains('pl-zb') ? e.clientY - src.getBoundingClientRect().top : 0 };
+  plDrag = { src, id:src.dataset.id, pid:src.dataset.pid || null, x0:e.clientX, y0:e.clientY, an:false, ziel:null };
 });
 addEventListener('pointermove', e => {
-  if (plDehn){
-    const v = planVon(plDehn.p), dm = Math.round((e.clientY - plDehn.y0) / PLAN_H * 60 / 15) * 15;
-    const n = Math.max(15, Math.min(1440 - v, plDehn.min + dm));
-    if (n !== plDehn.neu){
-      plDehn.neu = n;
-      plDehn.b.style.height = n / 60 * PLAN_H + 'px';
-      plDehn.b.classList.toggle('kurz', n <= 30);
-      plDehn.b.querySelector('.pl-bm').textContent = `${uhrMin(v)}–${uhrMin(v + n)}`;
-    }
-    return;
-  }
   if (!plDrag) return;
   if (!plDrag.an){
     if (Math.hypot(e.clientX - plDrag.x0, e.clientY - plDrag.y0) < 6) return;
@@ -2035,21 +1924,12 @@ addEventListener('pointermove', e => {
     g.innerHTML = `<i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span>${esc(t.title)}</span>`;
     document.body.append(g); plDrag.ghost = g;
     document.body.classList.add('pl-ziehen'); plDrag.src.classList.add('pl-quelle');
-    // Am Rand mitscrollen: im Stundenraster dieses, sonst den Inhalt – so ist jedes Ziel erreichbar
+    // Am Rand des Inhalts mitscrollen, damit der Kalender auch von weit unten erreichbar ist
     plDrag.scroll = setInterval(() => {
       if (!plDrag?.an) return;
-      const x = plDrag.px, y = plDrag.py, rs = $('.pl-rscroll');
-      if (rs){
-        const q = rs.getBoundingClientRect();
-        if (x >= q.left && x <= q.right && y >= q.top && y <= q.bottom + 12){
-          const d = y < q.top + 36 ? -(q.top + 36 - y) / 3 : y > q.bottom - 36 ? (y - (q.bottom - 36)) / 3 : 0;
-          if (d){ rs.scrollTop += d; plZiel(x, y); }
-          return;
-        }
-      }
-      const m = $('#main'), r = m.getBoundingClientRect();
+      const m = $('#main'), r = m.getBoundingClientRect(), y = plDrag.py;
       const d = y < r.top + 80 ? -(r.top + 80 - y) / 4 : y > r.bottom - 80 ? (y - (r.bottom - 80)) / 4 : 0;
-      if (d){ m.scrollTop += d; plZiel(x, y); }
+      if (d){ m.scrollTop += d; plZiel(plDrag.px, plDrag.py); }
     }, 16);
   }
   plDrag.px = e.clientX; plDrag.py = e.clientY;
@@ -2057,27 +1937,16 @@ addEventListener('pointermove', e => {
   plZiel(e.clientX, e.clientY);
 });
 addEventListener('pointerup', () => {
-  if (plDehn){
-    const d = plDehn; plDehn = null; document.body.classList.remove('pl-dehnt');
-    plKlickBis = Date.now() + 400;
-    if (d.neu !== d.min) planAendern(d.t, d.p.id, 'min', d.neu);
-    return;
-  }
   if (!plDrag) return;
   const d = plDrag; plEnde();
   if (!d.an) return;                                  // nur geklickt
   plKlickBis = Date.now() + 400;                      // der Klick nach dem Ablegen öffnet nichts
   if (!d.ziel) return;
   const t = T.find(x => x.id === d.id); if (!t) return;
-  const tag = d.ziel.dataset.planTag;
-  // Raster: Uhrzeit setzen · Tageskopf: ohne Uhrzeit · Handy-Tag/Monat: Uhrzeit behalten
-  const von = d.ziel.dataset.planRaster ? d.von : d.ziel.dataset.planOhne ? null : undefined;
-  d.pid ? planVerschieben(t, d.pid, tag, von) : planHinzu(t, tag, PLAN_STD, von ?? null);
+  // Verschieben behält die Uhrzeit, neu Eingeplantes kommt ohne Uhrzeit
+  d.pid ? planVerschieben(t, d.pid, d.ziel.dataset.planTag) : planHinzu(t, d.ziel.dataset.planTag);
 });
-addEventListener('pointercancel', () => {
-  if (plDehn){ plDehn = null; document.body.classList.remove('pl-dehnt'); renderMain(); }
-  plEnde();
-});
+addEventListener('pointercancel', plEnde);
 document.addEventListener('click', e => { if (Date.now() < plKlickBis){ e.stopPropagation(); e.preventDefault(); plKlickBis = 0; } }, true);
 document.addEventListener('dragstart', e => { if (e.target.closest?.('[data-pl-drag]')) e.preventDefault(); });
 function viewInbox(){
@@ -2502,7 +2371,6 @@ function renderMain(){
   $('#main').innerHTML = `<div class="main-inner">${html}</div>`;
   $('#main').scrollTop = scroll;
   leisteAusrichten();
-  plRasterScroll();
 }
 
 /* ============ Detail ============ */
