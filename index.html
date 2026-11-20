@@ -431,6 +431,66 @@ body.pl-ziehen,body.pl-ziehen *{cursor:grabbing!important;user-select:none!impor
 .pl-ghost span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .z-plan{display:flex;align-items:center;gap:6px;color:var(--sel-line)}
 .z-plan svg.i{width:13px;height:13px;flex:none}
+/* Plan: Stundenraster (Computer) */
+.pl-raster{border-radius:14px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line);background:var(--surface)}
+.pl-raster .pl-wkopf{grid-template-columns:48px repeat(7,minmax(0,1fr));border-radius:0;box-shadow:none;overflow:visible}
+.pl-ecke{display:block}
+.pl-tag.pl-kopf{min-height:0;padding-bottom:8px}
+.pl-kopf .pl-bloecke{min-height:24px}
+.pl-kopf .pl-leer{padding:3px 2px}
+.pl-rscroll{height:clamp(260px,48vh,560px);overflow-y:auto;border-top:1px solid var(--line);overscroll-behavior:contain}
+.pl-rinnen{position:relative;display:grid;grid-template-columns:48px repeat(7,minmax(0,1fr))}
+.pl-std{position:relative}
+.pl-std span{position:absolute;right:7px;transform:translateY(-50%);font-size:10.5px;color:var(--text-3);font-variant-numeric:tabular-nums}
+.pl-spalte{position:relative;border-left:1px solid var(--line);min-width:0;cursor:pointer;background-image:repeating-linear-gradient(to bottom,var(--line) 0 1px,transparent 1px var(--ph))}
+.pl-spalte.we{background-color:var(--pastel)}
+.pl-spalte.sel{background-color:color-mix(in srgb,var(--sel-line) 5%,var(--surface))}
+.pl-spalte.drop{background-color:color-mix(in srgb,var(--sel-line) 7%,var(--surface))}
+.pl-block.pl-zb{position:absolute;z-index:1;display:flex;flex-direction:column;align-items:stretch;gap:1px;padding:3px 6px 4px 8px;border-radius:6px;overflow:hidden;background:color-mix(in srgb,var(--c) 15%,var(--surface));box-shadow:inset 3px 0 0 var(--c),0 0 0 1px color-mix(in srgb,var(--c) 28%,transparent);font-size:12px;line-height:1.25}
+.pl-block.pl-zb:hover{box-shadow:inset 3px 0 0 var(--c),0 0 0 1px color-mix(in srgb,var(--c) 45%,transparent),0 2px 6px rgba(20,24,33,.1);z-index:2}
+.pl-block.pl-zb.is-sel{background:var(--sel-bg);box-shadow:inset 3px 0 0 var(--sel-line),0 0 0 1.5px var(--sel-line)}
+.pl-zb .pl-bt{flex:none;white-space:normal;overflow:hidden;overflow-wrap:break-word;hyphens:auto;-webkit-hyphens:auto;font-weight:550}
+.pl-zb .pl-bm{font-size:10.5px;font-weight:500}
+.pl-block.pl-zb.kurz{flex-direction:row;align-items:center;gap:6px;padding-top:0;padding-bottom:0}
+.pl-zb.kurz .pl-bt{flex:1;min-width:0;white-space:nowrap;text-overflow:ellipsis}
+.pl-zb.kurz .pl-bm{display:none}
+.pl-zb.done{opacity:.6}
+.pl-dehnen{position:absolute;left:0;right:0;bottom:0;height:7px;cursor:ns-resize}
+body.pl-dehnt,body.pl-dehnt *{cursor:ns-resize!important;user-select:none!important;-webkit-user-select:none!important}
+.pl-jetzt{position:absolute;left:0;right:0;height:2px;margin-top:-1px;background:var(--danger);z-index:3;pointer-events:none}
+.pl-jetzt::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--danger)}
+.pl-vorschau{position:absolute;left:2px;right:2px;z-index:4;pointer-events:none;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:650;color:var(--sel-line);background:color-mix(in srgb,var(--sel-line) 16%,var(--surface));box-shadow:inset 0 0 0 1.5px var(--sel-line);font-variant-numeric:tabular-nums}
+.pl-filter{margin-top:18px}
+/* Plan in der Detailansicht */
+.z-plan-l{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.z-plan-l .z-plan{font-size:12.5px;font-weight:600}
+.pl-dz{display:grid;grid-template-columns:minmax(0,1fr) 76px auto 28px;align-items:center;gap:6px}
+.pl-dt{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-dz .pl-von{width:76px}
+.pl-dz .pl-weg{width:28px;height:28px}
+/* Termine: Kalender wie im Plan */
+.dl-item{display:flex;align-items:center;gap:6px;min-width:0;max-width:100%;padding:4px 7px;border-radius:7px;background:var(--surface);box-shadow:0 0 0 1px var(--line);font-size:12.5px;text-align:left}
+.dl-item:hover{box-shadow:0 0 0 1px var(--line-2),0 2px 6px rgba(20,24,33,.08)}
+.dl-item .dot{flex:none;width:7px;height:7px}
+.dl-it{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dl-woche .dl-item{align-items:flex-start;padding:5px 7px}
+.dl-woche .dl-item .dot{margin-top:5px}
+.dl-woche .dl-it{white-space:normal;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.3;word-break:break-word}
+.dl-item.over .dl-it{color:var(--danger)}
+.dl-item.done .dl-it,.dl-chip.done .dl-it{text-decoration:line-through;color:var(--text-3)}
+.dl-item.is-sel,.dl-chip.is-sel{background:var(--sel-bg);box-shadow:inset 3px 0 0 var(--sel-line),0 0 0 1px var(--line)}
+.pl-mtag .dl-item{padding:3px 6px;font-size:11.5px}
+.dl-woche .pl-tag{min-height:150px}
+.dl-band{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 10px}
+.dl-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-width:0;height:26px;padding:0 10px 0 8px;border-radius:7px;font-size:12.5px;background:color-mix(in srgb,var(--c) 13%,transparent)}
+.dl-chip .dot{flex:none;width:7px;height:7px}
+.dl-cv{flex:none;font-size:11.5px;font-weight:650;color:var(--text-2)}
+.dl-wband{grid-column:1/-1;display:flex;align-items:center;gap:6px;min-width:0;padding:5px 8px;border-bottom:1px solid var(--line);background:var(--surface-2);cursor:pointer;overflow:hidden}
+.dl-wband.sel{background:color-mix(in srgb,var(--sel-line) 12%,var(--surface))}
+.dl-kw{flex:none;font-size:11px;font-weight:650;color:var(--text-3);letter-spacing:.04em}
+.dl-wband .dl-chip{flex:0 1 auto;height:22px;font-size:12px}
+.pl-monat .dl-wband + .pl-mtag{border-left:0}
+.dl-leiste{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:10px 0 18px;font-size:12px}
 /* Wochenkalender bleibt beim Scrollen durch die Liste oben stehen – so ist das Ziel beim Ziehen immer sichtbar */
 @media (min-width:761px) and (min-height:760px){
   .pl-kal.woche{position:sticky;top:-28px;z-index:6;background:var(--surface);padding:28px 0 8px;margin-top:-24px}
@@ -852,6 +912,12 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .pl-woche{grid-template-columns:1fr}
   .pl-tag{min-height:0;flex-direction:row;flex-wrap:wrap;align-items:center;border-left:0;border-top:1px solid var(--line);padding:8px 10px}
   .pl-tag:first-child{border-top:0}
+  .dl-woche .pl-tag{min-height:0}
+  .dl-woche .dl-it{-webkit-line-clamp:2}
+  .dl-band{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .dl-chip{flex:none;max-width:78vw}
+  .pl-dz{grid-template-columns:minmax(0,1fr) 84px auto 28px}
+  .pl-dz .pl-von{width:84px}
   .pl-tk{flex:0 0 74px;flex-direction:column;align-items:flex-start;gap:0}
   .pl-sum{margin-left:0;font-size:12px}
   .pl-last{display:none}
@@ -932,7 +998,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v74';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v75';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1279,7 +1345,8 @@ function relTime(ts){
 const S = {
   view:'deadlines', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
   calSel:null,                                   // im Deadlines-Kalender gewählter Tag/Woche/Monat
-  planArt:'woche', planWoche:THIS_MON, planMonat:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), planTag:iso(TODAY),
+  dlArt:'monat', dlWoche:THIS_MON,                 // Termine: Kalender als Woche oder Monat
+  planArt:'woche', planScroll:null, planWoche:THIS_MON, planMonat:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), planTag:iso(TODAY),
   azMonat:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), azTag:iso(TODAY), zeitEdit:null,
   sort:'due', area:'work', q:'', qDone:false, allView:'list', reorder:false, weekOff:0, online:navigator.onLine, memOnly:false,
   addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
@@ -1528,7 +1595,7 @@ function renderSidebar(){
     <div class="brand"><div class="brand-txt"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span><span class="brand-wort">Brain<span class="brand-72">72</span></span><span class="brand-app">ToDo</span></span><span class="brand-tag">copyright THS 2026</span></div></div>
     <label class="search ${S.q ? 'on' : ''}">${ic('search')}<input id="sbq" placeholder="Suchen" value="${esc(S.q)}" aria-label="To-dos durchsuchen" enterkeyhint="search">${S.q ? `<button class="sq-x" data-act="q-clear" aria-label="Suche leeren" title="Suche leeren">${ic('close')}</button>` : ''}</label>
     ${S.q.trim() ? `<button class="switch2 sq-sw ${S.qDone ? 'on' : ''}" data-act="q-done" aria-pressed="${S.qDone}"><span class="sw2"></span>auch Erledigte</button>` : ''}
-    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('deadlines', 'cal', 'Deadlines', cnt.mitFrist)}${tile('planung', 'plan', 'Planung', cnt.planHeute ? minKurz(cnt.planHeute) : '')}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}${tile('analyse', 'chart', 'Analyse', '')}</div>
+    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('deadlines', 'cal', 'Termine', cnt.mitFrist)}${tile('planung', 'plan', 'Plan', cnt.planHeute ? minKurz(cnt.planHeute) : '')}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}${tile('analyse', 'chart', 'Analyse', '')}</div>
     <div class="sb-group">${item('done', 'Erledigt', T.filter(t => t.status === 'done').length, ic('done'))}${item('archive', 'Archiv', T.filter(t => t.status === 'archived').length, ic('archive'))}${item('parked', 'Parkliste', T.filter(t => t.status === 'parked').length, ic('pause'))}${item('settings', 'Einstellungen', '', ic('gear'))}</div>
     <div class="sb-foot">
       <div class="sync"><i class="dot" style="--c:${syncCol}"></i><span>${syncTxt}</span>${syncBtn}<span class="ver" title="Laufende Fassung – Einstellungen → Fassung lädt die neueste">${APP_VERSION}</span></div>
@@ -1541,7 +1608,7 @@ const themeSeg = () => `<div class="seg" role="group" aria-label="Darstellung">$
 const MOBIL_MQ = '(max-width:760px), (max-height:520px) and (pointer:coarse)';
 const isMobile = () => matchMedia(MOBIL_MQ).matches;
 // Listenseiten: dort gelten Suche, Spaltenleiste und Tagesauswahl
-const GRUPPEN = { deadlines:['Deadlines', 'due'] };
+const GRUPPEN = { deadlines:['Termine', 'due'] };
 // Laufende Woche im Kalenderraster – steht auf jeder Listenseite an derselben Stelle.
 // Filterzeile mit Beschriftung – auf allen Listenseiten gleich
 function filterLeiste(o = {}){
@@ -1595,24 +1662,67 @@ function auswahlTitel(){
   if (sel.art === 'week'){ const a = P(sel.wert), b = addD(a, 6); return `KW ${kw(a)} · ${a.getDate()}. ${MON[a.getMonth()]} – ${b.getDate()}. ${MON[b.getMonth()]}`; }
   return longDate(P(sel.wert));
 }
-// Deadlines: oben der Monatskalender, darunter Filter und die Liste nach Frist.
+// Termine: oben der Kalender (Woche oder Monat, wie im Plan), darunter Filter und die Liste nach Frist.
 // Ein angeklickter Tag (oder Woche/Monat) steht in der Liste zuerst, danach Überfällig, Heute, Morgen …
+function fristItem(t){
+  const d = dueLabel(t);
+  return `<button class="dl-item ${t.status === 'done' ? 'done' : ''} ${d.cls === 'over' ? 'over' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}" title="${esc(t.title)}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span class="dl-it">${esc(t.title)}</span></button>`;
+}
+const fristChip = (t, vor = '') => `<button class="dl-chip ${t.status === 'done' ? 'done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}" style="--c:${areaColor(areaOf(t))}" title="${esc(t.title)}"><i class="dot"></i>${vor ? `<span class="dl-cv">${vor}</span>` : ''}<span class="dl-it">${esc(t.title)}</span></button>`;
+function termineKalender(vis){
+  const mob = isMobile(), sel = S.calSel, heuteIso = iso(TODAY);
+  const amTag = d => vis.filter(t => t.due?.type === 'day' && same(P(t.due.date), d)).sort((a, b) => a.title.localeCompare(b.title, 'de'));
+  const derWoche = ws => vis.filter(t => t.due?.type === 'week' && same(P(t.due.start), ws));
+  const desMonats = mk => vis.filter(t => t.due?.type === 'month' && t.due.month === mk);
+  const tagSel = tag => sel?.art === 'day' && sel.wert === tag;
+  let titel, raster, band, periode;
+  if (S.dlArt === 'woche'){
+    const ws = S.dlWoche, we = addD(ws, 6);
+    titel = `KW ${kw(ws)} <span class="pl-sp">${ws.getDate()}. ${ws.getMonth() !== we.getMonth() ? MON[ws.getMonth()] + ' ' : ''}– ${we.getDate()}. ${MON[we.getMonth()]}</span>`;
+    periode = { art:'week', wert:iso(ws), txt:'Ganze Woche' };
+    band = [...derWoche(ws).map(t => fristChip(t, `KW ${kw(ws)}`)),
+      ...[...new Set([monthKey(ws), monthKey(we)])].flatMap(mk => desMonats(mk).map(t => fristChip(t, MON[P(mk + '-01').getMonth()])))];
+    let spalten = '';
+    for (let i = 0; i < 7; i++){
+      const d = addD(ws, i), tag = iso(d), di = amTag(d);
+      spalten += `<div class="pl-tag dl-tag ${i >= 5 ? 'we' : ''} ${tag === heuteIso ? 'heute' : ''} ${tagSel(tag) ? 'sel' : ''} ${d < TODAY ? 'vorbei' : ''}" data-act="cal-day" data-d="${tag}">
+        <div class="pl-tk"><span class="pl-wd">${WD[d.getDay()]}</span><span class="pl-dn">${d.getDate()}.</span>${di.length ? `<span class="pl-sum">${di.length}</span>` : ''}</div>
+        <div class="pl-bloecke">${di.map(fristItem).join('')}</div></div>`;
+    }
+    raster = `<div class="pl-woche dl-woche">${spalten}</div>`;
+  } else {
+    const m = S.calMonth, erster = new Date(m.getFullYear(), m.getMonth(), 1), letzter = new Date(m.getFullYear(), m.getMonth() + 1, 0);
+    titel = `${MON[m.getMonth()]} ${m.getFullYear()}`;
+    periode = { art:'month', wert:monthKey(erster), txt:'Ganzer Monat' };
+    band = desMonats(monthKey(erster)).map(t => fristChip(t, 'Monat'));
+    let wochen = '';
+    for (let ws = mondayOf(erster); ws <= letzter; ws = addD(ws, 7)){
+      const wb = derWoche(ws);
+      const wband = wb.length ? `<div class="dl-wband ${sel?.art === 'week' && sel.wert === iso(ws) ? 'sel' : ''}" data-act="cal-week" data-d="${iso(ws)}" title="Ganze Woche wählen"><span class="dl-kw">KW ${kw(ws)}</span>${wb.map(t => fristChip(t)).join('')}</div>` : '';
+      let zellen = '';
+      for (let i = 0; i < 7; i++){
+        const d = addD(ws, i), tag = iso(d), aus = d.getMonth() !== m.getMonth(), di = aus ? [] : amTag(d);
+        zellen += `<div class="pl-mtag ${i >= 5 ? 'we' : ''} ${aus ? 'aus' : ''} ${tag === heuteIso ? 'heute' : ''} ${tagSel(tag) ? 'sel' : ''}" ${aus ? '' : `data-act="cal-day" data-d="${tag}"`}>
+          <span class="pl-mk"><span class="az-dn">${d.getDate()}</span></span>
+          ${mob ? (di.length ? `<span class="pl-punkte">${di.slice(0, 4).map(t => `<i class="dot" style="--c:${areaColor(areaOf(t))}"></i>`).join('')}</span>` : '')
+                : di.slice(0, 3).map(fristItem).join('') + (di.length > 3 ? `<span class="az-mehr">+${di.length - 3}</span>` : '')}</div>`;
+      }
+      wochen += `<div class="az-woche">${wband}${zellen}</div>`;
+    }
+    raster = `<div class="az-cal pl-monat dl-monat"><div class="az-dow">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(x => `<span>${x}</span>`).join('')}</div>${wochen}</div>`;
+  }
+  const periodeAn = sel?.art === periode.art && sel.wert === periode.wert;
+  const kopf = `<div class="cal-head pl-head"><h2>${titel}</h2>
+      ${seg('dlArt', [['woche', 'Woche'], ['monat', 'Monat']]).replace(/data-act="set" data-k="dlArt"/g, 'data-act="dl-art"')}
+      <button class="icon-btn" data-act="cal-prev" aria-label="Zurück">${ic('chevL')}</button><button class="btn btn-g btn-s" data-act="cal-today">Heute</button><button class="icon-btn" data-act="cal-next" aria-label="Weiter">${ic('chevR')}</button></div>`;
+  const leiste = `<div class="dl-leiste"><button class="btn ${periodeAn ? 'btn-p' : 'btn-g'} btn-s" data-act="${periode.art === 'week' ? 'cal-week' : 'cal-month'}" data-d="${periode.wert}">${periode.txt}</button>
+      ${sel ? `<button class="btn btn-t btn-s" data-act="cal-clear">${ic('close')}Auswahl aufheben</button>` : ''}<span class="lg-hint">Tag anklicken: steht in der Liste zuerst</span></div>`;
+  return `<div class="dl-kal">${kopf}${band.length ? `<div class="dl-band">${band.join('')}</div>` : ''}${raster}${leiste}</div>`;
+}
 function viewDeadlines(){
   const mob = isMobile(), sel = S.calSel;
   const basis = filterBasis(T.filter(t => isOpen(t) || (S.qDone && t.status === 'done')));
-  // Kalender
-  const m = S.calMonth, y = m.getFullYear(), mo = m.getMonth();
-  const first = new Date(y, mo, 1), last = new Date(y, mo + 1, 0);
-  const vis = basis.filter(t => t.due);
-  let weeks = '';
-  for (let ws = mondayOf(first); ws <= last; ws = addD(ws, 7)) weeks += kalenderWoche(ws, vis, { monat:mo, tagKlick:true, wochenWahl:true });
-  const monatAn = sel?.art === 'month' && sel.wert === monthKey(first);
-  const kalender = `<div class="cal-head"><h2>${MON[mo]} ${y}</h2>
-      ${sel ? `<button class="btn btn-t btn-s" data-act="cal-clear">${ic('close')}Auswahl aufheben</button>` : ''}
-      <button class="btn ${monatAn ? 'btn-p' : 'btn-g'} btn-s" data-act="cal-month" data-d="${monthKey(first)}">Ganzer Monat</button>
-      <button class="icon-btn" data-act="cal-prev" aria-label="Vorheriger Monat">${ic('chevL')}</button><button class="btn btn-g btn-s" data-act="cal-today">Heute</button><button class="icon-btn" data-act="cal-next" aria-label="Nächster Monat">${ic('chevR')}</button></div>
-    <div class="legend"><span><i class="lg-bar"></i>Wochen-Frist</span><span><i class="lg-band"></i>Monats-Frist</span><span class="lg-hint">Tag anklicken: steht in der Liste zuerst</span></div>
-    <div class="cal"><div class="wk wk-wahl wk-dow">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((d, i) => `<span style="grid-column:${i + 1}">${d}</span>`).join('')}<span style="grid-column:8"></span></div>${weeks}</div>`;
+  const kalender = termineKalender(basis.filter(t => t.due));
   // Projektfortschritt, wenn auf ein Projekt gefiltert ist
   const pr = S.proj !== 'all' ? projById(S.proj) : null;
   const projInfo = pr ? (() => { const alle = T.filter(t => t.project === pr.id), pct = projPct(alle);
@@ -1641,28 +1751,36 @@ function viewDeadlines(){
       : `<div class="empty-big"><strong>Keine offenen To-dos.</strong>Schön aufgeräumt.</div>`;
     body = (groups.some(g => g.items.length) ? groupsHTML(groups) : (fertig.length ? '' : leer)) + erledigtBlock + erledigteTrefferHTML();
   }
-  return header('Deadlines', esc(longDate(TODAY))) + kalender + filterLeiste() + suchFeld() + projInfo + body;
+  return header('Termine', esc(longDate(TODAY))) + kalender + filterLeiste() + suchFeld() + projInfo + body;
 }
 
-/* ============ Planung ============
-   Geplante Arbeitszeit liegt am To-do unter „plan“: eine Liste von {id, tag:'JJJJ-MM-TT', min, ts}.
+/* ============ Plan ============
+   Geplante Arbeitszeit liegt am To-do unter „plan“: eine Liste von {id, tag:'JJJJ-MM-TT', min, ts, von}.
+   „von“ ist die Uhrzeit ('HH:MM') oder null – dann ist nur der Tag geplant.
    Wie bei der Zeiterfassung wird die Liste bei jeder Änderung als Ganzes ersetzt – so gleicht der
    Abgleich sie sauber zwischen den Geräten ab, und nichts anderes am To-do wird berührt. */
 const plaene = t => Array.isArray(t.plan) ? t.plan : [];
 const PLAN_STD = 60;                                   // Minuten für ein neu eingeplantes To-do
 const PLAN_ZIEL = 8 * 60;                              // Richtwert für den Tagesbalken
 const PLAN_DAUERN = [15, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360, 420, 480];
+const PLAN_H = 40;                                     // Pixel je Stunde im Wochenraster
 const minTxt = m => dauerTxt(m * 60000);
 const minKurz = m => dauerKurz(m * 60000);
 const tagTxt = tag => { const d = P(tag); return `${WD[d.getDay()]} ${d.getDate()}. ${MONS[d.getMonth()]}`; };
-// Alle Einplanungen eines Tages; der Bereichsfilter gilt auch hier
+const zuMin = hm => { if (!hm) return null; const [h, m] = String(hm).split(':').map(Number); return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null; };
+const alsHM = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+const uhrMin = m => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+const planVon = p => zuMin(p.von);
+const planZeit = p => { const v = planVon(p); return v == null ? '' : `${uhrMin(v)}–${uhrMin(Math.min(1440, v + p.min))}`; };
+// Alle Einplanungen eines Tages – mit Uhrzeit zuerst, nach Beginn sortiert; der Bereichsfilter gilt auch hier
 function planAm(tag, alleBereiche = false){
   const r = [];
   for (const t of T){
     if (!alleBereiche && S.area !== 'all' && areaOf(t) !== S.area) continue;
     for (const p of plaene(t)) if (p.tag === tag) r.push({ t, p });
   }
-  return r.sort((a, b) => (a.p.ts || 0) - (b.p.ts || 0));
+  return r.sort((a, b) => { const va = planVon(a.p), vb = planVon(b.p);
+    return (va == null) - (vb == null) || (va ?? 0) - (vb ?? 0) || (a.p.ts || 0) - (b.p.ts || 0); });
 }
 const planSumme = tag => planAm(tag).reduce((a, x) => a + x.p.min, 0);
 function planSetzen(t, neu, msg){
@@ -1674,21 +1792,37 @@ function planSetzen(t, neu, msg){
   if (msg) toast(msg, { act:'undo', label:'Rückgängig' });
 }
 const kurzTitel = t => t.title.length > 38 ? t.title.slice(0, 36) + '…' : t.title;
-function planHinzu(t, tag, min = PLAN_STD){
-  const l = plaene(t).map(p => ({ ...p })), da = l.find(p => p.tag === tag);
-  if (da) da.min += min; else l.push({ id:uid(), tag, min, ts:Date.now() });
+const uhrZusatz = von => von ? `, ${uhrMin(zuMin(von))} Uhr` : '';
+// Ohne Uhrzeit wird eine Einplanung am selben Tag zusammengelegt, mit Uhrzeit kommt ein eigener Block dazu
+function planHinzu(t, tag, min = PLAN_STD, von = null){
+  const l = plaene(t).map(p => ({ ...p }));
+  const da = von ? null : l.find(p => p.tag === tag && !p.von);
+  if (da) da.min += min; else l.push({ id:uid(), tag, min, ts:Date.now(), von });
   S.planTag = tag;
-  planSetzen(t, l, `„${kurzTitel(t)}“ ${tagTxt(tag)} eingeplant · ${minTxt(da ? da.min : min)}`);
+  planSetzen(t, l, `„${kurzTitel(t)}“ ${tagTxt(tag)}${uhrZusatz(von)} eingeplant · ${minTxt(da ? da.min : min)}`);
 }
-function planVerschieben(t, pid, tag){
+// von: undefined = Uhrzeit behalten, null = ohne Uhrzeit, 'HH:MM' = neue Uhrzeit
+function planVerschieben(t, pid, tag, von){
   const l = plaene(t).map(p => ({ ...p })), p = l.find(x => x.id === pid);
-  if (!p || p.tag === tag) return;
-  const ziel = l.find(x => x.tag === tag && x.id !== pid);
-  if (ziel){ ziel.min += p.min; l.splice(l.indexOf(p), 1); } else p.tag = tag;
+  if (!p) return;
+  const neuVon = von === undefined ? (p.von || null) : von;
+  if (p.tag === tag && (p.von || null) === neuVon) return;
+  p.tag = tag; p.von = neuVon;
+  if (neuVon){ const v = zuMin(neuVon); if (v + p.min > 1440) p.min = Math.max(15, 1440 - v); }
+  else { const ziel = l.find(x => x !== p && x.tag === tag && !x.von); if (ziel){ ziel.min += p.min; l.splice(l.indexOf(p), 1); } }
   S.planTag = tag;
-  planSetzen(t, l, `„${kurzTitel(t)}“ auf ${tagTxt(tag)} verschoben`);
+  planSetzen(t, l, `„${kurzTitel(t)}“ auf ${tagTxt(tag)}${uhrZusatz(neuVon)} verschoben`);
 }
-// Sichtbarer Zeitraum im Planungskalender
+// Uhrzeit oder Dauer einer Einplanung ändern (Detailansicht, Ziehen an der Unterkante)
+function planAendern(t, pid, feld, wert){
+  const p0 = plaene(t).find(p => p.id === pid); if (!p0) return;
+  const n = { ...p0, [feld]:wert };
+  const v = planVon(n);
+  if (v != null && v + n.min > 1440) n.min = Math.max(15, 1440 - v);
+  const msg = feld === 'von' ? (wert ? `Beginn: ${uhrMin(v)} Uhr` : 'Ohne Uhrzeit geplant') : `Geplant: ${v != null ? planZeit(n) + ' · ' : ''}${minTxt(n.min)}`;
+  planSetzen(t, plaene(t).map(p => p.id === pid ? n : p), msg);
+}
+// Sichtbarer Zeitraum im Plan-Kalender
 function planSpanne(){
   if (S.planArt === 'monat'){ const m = S.planMonat; return [new Date(m.getFullYear(), m.getMonth(), 1), new Date(m.getFullYear(), m.getMonth() + 1, 0)]; }
   return [S.planWoche, addD(S.planWoche, 6)];
@@ -1697,10 +1831,32 @@ function planTagAnpassen(){
   const [a, b] = planSpanne(), g = P(S.planTag);
   if (g < a || g > b) S.planTag = iso(TODAY >= a && TODAY <= b ? TODAY : a);
 }
-function planBlock(t, p, kurz = false){
-  const fertig = t.status === 'done' || t.status === 'archived';
-  return `<button class="pl-block ${fertig ? 'done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-pl-drag data-act="open" data-id="${t.id}" data-pid="${p.id}" title="${esc(t.title)} · ${minTxt(p.min)}">
-    <i class="dot" style="--c:${areaColor(areaOf(t))}"></i>${kurz ? '' : `<span class="pl-bt">${esc(t.title)}</span>`}<span class="pl-bm">${minKurz(p.min)}</span></button>`;
+// Block im Tageskopf, in der Handy-Woche und im Monat
+function planBlock(t, p, art = 'woche'){
+  const fertig = t.status === 'done' || t.status === 'archived', v = planVon(p);
+  const mass = art === 'monat' ? (v != null ? uhrMin(v) : minKurz(p.min)) : (v != null ? `${uhrMin(v)} · ${minKurz(p.min)}` : minKurz(p.min));
+  return `<button class="pl-block ${fertig ? 'done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-pl-drag data-act="open" data-id="${t.id}" data-pid="${p.id}" title="${esc(t.title)} · ${v != null ? planZeit(p) + ' · ' : ''}${minTxt(p.min)}">
+    <i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span class="pl-bt">${esc(t.title)}</span><span class="pl-bm">${mass}</span></button>`;
+}
+// Block im Stundenraster: Lage nach Uhrzeit, Höhe nach Dauer, überlappende Blöcke nebeneinander
+function planSpuren(e){
+  const s = e.map(x => { const a = planVon(x.p); return { ...x, a, b:Math.min(1440, a + x.p.min) }; }).sort((x, y) => x.a - y.a || y.b - x.b);
+  let gruppe = [], spuren = [], ende = -1;
+  const schliessen = () => { const n = Math.max(1, spuren.length); gruppe.forEach(x => x.n = n); gruppe = []; spuren = []; };
+  for (const x of s){
+    if (gruppe.length && x.a >= ende) schliessen();
+    let i = spuren.findIndex(b => b <= x.a); if (i < 0){ i = spuren.length; spuren.push(0); }
+    spuren[i] = x.b; x.spur = i; gruppe.push(x); ende = Math.max(ende, x.b);
+  }
+  schliessen();
+  return s;
+}
+function planRasterBlock(x){
+  const { t, p } = x, fertig = t.status === 'done' || t.status === 'archived';
+  const top = x.a / 60 * PLAN_H, h = Math.max(PLAN_H / 4, (x.b - x.a) / 60 * PLAN_H);
+  return `<button class="pl-block pl-zb ${p.min <= 30 ? 'kurz' : ''} ${fertig ? 'done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-pl-drag data-act="open" data-id="${t.id}" data-pid="${p.id}"
+      style="top:${top}px;height:${h}px;left:calc(${x.spur / x.n * 100}% + 2px);width:calc(${100 / x.n}% - 4px);--c:${areaColor(areaOf(t))}" title="${esc(t.title)} · ${planZeit(p)}">
+    <span class="pl-bt">${esc(t.title)}</span><span class="pl-bm">${planZeit(p)}</span><span class="pl-dehnen" data-pl-resize title="Ziehen, um die Dauer zu ändern"></span></button>`;
 }
 function viewPlanung(){
   const mob = isMobile(), heuteIso = iso(TODAY);
@@ -1719,7 +1875,7 @@ function viewPlanung(){
         zellen += `<div class="pl-mtag ${i >= 5 ? 'we' : ''} ${aus ? 'aus' : ''} ${tag === heuteIso ? 'heute' : ''} ${tag === S.planTag ? 'sel' : ''}" ${aus ? '' : `data-plan-tag="${tag}" data-act="pl-tag" data-d="${tag}"`}>
           <span class="pl-mk"><span class="az-dn">${d.getDate()}</span>${sum ? `<span class="pl-msum">${minKurz(sum)}</span>` : ''}</span>
           ${mob ? (e.length ? `<span class="pl-punkte">${e.slice(0, 4).map(x => `<i class="dot" style="--c:${areaColor(areaOf(x.t))}"></i>`).join('')}</span>` : '')
-                : e.slice(0, 3).map(x => planBlock(x.t, x.p)).join('') + (e.length > 3 ? `<span class="az-mehr">+${e.length - 3}</span>` : '')}</div>`;
+                : e.slice(0, 3).map(x => planBlock(x.t, x.p, 'monat')).join('') + (e.length > 3 ? `<span class="az-mehr">+${e.length - 3}</span>` : '')}</div>`;
       }
       wochen += `<div class="az-woche">${zellen}</div>`;
     }
@@ -1727,42 +1883,43 @@ function viewPlanung(){
   } else {
     const ws = S.planWoche, we = addD(ws, 6);
     titel = `KW ${kw(ws)} <span class="pl-sp">${ws.getDate()}. ${ws.getMonth() !== we.getMonth() ? MON[ws.getMonth()] + ' ' : ''}– ${we.getDate()}. ${MON[we.getMonth()]}</span>`;
-    let spalten = '';
-    for (let i = 0; i < 7; i++){
-      const d = addD(ws, i), tag = iso(d), e = planAm(tag), sum = e.reduce((a, x) => a + x.p.min, 0);
-      spalten += `<div class="pl-tag ${i >= 5 ? 'we' : ''} ${tag === heuteIso ? 'heute' : ''} ${tag === S.planTag ? 'sel' : ''} ${d < TODAY ? 'vorbei' : ''}" data-plan-tag="${tag}" data-act="pl-tag" data-d="${tag}">
-        <div class="pl-tk"><span class="pl-wd">${WD[d.getDay()]}</span><span class="pl-dn">${d.getDate()}.</span><span class="pl-sum">${sum ? minKurz(sum) : ''}</span></div>
-        ${lastBalken(sum)}
-        <div class="pl-bloecke">${e.map(x => planBlock(x.t, x.p)).join('') || `<span class="pl-leer">${mob ? 'frei' : 'hierher ziehen'}</span>`}</div></div>`;
+    if (mob){
+      // Handy: Tage untereinander, Blöcke mit Uhrzeit
+      let spalten = '';
+      for (let i = 0; i < 7; i++){
+        const d = addD(ws, i), tag = iso(d), e = planAm(tag), sum = e.reduce((a, x) => a + x.p.min, 0);
+        spalten += `<div class="pl-tag ${i >= 5 ? 'we' : ''} ${tag === heuteIso ? 'heute' : ''} ${tag === S.planTag ? 'sel' : ''} ${d < TODAY ? 'vorbei' : ''}" data-plan-tag="${tag}" data-act="pl-tag" data-d="${tag}">
+          <div class="pl-tk"><span class="pl-wd">${WD[d.getDay()]}</span><span class="pl-dn">${d.getDate()}.</span><span class="pl-sum">${sum ? minKurz(sum) : ''}</span></div>
+          ${lastBalken(sum)}
+          <div class="pl-bloecke">${e.map(x => planBlock(x.t, x.p)).join('') || `<span class="pl-leer">frei</span>`}</div></div>`;
+      }
+      raster = `<div class="pl-woche">${spalten}</div>`;
+    } else {
+      // Computer: oben je Tag der Kopf mit allem ohne Uhrzeit, darunter das Stundenraster
+      const jetzt = new Date(), jetztMin = jetzt.getHours() * 60 + jetzt.getMinutes();
+      let koepfe = '', spalten = '';
+      for (let i = 0; i < 7; i++){
+        const d = addD(ws, i), tag = iso(d), e = planAm(tag), sum = e.reduce((a, x) => a + x.p.min, 0);
+        const ohne = e.filter(x => planVon(x.p) == null), mit = e.filter(x => planVon(x.p) != null);
+        const kl = `${i >= 5 ? 'we' : ''} ${tag === heuteIso ? 'heute' : ''} ${tag === S.planTag ? 'sel' : ''} ${d < TODAY ? 'vorbei' : ''}`;
+        koepfe += `<div class="pl-tag pl-kopf ${kl}" data-plan-tag="${tag}" data-plan-ohne="1" data-act="pl-tag" data-d="${tag}">
+          <div class="pl-tk"><span class="pl-wd">${WD[d.getDay()]}</span><span class="pl-dn">${d.getDate()}.</span><span class="pl-sum">${sum ? minKurz(sum) : ''}</span></div>
+          ${lastBalken(sum)}
+          <div class="pl-bloecke">${ohne.map(x => planBlock(x.t, x.p)).join('') || `<span class="pl-leer">ohne Uhrzeit</span>`}</div></div>`;
+        spalten += `<div class="pl-spalte ${kl}" data-plan-tag="${tag}" data-plan-raster="1" data-act="pl-tag" data-d="${tag}">
+          ${planSpuren(mit).map(planRasterBlock).join('')}${tag === heuteIso ? `<i class="pl-jetzt" style="top:${jetztMin / 60 * PLAN_H}px"></i>` : ''}</div>`;
+      }
+      const stunden = Array.from({ length:24 }, (_, h) => h ? `<span style="top:${h * PLAN_H}px">${h}:00</span>` : '').join('');
+      raster = `<div class="pl-raster" style="--ph:${PLAN_H}px"><div class="pl-woche pl-wkopf"><span class="pl-ecke"></span>${koepfe}</div>
+        <div class="pl-rscroll"><div class="pl-rinnen" style="height:${24 * PLAN_H}px"><div class="pl-std">${stunden}</div>${spalten}</div></div></div>`;
     }
-    raster = `<div class="pl-woche">${spalten}</div>`;
   }
   const kopf = `<div class="cal-head pl-head"><h2>${titel}</h2>
       ${seg('planArt', [['woche', 'Woche'], ['monat', 'Monat']]).replace(/data-act="set" data-k="planArt"/g, 'data-act="pl-art"')}
       <button class="icon-btn" data-act="pl-nav" data-v="-1" aria-label="Zurück">${ic('chevL')}</button><button class="btn btn-g btn-s" data-act="pl-heute">Heute</button><button class="icon-btn" data-act="pl-nav" data-v="1" aria-label="Weiter">${ic('chevR')}</button></div>`;
 
-  // Gewählter Tag: Einplanungen mit Dauer, daneben die tatsächlich erfasste Zeit
-  const tag = S.planTag, gd = P(tag), e = planAm(tag), sum = e.reduce((a, x) => a + x.p.min, 0);
-  const vonMs = gd.getTime(), bisMs = addD(gd, 1).getTime();
-  const dauerWahl = (t, p) => {
-    const opts = PLAN_DAUERN.includes(p.min) ? PLAN_DAUERN : [...PLAN_DAUERN, p.min].sort((a, b) => a - b);
-    return `<select class="pl-dauer" data-pl-dauer="${p.id}" data-id="${t.id}" aria-label="Geplante Dauer">${opts.map(m => `<option value="${m}"${m === p.min ? ' selected' : ''}>${minTxt(m)}</option>`).join('')}</select>`;
-  };
-  const tagListe = e.length ? `<div class="pl-tagliste">${e.map(({ t, p }) => {
-      const ist = zeitIn(t, vonMs, bisMs), offen = isOpen(t);
-      return `<div class="pl-zeile ${offen ? '' : 'done'}" data-pl-drag data-id="${t.id}" data-pid="${p.id}">
-        <span class="pl-grip" title="Auf einen anderen Tag ziehen">${ic('grip')}</span>
-        <i class="dot" style="--c:${areaColor(areaOf(t))}"></i>
-        <button class="pl-zt" data-act="open" data-id="${t.id}">${esc(t.title)}</button>
-        ${ist >= 60000 ? `<span class="pl-ist" title="An diesem Tag erfasst">erfasst ${dauerKurz(ist)}</span>` : ''}
-        ${dauerWahl(t, p)}
-        ${tag === heuteIso && offen && !t.timerStart ? `<button class="icon-btn pl-fokus" data-act="timer-start" data-id="${t.id}" title="Fokus starten" aria-label="Fokus starten">${ic('play')}</button>` : ''}
-        <button class="icon-btn pl-weg" data-act="pl-weg" data-id="${t.id}" data-pid="${p.id}" title="Aus der Planung nehmen" aria-label="Aus der Planung nehmen">${ic('close')}</button></div>`;
-    }).join('')}</div>`
-    : `<div class="empty">${mob ? 'Noch nichts geplant. Tippe unten bei einem To-do auf „+“ – oder zieh es am Griff in einen Tag.' : 'Noch nichts geplant. Zieh ein To-do aus der Liste unten in einen Tag – oder klick auf „+“.'}</div>`;
-  const tagBlock = `<div class="sec pl-sec"><h3>${esc(longDate(gd))}</h3><span class="n">${sum ? `${minTxt(sum)} geplant` : ''}</span></div>${tagListe}`;
-
-  // To-dos zum Einplanen, gruppiert wie auf der Deadlines-Seite
+  // To-dos zum Einplanen, gruppiert wie auf der Seite Termine
+  const gd = P(S.planTag);
   const offen = filterBasis(T.filter(isOpen));
   const abHeute = t => plaene(t).filter(p => p.tag >= heuteIso);
   const plusTxt = `${WD[gd.getDay()]} ${gd.getDate()}.`;
@@ -1772,40 +1929,102 @@ function viewPlanung(){
       <span class="pl-grip" title="Ziehen, um einzuplanen">${ic('grip')}</span>
       <i class="dot" style="--c:${areaColor(areaOf(t))}"></i>
       <button class="pl-rt" data-act="open" data-id="${t.id}">${hl(t.title)}</button>
-      ${ksum ? `<span class="pl-chip" title="${esc(kommend.map(p => `${tagTxt(p.tag)}: ${minTxt(p.min)}`).join(' · '))}">${minKurz(ksum)} geplant</span>` : ''}
+      ${ksum ? `<span class="pl-chip" title="${esc(kommend.map(p => `${tagTxt(p.tag)}${p.von ? ' ' + planZeit(p) : ''}: ${minTxt(p.min)}`).join(' · '))}">${minKurz(ksum)} geplant</span>` : ''}
       <span class="pl-due ${d.cls}">${esc(d.txt)}</span>
-      <button class="pl-add" data-act="pl-add" data-id="${t.id}" title="Für ${esc(longDate(gd))} einplanen">${ic('plus')}${plusTxt}</button></div>`;
+      <button class="pl-add" data-act="pl-add" data-id="${t.id}" title="Für ${esc(longDate(gd))} einplanen (ohne Uhrzeit)">${ic('plus')}${plusTxt}</button></div>`;
   };
   const gruppen = bucketGroups(offen).filter(g => g.items.length);
   const liste = gruppen.length
     ? gruppen.map(g => `<div class="sec ${g.cls || ''}"><h3>${esc(g.title)}</h3><span class="n">${g.items.length}</span></div><div class="pl-liste">${g.items.map(zeile).join('')}</div>`).join('')
     : `<div class="empty">${S.q.trim() ? `Keine Treffer für „${esc(S.q.trim())}“.` : 'Keine offenen To-dos für diesen Filter.'}</div>`;
 
-  return header('Planung', mob ? 'Wann arbeitest du woran – und wie lange?' : 'Zieh To-dos in einen Tag und leg fest, wie lange du daran arbeitest.') +
-    `<div class="pl-kal ${S.planArt}">${kopf}${raster}</div>` + tagBlock +
-    `<div class="sec pl-zu"><h3>Zu planen</h3></div>` + filterLeiste({ ohneAnsicht:true, ohneErledigt:true }) + suchFeld() + liste;
+  return header('Plan', mob ? 'Wann arbeitest du woran – und wie lange?' : 'Zieh To-dos auf eine Uhrzeit. Die Unterkante eines Blocks ändert die Dauer.') +
+    `<div class="pl-kal ${S.planArt}">${kopf}${raster}</div>` +
+    `<div class="pl-filter">${filterLeiste({ ohneAnsicht:true, ohneErledigt:true })}${suchFeld()}</div>` + liste;
+}
+// Stundenraster nach jedem Aufbau an die alte Stelle rollen; beim ersten Mal kurz vor den Arbeitsbeginn
+function plRasterScroll(){
+  const rs = $('.pl-rscroll'); if (!rs) return;
+  if (S.planScroll == null){
+    let frueh = 8 * 60;
+    for (let i = 0; i < 7; i++) for (const x of planAm(iso(addD(S.planWoche, i)))){ const v = planVon(x.p); if (v != null) frueh = Math.min(frueh, v); }
+    S.planScroll = Math.max(0, (frueh - 60) / 60 * PLAN_H);
+  }
+  rs.scrollTop = S.planScroll;
+}
+document.addEventListener('scroll', e => { if (e.target.classList?.contains('pl-rscroll')) S.planScroll = e.target.scrollTop; }, true);
+// Detailansicht: Einplanungen ab heute mit Uhrzeit, Dauer und Entfernen
+function planInfo(t){
+  const k = plaene(t).filter(p => p.tag >= iso(TODAY)).sort((a, b) => a.tag.localeCompare(b.tag) || (planVon(a) ?? 9999) - (planVon(b) ?? 9999));
+  if (!k.length) return '';
+  const dauerWahl = p => {
+    const opts = PLAN_DAUERN.includes(p.min) ? PLAN_DAUERN : [...PLAN_DAUERN, p.min].sort((a, b) => a - b);
+    return `<select class="pl-dauer" data-pl-dauer="${p.id}" data-id="${t.id}" aria-label="Geplante Dauer">${opts.map(m => `<option value="${m}"${m === p.min ? ' selected' : ''}>${minTxt(m)}</option>`).join('')}</select>`;
+  };
+  return `<div class="z-plan-l"><div class="z-plan">${ic('plan')}Geplant</div>${k.map(p => `<div class="pl-dz">
+      <span class="pl-dt">${tagTxt(p.tag)}</span>
+      <input type="time" class="z-in pl-von" step="900" data-pl-von="${p.id}" data-id="${t.id}" value="${p.von || ''}" aria-label="Beginn" title="Beginn – leer lassen für ohne Uhrzeit">
+      ${dauerWahl(p)}
+      <button class="icon-btn pl-weg" data-act="pl-weg" data-id="${t.id}" data-pid="${p.id}" title="Aus dem Plan nehmen" aria-label="Aus dem Plan nehmen">${ic('close')}</button></div>`).join('')}</div>`;
 }
 // Ziehen & Ablegen: Maus an der ganzen Zeile, Finger am Griff (sonst würde jedes Wischen zum Ziehen)
-let plDrag = null, plKlickBis = 0;
+let plDrag = null, plDehn = null, plKlickBis = 0;
 function plZiel(x, y){
   const z = document.elementFromPoint(x, y)?.closest('[data-plan-tag]') || null;
   if (z !== plDrag.ziel){ plDrag.ziel?.classList.remove('drop'); z?.classList.add('drop'); plDrag.ziel = z; }
+  plDrag.von = null;
+  if (z?.dataset.planRaster){
+    // Uhrzeit aus der Höhe im Raster, auf Viertelstunden gerundet
+    const r = z.getBoundingClientRect();
+    let m = Math.round((y - r.top - plDrag.dy) / PLAN_H * 60 / 15) * 15;
+    m = Math.max(0, Math.min(1440 - plDrag.min, m));
+    plDrag.von = alsHM(m);
+    let v = plDrag.vorschau;
+    if (!v){ v = plDrag.vorschau = document.createElement('div'); v.className = 'pl-vorschau'; }
+    if (v.parentNode !== z) z.append(v);
+    v.style.top = m / 60 * PLAN_H + 'px';
+    v.style.height = Math.max(PLAN_H / 4, plDrag.min / 60 * PLAN_H) + 'px';
+    v.textContent = `${uhrMin(m)}–${uhrMin(m + plDrag.min)}`;
+  } else plDrag.vorschau?.remove();
 }
 function plEnde(){
   if (!plDrag) return;
-  clearInterval(plDrag.scroll); plDrag.ghost?.remove(); plDrag.ziel?.classList.remove('drop');
+  clearInterval(plDrag.scroll); plDrag.ghost?.remove(); plDrag.vorschau?.remove(); plDrag.ziel?.classList.remove('drop');
   plDrag.src.classList.remove('pl-quelle'); document.body.classList.remove('pl-ziehen');
   plDrag = null;
 }
 document.addEventListener('pointerdown', e => {
   if (S.view !== 'planung' || e.button > 0) return;
+  // Unterkante eines Blocks im Raster: Dauer ziehen
+  const dh = e.target.closest('[data-pl-resize]');
+  if (dh){
+    const b = dh.closest('.pl-zb'), t = T.find(x => x.id === b?.dataset.id), p = t && plaene(t).find(x => x.id === b.dataset.pid);
+    if (!p) return;
+    e.preventDefault();
+    plDehn = { b, t, p, y0:e.clientY, min:p.min, neu:p.min };
+    document.body.classList.add('pl-dehnt');
+    return;
+  }
   const src = e.target.closest('[data-pl-drag]'); if (!src) return;
   const griff = e.target.closest('.pl-grip');
   if (e.pointerType !== 'mouse' && !griff) return;
   if (!griff && e.target.closest('select, input, .pl-add, .pl-weg, .pl-fokus')) return;
-  plDrag = { src, id:src.dataset.id, pid:src.dataset.pid || null, x0:e.clientX, y0:e.clientY, an:false, ziel:null };
+  const t = T.find(x => x.id === src.dataset.id), p = src.dataset.pid && t ? plaene(t).find(x => x.id === src.dataset.pid) : null;
+  plDrag = { src, id:src.dataset.id, pid:src.dataset.pid || null, x0:e.clientX, y0:e.clientY, an:false, ziel:null,
+    min:p ? p.min : PLAN_STD, dy:src.classList.contains('pl-zb') ? e.clientY - src.getBoundingClientRect().top : 0 };
 });
 addEventListener('pointermove', e => {
+  if (plDehn){
+    const v = planVon(plDehn.p), dm = Math.round((e.clientY - plDehn.y0) / PLAN_H * 60 / 15) * 15;
+    const n = Math.max(15, Math.min(1440 - v, plDehn.min + dm));
+    if (n !== plDehn.neu){
+      plDehn.neu = n;
+      plDehn.b.style.height = n / 60 * PLAN_H + 'px';
+      plDehn.b.classList.toggle('kurz', n <= 30);
+      plDehn.b.querySelector('.pl-bm').textContent = `${uhrMin(v)}–${uhrMin(v + n)}`;
+    }
+    return;
+  }
   if (!plDrag) return;
   if (!plDrag.an){
     if (Math.hypot(e.clientX - plDrag.x0, e.clientY - plDrag.y0) < 6) return;
@@ -1816,12 +2035,21 @@ addEventListener('pointermove', e => {
     g.innerHTML = `<i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span>${esc(t.title)}</span>`;
     document.body.append(g); plDrag.ghost = g;
     document.body.classList.add('pl-ziehen'); plDrag.src.classList.add('pl-quelle');
-    // Am Rand des Inhalts mitscrollen, damit der Kalender auch von weit unten erreichbar ist
+    // Am Rand mitscrollen: im Stundenraster dieses, sonst den Inhalt – so ist jedes Ziel erreichbar
     plDrag.scroll = setInterval(() => {
       if (!plDrag?.an) return;
-      const m = $('#main'), r = m.getBoundingClientRect(), y = plDrag.py;
+      const x = plDrag.px, y = plDrag.py, rs = $('.pl-rscroll');
+      if (rs){
+        const q = rs.getBoundingClientRect();
+        if (x >= q.left && x <= q.right && y >= q.top && y <= q.bottom + 12){
+          const d = y < q.top + 36 ? -(q.top + 36 - y) / 3 : y > q.bottom - 36 ? (y - (q.bottom - 36)) / 3 : 0;
+          if (d){ rs.scrollTop += d; plZiel(x, y); }
+          return;
+        }
+      }
+      const m = $('#main'), r = m.getBoundingClientRect();
       const d = y < r.top + 80 ? -(r.top + 80 - y) / 4 : y > r.bottom - 80 ? (y - (r.bottom - 80)) / 4 : 0;
-      if (d){ m.scrollTop += d; plZiel(plDrag.px, plDrag.py); }
+      if (d){ m.scrollTop += d; plZiel(x, y); }
     }, 16);
   }
   plDrag.px = e.clientX; plDrag.py = e.clientY;
@@ -1829,15 +2057,27 @@ addEventListener('pointermove', e => {
   plZiel(e.clientX, e.clientY);
 });
 addEventListener('pointerup', () => {
+  if (plDehn){
+    const d = plDehn; plDehn = null; document.body.classList.remove('pl-dehnt');
+    plKlickBis = Date.now() + 400;
+    if (d.neu !== d.min) planAendern(d.t, d.p.id, 'min', d.neu);
+    return;
+  }
   if (!plDrag) return;
   const d = plDrag; plEnde();
   if (!d.an) return;                                  // nur geklickt
   plKlickBis = Date.now() + 400;                      // der Klick nach dem Ablegen öffnet nichts
   if (!d.ziel) return;
   const t = T.find(x => x.id === d.id); if (!t) return;
-  d.pid ? planVerschieben(t, d.pid, d.ziel.dataset.planTag) : planHinzu(t, d.ziel.dataset.planTag);
+  const tag = d.ziel.dataset.planTag;
+  // Raster: Uhrzeit setzen · Tageskopf: ohne Uhrzeit · Handy-Tag/Monat: Uhrzeit behalten
+  const von = d.ziel.dataset.planRaster ? d.von : d.ziel.dataset.planOhne ? null : undefined;
+  d.pid ? planVerschieben(t, d.pid, tag, von) : planHinzu(t, tag, PLAN_STD, von ?? null);
 });
-addEventListener('pointercancel', plEnde);
+addEventListener('pointercancel', () => {
+  if (plDehn){ plDehn = null; document.body.classList.remove('pl-dehnt'); renderMain(); }
+  plEnde();
+});
 document.addEventListener('click', e => { if (Date.now() < plKlickBis){ e.stopPropagation(); e.preventDefault(); plKlickBis = 0; } }, true);
 document.addEventListener('dragstart', e => { if (e.target.closest?.('[data-pl-drag]')) e.preventDefault(); });
 function viewInbox(){
@@ -2251,7 +2491,7 @@ function viewSettings(){
 }
 
 // Frühere Seitennamen weiterleiten, damit gespeicherte Zustände und alte Verweise nicht ins Leere laufen
-const ALT_VIEWS = { bydeadline:'deadlines', calendar:'deadlines', byperson:'deadlines', byproject:'deadlines', today:'deadlines', all:'deadlines', bycat:'deadlines', people:'deadlines', projects:'deadlines' };
+const ALT_VIEWS = { termine:'deadlines', plan:'planung', bydeadline:'deadlines', calendar:'deadlines', byperson:'deadlines', byproject:'deadlines', today:'deadlines', all:'deadlines', bycat:'deadlines', people:'deadlines', projects:'deadlines' };
 function renderMain(){
   if (ALT_VIEWS[S.view]) S.view = ALT_VIEWS[S.view];
   const [kind, id] = S.view.includes(':') ? S.view.split(/:(.+)/) : [S.view];
@@ -2262,6 +2502,7 @@ function renderMain(){
   $('#main').innerHTML = `<div class="main-inner">${html}</div>`;
   $('#main').scrollTop = scroll;
   leisteAusrichten();
+  plRasterScroll();
 }
 
 /* ============ Detail ============ */
@@ -2539,9 +2780,9 @@ function fmtRange(t){ const [s, e] = range(t); return `${s.getDate()}. ${MONS[s.
 /* ============ Tabbar (mobil) ============ */
 function renderTabbar(){
   const tab = (v, icon, l) => `<button class="tab ${S.view === v ? 'on' : ''}" data-act="nav" data-view="${v}">${ic(icon)}${l}</button>`;
-  $('#tabbar').innerHTML = `<button class="tab" data-act="menu">${ic('menu')}Menü</button>` + tab('deadlines', 'cal', 'Deadlines') +
+  $('#tabbar').innerHTML = `<button class="tab" data-act="menu">${ic('menu')}Menü</button>` + tab('deadlines', 'cal', 'Termine') +
     `<button class="fab" data-act="assist-capture" aria-label="To-do diktieren">${ic('mic')}</button>` +
-    tab('planung', 'plan', 'Planung') + tab('recs', 'spark', 'Empfehlungen');
+    tab('planung', 'plan', 'Plan') + tab('recs', 'spark', 'Empfehlungen');
 }
 function syncScrim(){
   const narrowDetail = S.sel && innerWidth <= 1100;
@@ -3141,11 +3382,6 @@ function zeitBlock(t){
       <button class="z-link" data-act="zeit-edit" data-id="${t.id}">${offen ? 'Fertig' : 'Korrigieren'}</button></div>
     ${knopf ? `<div class="z-zeile">${knopf}</div>` : ''}<div class="z-info">${info}</div>${planInfo(t)}${offen ? zeitEditor(t) : ''}</div>`;
 }
-function planInfo(t){
-  const k = plaene(t).filter(p => p.tag >= iso(TODAY)).sort((a, b) => a.tag.localeCompare(b.tag));
-  if (!k.length) return '';
-  return `<div class="z-info z-plan">${ic('plan')}Geplant: ${k.slice(0, 3).map(p => `${tagTxt(p.tag)} · ${minTxt(p.min)}`).join(', ')}${k.length > 3 ? ` · +${k.length - 3} weitere` : ''}</div>`;
-}
 /* Zeit von Hand korrigieren: nachtragen, abziehen, einzelne Sitzungen ändern oder löschen.
    Jede Änderung ersetzt die Liste „zeit“ als Ganzes (so gleicht der Abgleich sie sauber ab)
    und lässt sich über „Rückgängig“ zurücknehmen. */
@@ -3253,6 +3489,7 @@ function applyTheme(){
     document.querySelectorAll('meta[name="theme-color"]').forEach(m => { if (S.theme === 'auto') m.content = m.media.includes('dark') ? '#18191C' : '#FFFFFF'; else m.content = c; });
   });
 }
+function kalArtMerken(){ try { localStorage.setItem('brain72-kalart', JSON.stringify({ dl:S.dlArt, plan:S.planArt })); } catch (e) {} }
 function nav(v){
   flushSaves();
   // Geöffnetes Projekt bzw. geöffnete Person bleibt in der Übersicht hervorgehoben
@@ -3346,7 +3583,7 @@ document.addEventListener('click', e => {
     case 'theme': S.theme = el.dataset.v; applyTheme(); render(); break;
     case 'new-proj-area': S.newProjArea = el.dataset.v; renderMain(); break;
     case 'proj-area': { const p = projById(id); if (p){ p.area = el.dataset.v; save('projects', p); render(); } break; }
-    case 'goto-day': { const d = el.dataset.d; nav('deadlines'); S.calDay = d; S.calSel = { art:'day', wert:d }; S.calMonth = new Date(P(d).getFullYear(), P(d).getMonth(), 1); renderMain(); break; }
+    case 'goto-day': { const d = el.dataset.d; nav('deadlines'); S.calDay = d; S.calSel = { art:'day', wert:d }; S.calMonth = new Date(P(d).getFullYear(), P(d).getMonth(), 1); S.dlWoche = mondayOf(P(d)); renderMain(); break; }
     case 'cal-area': {
       const v = el.dataset.v;
       S.calAreas[v] = !S.calAreas[v];
@@ -3359,7 +3596,7 @@ document.addEventListener('click', e => {
     case 'cal-clear': S.calSel = null; renderMain(); break;
     case 'pl-tag': S.planTag = el.dataset.d; renderMain(); break;
     case 'pl-art': {
-      S.planArt = el.dataset.v; const g = P(S.planTag);
+      S.planArt = el.dataset.v; kalArtMerken(); const g = P(S.planTag);
       S.planWoche = mondayOf(g); S.planMonat = new Date(g.getFullYear(), g.getMonth(), 1);
       renderMain(); break; }
     case 'pl-nav': {
@@ -3370,10 +3607,20 @@ document.addEventListener('click', e => {
     case 'pl-heute': S.planWoche = THIS_MON; S.planMonat = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); S.planTag = iso(TODAY); renderMain(); break;
     case 'pl-add': { e.stopPropagation(); const t = T.find(x => x.id === id); if (t) planHinzu(t, S.planTag); break; }
     case 'pl-weg': { e.stopPropagation(); const t = T.find(x => x.id === id); if (!t) break;
-      planSetzen(t, plaene(t).filter(p => p.id !== el.dataset.pid), `„${kurzTitel(t)}“ aus der Planung genommen`); break; }
-    case 'cal-prev': S.calMonth = new Date(S.calMonth.getFullYear(), S.calMonth.getMonth() - 1, 1); renderMain(); break;
-    case 'cal-next': S.calMonth = new Date(S.calMonth.getFullYear(), S.calMonth.getMonth() + 1, 1); renderMain(); break;
-    case 'cal-today': S.calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); S.calDay = iso(TODAY); S.calSel = null; renderMain(); break;
+      planSetzen(t, plaene(t).filter(p => p.id !== el.dataset.pid), `„${kurzTitel(t)}“ aus dem Plan genommen`); break; }
+    case 'cal-prev': case 'cal-next': {
+      const n = act === 'cal-prev' ? -1 : 1;
+      if (S.dlArt === 'woche') S.dlWoche = addD(S.dlWoche, 7 * n);
+      else S.calMonth = new Date(S.calMonth.getFullYear(), S.calMonth.getMonth() + n, 1);
+      renderMain(); break; }
+    case 'cal-today': S.calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); S.dlWoche = THIS_MON; S.calDay = iso(TODAY); S.calSel = null; renderMain(); break;
+    case 'dl-art': {
+      const v = el.dataset.v; if (v === S.dlArt) break;
+      if (v === 'woche'){
+        const m = S.calMonth, imMonat = TODAY.getFullYear() === m.getFullYear() && TODAY.getMonth() === m.getMonth();
+        S.dlWoche = mondayOf(S.calSel && S.calSel.art !== 'month' ? P(S.calSel.wert) : imMonat ? TODAY : m);
+      } else { const d = addD(S.dlWoche, 3); S.calMonth = new Date(d.getFullYear(), d.getMonth(), 1); }
+      S.dlArt = v; kalArtMerken(); renderMain(); break; }
     case 'park': { e.stopPropagation(); const t = T.find(x => x.id === id); if (!t) break;
       const vorher = t.status;
       t.status = t.status === 'parked' ? 'open' : 'parked';
@@ -3607,8 +3854,15 @@ document.addEventListener('change', e => {
   const pd = e.target.dataset?.plDauer;
   if (pd){
     const t = T.find(x => x.id === e.target.dataset.id); if (!t) return;
-    const min = Number(e.target.value);
-    planSetzen(t, plaene(t).map(p => p.id === pd ? { ...p, min } : p), `Geplant: ${minTxt(min)}`);
+    planAendern(t, pd, 'min', Number(e.target.value));
+    return;
+  }
+  // Plan: Uhrzeit einer Einplanung geändert (leer = ohne Uhrzeit)
+  const pv = e.target.dataset?.plVon;
+  if (pv){
+    const t = T.find(x => x.id === e.target.dataset.id); if (!t) return;
+    const von = e.target.value && zuMin(e.target.value) != null ? alsHM(zuMin(e.target.value)) : null;
+    if ((plaene(t).find(p => p.id === pv)?.von || null) !== von) planAendern(t, pv, 'von', von);
     return;
   }
   // Zeiterfassung: einzelne Sitzung geändert
@@ -3809,6 +4063,7 @@ setInterval(onNewDay, 60000);
 async function boot(){
   loadSess();
   try { S.theme = localStorage.getItem('brain-theme') || localStorage.getItem('klar-theme') || 'auto'; } catch (e) {}
+  try { const k = JSON.parse(localStorage.getItem('brain72-kalart') || '{}'); if (k.dl === 'woche' || k.dl === 'monat') S.dlArt = k.dl; if (k.plan === 'woche' || k.plan === 'monat') S.planArt = k.plan; } catch (e) {}
   try { Object.assign(S.openArea, JSON.parse(localStorage.getItem('brain-areas') || '{}')); } catch (e) {}
   try { Object.assign(S.calAreas, JSON.parse(localStorage.getItem('brain-calareas') || '{}')); } catch (e) {}
   try { const w = +localStorage.getItem('brain72-dw'); if (w) setzeDetailBreite(w); } catch (e) {}
