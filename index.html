@@ -27,7 +27,7 @@
   --shadow-lg:0 24px 64px rgba(20,24,33,.20),0 2px 6px rgba(20,24,33,.06);
   --scrim:rgba(24,26,32,.26); --glass:rgba(255,255,255,.8);
   --pastel:rgba(92,139,114,.10); --pastel-2:rgba(92,139,114,.22);
-  --sel-bg:#F1ECF8; --sel-bg-h:#EAE3F5; --sel-line:#8A6CC2;
+  --sel-bg:#DDEFEB; --sel-bg-h:#D2E9E4; --sel-line:#2C8A7C;
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){
@@ -43,7 +43,7 @@
     --shadow-lg:0 24px 70px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);
     --scrim:rgba(0,0,0,.5); --glass:rgba(24,25,28,.82);
     --pastel:rgba(137,183,157,.10); --pastel-2:rgba(137,183,157,.18);
-    --sel-bg:#251F33; --sel-bg-h:#2B243B; --sel-line:#B39BE8;
+    --sel-bg:#16312D; --sel-bg-h:#1B3A35; --sel-line:#5FC4B3;
     color-scheme:dark;
   }
 }
@@ -58,7 +58,7 @@
   --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.3);
   --shadow-lg:0 24px 70px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);
   --scrim:rgba(0,0,0,.5); --glass:rgba(24,25,28,.82);
-  --sel-bg:#251F33; --sel-bg-h:#2B243B; --sel-line:#B39BE8;
+  --sel-bg:#16312D; --sel-bg-h:#1B3A35; --sel-line:#5FC4B3;
   color-scheme:dark;
 }
 
@@ -351,6 +351,90 @@ body.fokus-an .main-inner{padding-bottom:150px}
 .az-det{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .az-dem{flex:none;font-variant-numeric:tabular-nums}
 .az-mehr{font-size:11px;color:var(--text-3)}
+.lg-hint{color:var(--text-3)}
+.sec.sec-auswahl h3{color:var(--sel-line)}
+/* Planung */
+.pl-kal{margin-top:4px}
+.pl-head .seg{margin-right:8px}
+.pl-head h2 .pl-sp{font-size:14px;font-weight:500;color:var(--text-2);margin-left:6px;letter-spacing:0}
+.pl-woche{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-radius:14px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
+.pl-tag{display:flex;flex-direction:column;gap:6px;min-height:190px;padding:8px 7px 10px;border-left:1px solid var(--line);min-width:0;cursor:pointer;transition:background .12s,box-shadow .12s}
+.pl-tag:first-child{border-left:0}
+.pl-tag.we{background:var(--pastel)}
+.pl-tag:hover{background:var(--surface-2)}
+.pl-tag.sel{background:color-mix(in srgb,var(--sel-line) 7%,var(--surface))}
+.pl-tag.vorbei .pl-tk{opacity:.55}
+.pl-tk{display:flex;align-items:baseline;gap:5px;font-size:12.5px;color:var(--text-2)}
+.pl-wd{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3)}
+.pl-dn{font-variant-numeric:tabular-nums}
+.pl-tag.heute .pl-dn{display:inline-grid;place-items:center;min-width:24px;height:22px;padding:0 5px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:650}
+.pl-sum{margin-left:auto;font-weight:650;color:var(--text);font-variant-numeric:tabular-nums}
+.pl-last{display:block;height:4px;border-radius:4px;background:var(--surface-3);overflow:hidden}
+.pl-last i{display:block;height:100%;border-radius:4px;background:var(--sel-line)}
+.pl-last.voll i{background:var(--warn)}
+.pl-bloecke{display:flex;flex-direction:column;gap:4px;min-width:0}
+.pl-block{display:flex;align-items:center;gap:6px;min-width:0;padding:5px 7px;border-radius:8px;background:var(--surface);box-shadow:0 0 0 1px var(--line),0 1px 2px rgba(20,24,33,.05);font-size:12.5px;text-align:left;cursor:grab;user-select:none;-webkit-user-select:none}
+.pl-block:hover{box-shadow:0 0 0 1px var(--line-2),0 2px 6px rgba(20,24,33,.08)}
+.pl-block.is-sel{background:var(--sel-bg);box-shadow:inset 3px 0 0 var(--sel-line),0 0 0 1px var(--line)}
+.pl-block .dot{flex:none;width:7px;height:7px}
+.pl-bt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-bm{flex:none;font-size:11.5px;font-weight:600;color:var(--text-2);font-variant-numeric:tabular-nums}
+.pl-block.done .pl-bt{text-decoration:line-through;color:var(--text-3)}
+.pl-woche .pl-block{display:grid;grid-template-columns:7px minmax(0,1fr);column-gap:6px;row-gap:1px;align-items:start;padding:6px 7px}
+.pl-woche .pl-block .dot{margin-top:5px}
+.pl-woche .pl-bt{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3;word-break:break-word}
+.pl-woche .pl-bm{grid-column:2;font-size:11px}
+.pl-leer{font-size:11.5px;color:var(--text-3);padding:6px 2px;opacity:0;transition:opacity .15s}
+.pl-tag:hover .pl-leer,body.pl-ziehen .pl-leer{opacity:1}
+.pl-monat .pl-mtag{display:flex;flex-direction:column;gap:3px;min-height:104px;padding:6px 6px 8px;border-left:1px solid var(--line);min-width:0;cursor:pointer}
+.pl-monat .pl-mtag:first-child{border-left:0}
+.pl-mtag.we{background:var(--pastel)}
+.pl-mtag.aus{background:var(--surface-2);opacity:.45;cursor:default}
+.pl-mtag:not(.aus):hover{background:var(--surface-2)}
+.pl-mtag.sel{background:color-mix(in srgb,var(--sel-line) 7%,var(--surface))}
+.pl-mk{display:flex;align-items:center;gap:6px}
+.pl-mtag.heute .az-dn{display:inline-grid;place-items:center;min-width:22px;height:22px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:650}
+.pl-msum{margin-left:auto;font-size:12px;font-weight:650;font-variant-numeric:tabular-nums}
+.pl-mtag .pl-block{padding:3px 6px;font-size:11.5px}
+.pl-punkte{display:flex;gap:3px;flex-wrap:wrap}
+.pl-punkte .dot{width:6px;height:6px}
+.pl-tag.drop,.pl-mtag.drop{background:var(--sel-bg)!important;box-shadow:inset 0 0 0 2px var(--sel-line)}
+.pl-sec{margin-top:26px}
+.pl-tagliste,.pl-liste{display:flex;flex-direction:column}
+.pl-zeile,.pl-row{display:flex;align-items:center;gap:9px;min-height:42px;padding:3px 8px 3px 4px;border-radius:9px;border-bottom:1px solid var(--line);user-select:none;-webkit-user-select:none}
+.pl-zeile:hover,.pl-row:hover{background:var(--surface-2)}
+.pl-row{cursor:grab}
+.pl-grip{flex:none;display:grid;place-items:center;width:22px;height:30px;color:var(--text-3);cursor:grab;touch-action:none;border-radius:6px}
+.pl-grip svg.i{width:16px;height:16px;stroke-width:3.2}
+.pl-grip:hover{color:var(--text-2);background:var(--surface-3)}
+.pl-zeile .dot,.pl-row .dot{flex:none}
+.pl-zt,.pl-rt{flex:1;min-width:0;text-align:left;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:6px 0}
+.pl-zeile.done .pl-zt{text-decoration:line-through;color:var(--text-3)}
+.pl-ist{flex:none;font-size:12px;color:var(--ok);font-variant-numeric:tabular-nums;white-space:nowrap}
+.pl-dauer{flex:none;font:inherit;font-size:13px;color:var(--text);background:var(--surface-2);border:0;border-radius:8px;height:30px;padding:0 8px;cursor:pointer;outline:none}
+.pl-dauer:focus{box-shadow:inset 0 0 0 1px var(--accent),0 0 0 3px var(--accent-soft)}
+.pl-fokus{color:var(--ok)}
+.pl-fokus svg.i{fill:var(--ok)}
+.pl-weg{color:var(--text-3)}
+.pl-weg:hover{color:var(--danger)}
+.pl-chip{flex:none;font-size:11.5px;font-weight:600;color:var(--sel-line);background:color-mix(in srgb,var(--sel-line) 12%,transparent);padding:2px 8px;border-radius:999px;white-space:nowrap}
+.pl-due{flex:none;font-size:12.5px;color:var(--text-2);white-space:nowrap;min-width:64px;text-align:right}
+.pl-due.over{color:var(--danger)}
+.pl-add{flex:none;display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px 0 7px;border-radius:8px;font-size:12.5px;font-weight:550;color:var(--sel-line);background:color-mix(in srgb,var(--sel-line) 10%,transparent);white-space:nowrap}
+.pl-add:hover{background:color-mix(in srgb,var(--sel-line) 18%,transparent)}
+.pl-add svg.i{width:13px;height:13px}
+.pl-row.is-fokus .pl-rt::before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:50%;background:var(--ok);vertical-align:1px;animation:fkpuls 1.6s ease-in-out infinite}
+.pl-zu{margin-top:30px}
+.pl-quelle{opacity:.45}
+body.pl-ziehen,body.pl-ziehen *{cursor:grabbing!important;user-select:none!important;-webkit-user-select:none!important}
+.pl-ghost{position:fixed;left:0;top:0;z-index:200;pointer-events:none;display:flex;align-items:center;gap:7px;max-width:280px;padding:7px 12px;border-radius:10px;background:var(--surface);box-shadow:var(--shadow-lg),inset 0 0 0 1.5px var(--sel-line);font-size:13px;font-weight:550}
+.pl-ghost span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.z-plan{display:flex;align-items:center;gap:6px;color:var(--sel-line)}
+.z-plan svg.i{width:13px;height:13px;flex:none}
+/* Wochenkalender bleibt beim Scrollen durch die Liste oben stehen – so ist das Ziel beim Ziehen immer sichtbar */
+@media (min-width:761px) and (min-height:760px){
+  .pl-kal.woche{position:sticky;top:-28px;z-index:6;background:var(--surface);padding:28px 0 8px;margin-top:-24px}
+}
 .sec-over h3{color:var(--danger)}
 .sec-today h3{color:var(--accent)}
 .sec-tomorrow h3{color:var(--text)}
@@ -372,7 +456,7 @@ body.fokus-an .main-inner{padding-bottom:150px}
 .wk-dow span{padding:5px 8px;font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:.05em;text-transform:uppercase}
 .cwd{display:block;font-style:normal;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:1px}
 .calle{border-left:1px solid var(--line);background:var(--surface-2)}
-.calle.sel{background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.calle.sel{background:color-mix(in srgb,var(--sel-line) 22%,transparent)}
 .calle.sel + .cnum,.calle.sel ~ .calle-l{color:var(--text)}
 .calle-l{text-align:center;color:var(--text-2);font-size:11px;line-height:1.25;padding-top:10px}
 .calle-l span{display:inline;min-width:0;height:auto;padding:0;border-radius:0}
@@ -469,10 +553,11 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .swipe{position:relative;overflow:hidden;border-radius:10px}
 .swipe>.row{background:var(--surface);transition:transform .18s ease}
 .swipe.dragging>.row{transition:none}
-/* Ausgewähltes To-do: zartes Lavendel mit schmaler Kante links – bewusst eine eigene Farbe,
+/* Ausgewähltes To-do: gedecktes Petrol mit schmaler Kante links – bewusst eine eigene Farbe,
    damit es sich auch von den blau/rot getönten Abschnitten Heute/Überfällig abhebt */
 .row.is-sel.is-sel.is-sel.is-sel{background:var(--sel-bg);box-shadow:inset 3px 0 0 var(--sel-line)}
 .row.is-sel.is-sel.is-sel.is-sel:hover{background:var(--sel-bg-h)}
+.pl-row.is-sel{background:var(--sel-bg);box-shadow:inset 3px 0 0 var(--sel-line)}
 .row.is-sel .rnum{background:color-mix(in srgb,var(--sel-line) 18%,transparent)!important;color:var(--sel-line)!important}
 .swipe-act{position:absolute;inset:0;display:flex;justify-content:flex-end;background:var(--danger);border-radius:10px}
 .swipe-act button{display:flex;align-items:center;gap:6px;color:#fff;font-weight:600;font-size:13.5px;padding:0 18px}
@@ -580,9 +665,9 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .cbg.c0{border-left:0}
 .cbg.we{background:var(--pastel)}
 .cbg.out{background:var(--surface-2)}
-.cbg.sel{background:var(--accent-soft)}
+.cbg.sel{background:color-mix(in srgb,var(--sel-line) 16%,transparent)}
 .cbg.today{background:color-mix(in srgb,var(--accent) 14%,transparent)}
-.cbg.today.sel{background:var(--accent-soft)}
+.cbg.today.sel{background:color-mix(in srgb,var(--sel-line) 16%,transparent)}
 .cbg:hover{background:var(--surface-2)}
 .cnum,.citems{pointer-events:none;min-width:0}
 .cnum>*,.citems>*{pointer-events:auto}
@@ -762,6 +847,26 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .fokus{bottom:calc(84px + env(safe-area-inset-bottom))}
   body.fokus-an .toast{bottom:calc(140px + env(safe-area-inset-bottom))}
   .az-kacheln{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pl-head{flex-wrap:wrap}
+  .pl-head h2{flex:1 0 100%;margin-bottom:6px}
+  .pl-woche{grid-template-columns:1fr}
+  .pl-tag{min-height:0;flex-direction:row;flex-wrap:wrap;align-items:center;border-left:0;border-top:1px solid var(--line);padding:8px 10px}
+  .pl-tag:first-child{border-top:0}
+  .pl-tk{flex:0 0 74px;flex-direction:column;align-items:flex-start;gap:0}
+  .pl-sum{margin-left:0;font-size:12px}
+  .pl-last{display:none}
+  .pl-bloecke{flex:1;flex-direction:row;flex-wrap:wrap}
+  .pl-block,.pl-woche .pl-block{max-width:100%;display:flex;align-items:center;padding:5px 8px}
+  .pl-woche .pl-block .dot{margin-top:0}
+  .pl-woche .pl-bt{display:block;white-space:nowrap}
+  .pl-leer{opacity:1}
+  .pl-monat .pl-mtag{min-height:58px;padding:4px}
+  .pl-msum{font-size:10.5px;margin-left:0}
+  .pl-mk{flex-direction:column;align-items:flex-start;gap:1px}
+  .pl-due{display:none}
+  .pl-chip{display:none}
+  .pl-ist{display:none}
+  .pl-zt,.pl-rt{font-size:15px}
   .az-kopf{display:none}
   .az-zeile{grid-template-columns:minmax(0,1fr) auto;row-gap:2px;padding:8px 6px}
   .az-letzte{grid-column:1 / -1;font-size:11.5px}
@@ -827,7 +932,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v73';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v74';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -893,7 +998,8 @@ const ICONS = {
   down:'<path d="M12 4.5v11M7.5 11l4.5 4.5 4.5-4.5M5 19.5h14"/>',
   up:'<path d="M12 15.5v-11M7.5 9L12 4.5 16.5 9M5 19.5h14"/>',
   grip:'<path d="M8 8h.01M8 12h.01M8 16h.01M15 8h.01M15 12h.01M15 16h.01"/>',
-  check:'<path d="M6 12.5l4 4 8-9"/>'
+  check:'<path d="M6 12.5l4 4 8-9"/>',
+  plan:'<rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v3.5M15.5 3.5v3.5M8 13.5h5M8 16.8h8"/>'
 };
 const ic = (n, cls = 'i') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]}</svg>`;
 
@@ -1171,8 +1277,9 @@ function relTime(ts){
 
 /* ============ Zustand ============ */
 const S = {
-  view:'bydeadline', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
-  calSel:{ art:'day', wert:iso(TODAY) },
+  view:'deadlines', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
+  calSel:null,                                   // im Deadlines-Kalender gewählter Tag/Woche/Monat
+  planArt:'woche', planWoche:THIS_MON, planMonat:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), planTag:iso(TODAY),
   azMonat:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), azTag:iso(TODAY), zeitEdit:null,
   sort:'due', area:'work', q:'', qDone:false, allView:'list', reorder:false, weekOff:0, online:navigator.onLine, memOnly:false,
   addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
@@ -1184,7 +1291,7 @@ let undo = null;
 
 /* ============ Bausteine ============ */
 /* Suche: Treffer sichtbar machen. Aktiv nur dort, wo die Suche auch filtert (Empfehlungen). */
-const suchBegriff = () => (GRUPPEN[S.view] || S.view === 'recs' ? S.q.trim() : '');
+const suchBegriff = () => (GRUPPEN[S.view] || S.view === 'recs' || S.view === 'planung' ? S.q.trim() : '');
 // Gemeinsamer Suchfilter: Titel, Beschreibung, Kontext, Personen, Projekt, Kategorie
 function sucheFilter(list){
   const q = S.q.trim().toLowerCase(); if (!q) return list;
@@ -1404,7 +1511,8 @@ function renderSidebar(){
     inbox: T.filter(t => t.status === 'inbox').length,
     today: open.filter(t => ['overdue', 'today'].includes(bucket(t))).length,
     mitFrist: open.filter(t => t.due).length,
-    all: open.length
+    all: open.length,
+    planHeute: planAm(iso(TODAY), true).reduce((a, x) => a + x.p.min, 0)
   };
   const tile = (v, icon, label, n) => `<button class="tile ${S.view === v ? 'on' : ''}" data-act="nav" data-view="${v}">${ic(icon)}<span class="tile-l">${label}</span>${n === '' ? '' : `<span class="tile-n">${n}</span>`}</button>`;
   const aktivIn = v => S.view === v;
@@ -1420,7 +1528,7 @@ function renderSidebar(){
     <div class="brand"><div class="brand-txt"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span><span class="brand-wort">Brain<span class="brand-72">72</span></span><span class="brand-app">ToDo</span></span><span class="brand-tag">copyright THS 2026</span></div></div>
     <label class="search ${S.q ? 'on' : ''}">${ic('search')}<input id="sbq" placeholder="Suchen" value="${esc(S.q)}" aria-label="To-dos durchsuchen" enterkeyhint="search">${S.q ? `<button class="sq-x" data-act="q-clear" aria-label="Suche leeren" title="Suche leeren">${ic('close')}</button>` : ''}</label>
     ${S.q.trim() ? `<button class="switch2 sq-sw ${S.qDone ? 'on' : ''}" data-act="q-done" aria-pressed="${S.qDone}"><span class="sw2"></span>auch Erledigte</button>` : ''}
-    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('calendar', 'cal', 'Kalender', '')}${tile('bydeadline', 'clock', 'Nach Frist', cnt.mitFrist)}${tile('byperson', 'person', 'Nach Person', PEOPLE.length)}${tile('byproject', 'folder', 'Nach Projekt', PROJECTS.length)}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}${tile('analyse', 'chart', 'Analyse', '')}</div>
+    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('deadlines', 'cal', 'Deadlines', cnt.mitFrist)}${tile('planung', 'plan', 'Planung', cnt.planHeute ? minKurz(cnt.planHeute) : '')}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}${tile('analyse', 'chart', 'Analyse', '')}</div>
     <div class="sb-group">${item('done', 'Erledigt', T.filter(t => t.status === 'done').length, ic('done'))}${item('archive', 'Archiv', T.filter(t => t.status === 'archived').length, ic('archive'))}${item('parked', 'Parkliste', T.filter(t => t.status === 'parked').length, ic('pause'))}${item('settings', 'Einstellungen', '', ic('gear'))}</div>
     <div class="sb-foot">
       <div class="sync"><i class="dot" style="--c:${syncCol}"></i><span>${syncTxt}</span>${syncBtn}<span class="ver" title="Laufende Fassung – Einstellungen → Fassung lädt die neueste">${APP_VERSION}</span></div>
@@ -1432,21 +1540,19 @@ const themeSeg = () => `<div class="seg" role="group" aria-label="Darstellung">$
 /* ============ Ansichten ============ */
 const MOBIL_MQ = '(max-width:760px), (max-height:520px) and (pointer:coarse)';
 const isMobile = () => matchMedia(MOBIL_MQ).matches;
-// Die vier Listenseiten unterscheiden sich nur in der Gruppierung.
-const GRUPPEN = {
-  bydeadline:['Nach Frist', 'due'],
-  byperson:['Nach Person', 'person'],
-  byproject:['Nach Projekt', 'project']
-};
+// Listenseiten: dort gelten Suche, Spaltenleiste und Tagesauswahl
+const GRUPPEN = { deadlines:['Deadlines', 'due'] };
 // Laufende Woche im Kalenderraster – steht auf jeder Listenseite an derselben Stelle.
 // Filterzeile mit Beschriftung – auf allen Listenseiten gleich
 function filterLeiste(o = {}){
   // Neben dem Bereich lässt sich auf einen Tag der Woche und – je nach Seite – auf eine Person
   // oder ein Projekt eingrenzen; der Schalter blendet zusätzlich Erledigtes ein.
   let wahl = '';
-  if (S.view === 'byperson') wahl += auswahlFeld('pers', 'Person', [...PEOPLE].sort(byName));
-  if (S.view === 'byproject') wahl += auswahlFeld('proj', 'Projekt', [...PROJECTS].sort(byName));
-  const erledigt = `<button class="switch2 sw-erl ${S.qDone ? 'on' : ''}" data-act="q-done" aria-pressed="${S.qDone}"><span class="sw2"></span>Erledigte</button>`;
+  if (S.view === 'deadlines' || S.view === 'planung'){
+    wahl += auswahlFeld('pers', 'Person', [...PEOPLE].sort(byName));
+    wahl += auswahlFeld('proj', 'Projekt', [...PROJECTS].sort(byName));
+  }
+  const erledigt = o.ohneErledigt ? '' : `<button class="switch2 sw-erl ${S.qDone ? 'on' : ''}" data-act="q-done" aria-pressed="${S.qDone}"><span class="sw2"></span>Erledigte</button>`;
   return `<div class="tb-group filterbar"><span class="tb-label">Filter</span>
     <div class="toolbar tb-split" style="width:100%"><div class="f-links">${seg('area', AREA_SEG)}${wahl}${erledigt}</div>${o.ohneAnsicht ? '' : seg('allView', VIEW_SEG)}</div></div>`;
 }
@@ -1464,44 +1570,276 @@ function wochenKopf(list, tagWahl = false){
       <button class="icon-btn" style="margin-left:auto" data-act="week" data-v="1" aria-label="Nächste Woche">${ic('chevR')}</button></div>
     <div class="cal cal-wk">${kalenderWoche(wStart, list, { tagWahl })}</div>`;
 }
-function viewListe(){
-  const mob = isMobile();
-  const [titel, art] = GRUPPEN[S.view] || GRUPPEN.bydeadline;
-  const alle = T.filter(t => isOpen(t) || (S.qDone && t.status === 'done'));
-  let open = sucheFilter(S.area === 'all' ? alle : alle.filter(t => areaOf(t) === S.area));
-  if (S.view === 'byperson' && S.pers !== 'all') open = open.filter(t => t.persons.includes(S.pers));
-  if (S.view === 'byproject' && S.proj !== 'all') open = open.filter(t => t.project === S.proj);
-  const wochenListe = open;                       // die Wochenzeile bleibt immer vollständig
-  const tagGewaehlt = S.tag !== 'all' ? P(S.tag) : null;
-  // Zum Tag zählt nur, was auf dieses Datum terminiert ist – nicht jede Wochen- oder Monatsfrist,
-  // die den Tag zufällig überspannt. Die stehen darunter in ihren gewohnten Gruppen.
-  const amTag = t => t.due?.type === 'day' && same(P(t.due.date), tagGewaehlt);
-  const woche = wochenKopf(wochenListe, true);
-  const leisten = filterLeiste() + suchFeld();
-  // Zwei Blöcke: oben die offenen To-dos gruppiert, darunter das Erledigte am Stück
-  const offen = open.filter(isOpen);
-  const fertig = open.filter(t => t.status === 'done').sort((a, b) => String(b.doneAt || '').localeCompare(String(a.doneAt || '')));
+/* Gemeinsame Filter für Deadlines und Planung: Bereich, Person, Projekt, Suche */
+function filterBasis(list){
+  if (S.area !== 'all') list = list.filter(t => areaOf(t) === S.area);
+  if (S.pers !== 'all') list = list.filter(t => (t.persons || []).includes(S.pers));
+  if (S.proj !== 'all') list = list.filter(t => t.project === S.proj);
+  return sucheFilter(list);
+}
+// Liegt die Frist im Zeitraum, der im Kalender gewählt ist? Gezählt wird nur, was dort fällig ist –
+// nicht jede Frist, die den Zeitraum zufällig überspannt.
+function inAuswahl(t){
+  const sel = S.calSel; if (!sel || !t.due) return false;
+  if (sel.art === 'month') return t.due.type === 'month' ? t.due.month === sel.wert
+    : monthKey(P(t.due.type === 'week' ? t.due.start : t.due.date)) === sel.wert;
+  if (sel.art === 'week'){
+    const wmo = P(sel.wert), wso = addD(wmo, 6);
+    return t.due.type === 'day' ? (P(t.due.date) >= wmo && P(t.due.date) <= wso) : t.due.type === 'week' ? same(P(t.due.start), wmo) : false;
+  }
+  return t.due.type === 'day' && same(P(t.due.date), P(sel.wert));
+}
+function auswahlTitel(){
+  const sel = S.calSel;
+  if (sel.art === 'month'){ const d = P(sel.wert + '-01'); return `${MON[d.getMonth()]} ${d.getFullYear()}`; }
+  if (sel.art === 'week'){ const a = P(sel.wert), b = addD(a, 6); return `KW ${kw(a)} · ${a.getDate()}. ${MON[a.getMonth()]} – ${b.getDate()}. ${MON[b.getMonth()]}`; }
+  return longDate(P(sel.wert));
+}
+// Deadlines: oben der Monatskalender, darunter Filter und die Liste nach Frist.
+// Ein angeklickter Tag (oder Woche/Monat) steht in der Liste zuerst, danach Überfällig, Heute, Morgen …
+function viewDeadlines(){
+  const mob = isMobile(), sel = S.calSel;
+  const basis = filterBasis(T.filter(t => isOpen(t) || (S.qDone && t.status === 'done')));
+  // Kalender
+  const m = S.calMonth, y = m.getFullYear(), mo = m.getMonth();
+  const first = new Date(y, mo, 1), last = new Date(y, mo + 1, 0);
+  const vis = basis.filter(t => t.due);
+  let weeks = '';
+  for (let ws = mondayOf(first); ws <= last; ws = addD(ws, 7)) weeks += kalenderWoche(ws, vis, { monat:mo, tagKlick:true, wochenWahl:true });
+  const monatAn = sel?.art === 'month' && sel.wert === monthKey(first);
+  const kalender = `<div class="cal-head"><h2>${MON[mo]} ${y}</h2>
+      ${sel ? `<button class="btn btn-t btn-s" data-act="cal-clear">${ic('close')}Auswahl aufheben</button>` : ''}
+      <button class="btn ${monatAn ? 'btn-p' : 'btn-g'} btn-s" data-act="cal-month" data-d="${monthKey(first)}">Ganzer Monat</button>
+      <button class="icon-btn" data-act="cal-prev" aria-label="Vorheriger Monat">${ic('chevL')}</button><button class="btn btn-g btn-s" data-act="cal-today">Heute</button><button class="icon-btn" data-act="cal-next" aria-label="Nächster Monat">${ic('chevR')}</button></div>
+    <div class="legend"><span><i class="lg-bar"></i>Wochen-Frist</span><span><i class="lg-band"></i>Monats-Frist</span><span class="lg-hint">Tag anklicken: steht in der Liste zuerst</span></div>
+    <div class="cal"><div class="wk wk-wahl wk-dow">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((d, i) => `<span style="grid-column:${i + 1}">${d}</span>`).join('')}<span style="grid-column:8"></span></div>${weeks}</div>`;
+  // Projektfortschritt, wenn auf ein Projekt gefiltert ist
+  const pr = S.proj !== 'all' ? projById(S.proj) : null;
+  const projInfo = pr ? (() => { const alle = T.filter(t => t.project === pr.id), pct = projPct(alle);
+    return `<div class="hdr-prog"><span class="prog" style="--c:${areaColor(pr.area)}"><i style="width:${pct}%"></i></span><span class="prog-l">${pct} %</span><span class="muted">${esc(pr.name)} · Fortschritt über alle To-dos</span></div>`; })() : '';
+  // Liste
+  const offen = basis.filter(isOpen);
+  const fertig = basis.filter(t => t.status === 'done').sort((a, b) => String(b.doneAt || '').localeCompare(String(a.doneAt || '')));
   const erledigtBlock = fertig.length
     ? `<div class="sec sec-done"><h3>Erledigt</h3><span class="n">${fertig.length}</span></div>
        <div>${fertig.map(t => rowHTML(t, { noPark:true })).join('')}</div>`
     : '';
   let body;
   if (S.allView === 'grid'){
-    body = gridHTML(tagGewaehlt ? offen.filter(amTag) : offen) + erledigtBlock;
+    body = gridHTML(sel ? offen.filter(inAuswahl) : offen) + erledigtBlock;
   } else {
-    const rest = tagGewaehlt ? offen.filter(t => !amTag(t)) : offen;
-    const restGruppen = art === 'due' ? bucketGroups(rest) : groupList(rest, art);
-    const groups = tagGewaehlt
-      ? [{ title:longDate(tagGewaehlt), items:offen.filter(amTag).sort(sortByDue), leer:'Keine Tasks an diesem Tag.' }, ...restGruppen]
-      : restGruppen;
+    const order = { day:0, week:1, month:2 };
+    const rest = sel ? offen.filter(t => !inAuswahl(t)) : offen;
+    const leerTxt = !sel ? '' : sel.art === 'month' ? 'In diesem Monat ist nichts fällig.' : sel.art === 'week' ? 'In dieser Woche ist nichts fällig.' : 'An diesem Tag ist nichts fällig.';
+    const groups = [
+      ...(sel ? [{ title:auswahlTitel(), cls:'sec-auswahl', items:offen.filter(inAuswahl).sort((a, b) => order[a.due.type] - order[b.due.type] || sortByDue(a, b)), leer:leerTxt }] : []),
+      ...bucketGroups(rest)
+    ];
     const leer = !T.length
       ? `<div class="empty-big"><strong>Willkommen bei Brain72.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Leg links im Menü dein erstes To-do an.'}</div>`
       : S.q.trim() ? `<div class="empty-big"><strong>Keine Treffer für „${esc(S.q.trim())}“.</strong>Suchbegriff ändern oder leeren.</div>`
       : `<div class="empty-big"><strong>Keine offenen To-dos.</strong>Schön aufgeräumt.</div>`;
     body = (groups.some(g => g.items.length) ? groupsHTML(groups) : (fertig.length ? '' : leer)) + erledigtBlock + erledigteTrefferHTML();
   }
-  return header(titel, esc(longDate(TODAY))) + woche + leisten + body;
+  return header('Deadlines', esc(longDate(TODAY))) + kalender + filterLeiste() + suchFeld() + projInfo + body;
 }
+
+/* ============ Planung ============
+   Geplante Arbeitszeit liegt am To-do unter „plan“: eine Liste von {id, tag:'JJJJ-MM-TT', min, ts}.
+   Wie bei der Zeiterfassung wird die Liste bei jeder Änderung als Ganzes ersetzt – so gleicht der
+   Abgleich sie sauber zwischen den Geräten ab, und nichts anderes am To-do wird berührt. */
+const plaene = t => Array.isArray(t.plan) ? t.plan : [];
+const PLAN_STD = 60;                                   // Minuten für ein neu eingeplantes To-do
+const PLAN_ZIEL = 8 * 60;                              // Richtwert für den Tagesbalken
+const PLAN_DAUERN = [15, 30, 45, 60, 90, 120, 150, 180, 240, 300, 360, 420, 480];
+const minTxt = m => dauerTxt(m * 60000);
+const minKurz = m => dauerKurz(m * 60000);
+const tagTxt = tag => { const d = P(tag); return `${WD[d.getDay()]} ${d.getDate()}. ${MONS[d.getMonth()]}`; };
+// Alle Einplanungen eines Tages; der Bereichsfilter gilt auch hier
+function planAm(tag, alleBereiche = false){
+  const r = [];
+  for (const t of T){
+    if (!alleBereiche && S.area !== 'all' && areaOf(t) !== S.area) continue;
+    for (const p of plaene(t)) if (p.tag === tag) r.push({ t, p });
+  }
+  return r.sort((a, b) => (a.p.ts || 0) - (b.p.ts || 0));
+}
+const planSumme = tag => planAm(tag).reduce((a, x) => a + x.p.min, 0);
+function planSetzen(t, neu, msg){
+  const vorher = plaene(t).map(p => ({ ...p }));
+  t.plan = neu.filter(p => p.min > 0);
+  save('todos', t);
+  undo = () => { t.plan = vorher; save('todos', t); };
+  render();
+  if (msg) toast(msg, { act:'undo', label:'Rückgängig' });
+}
+const kurzTitel = t => t.title.length > 38 ? t.title.slice(0, 36) + '…' : t.title;
+function planHinzu(t, tag, min = PLAN_STD){
+  const l = plaene(t).map(p => ({ ...p })), da = l.find(p => p.tag === tag);
+  if (da) da.min += min; else l.push({ id:uid(), tag, min, ts:Date.now() });
+  S.planTag = tag;
+  planSetzen(t, l, `„${kurzTitel(t)}“ ${tagTxt(tag)} eingeplant · ${minTxt(da ? da.min : min)}`);
+}
+function planVerschieben(t, pid, tag){
+  const l = plaene(t).map(p => ({ ...p })), p = l.find(x => x.id === pid);
+  if (!p || p.tag === tag) return;
+  const ziel = l.find(x => x.tag === tag && x.id !== pid);
+  if (ziel){ ziel.min += p.min; l.splice(l.indexOf(p), 1); } else p.tag = tag;
+  S.planTag = tag;
+  planSetzen(t, l, `„${kurzTitel(t)}“ auf ${tagTxt(tag)} verschoben`);
+}
+// Sichtbarer Zeitraum im Planungskalender
+function planSpanne(){
+  if (S.planArt === 'monat'){ const m = S.planMonat; return [new Date(m.getFullYear(), m.getMonth(), 1), new Date(m.getFullYear(), m.getMonth() + 1, 0)]; }
+  return [S.planWoche, addD(S.planWoche, 6)];
+}
+function planTagAnpassen(){
+  const [a, b] = planSpanne(), g = P(S.planTag);
+  if (g < a || g > b) S.planTag = iso(TODAY >= a && TODAY <= b ? TODAY : a);
+}
+function planBlock(t, p, kurz = false){
+  const fertig = t.status === 'done' || t.status === 'archived';
+  return `<button class="pl-block ${fertig ? 'done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-pl-drag data-act="open" data-id="${t.id}" data-pid="${p.id}" title="${esc(t.title)} · ${minTxt(p.min)}">
+    <i class="dot" style="--c:${areaColor(areaOf(t))}"></i>${kurz ? '' : `<span class="pl-bt">${esc(t.title)}</span>`}<span class="pl-bm">${minKurz(p.min)}</span></button>`;
+}
+function viewPlanung(){
+  const mob = isMobile(), heuteIso = iso(TODAY);
+  planTagAnpassen();
+  const lastBalken = sum => `<span class="pl-last ${sum > PLAN_ZIEL ? 'voll' : ''}"><i style="width:${Math.min(100, Math.round(sum / PLAN_ZIEL * 100))}%"></i></span>`;
+  let titel, raster;
+  if (S.planArt === 'monat'){
+    const m = S.planMonat, erster = new Date(m.getFullYear(), m.getMonth(), 1), letzter = new Date(m.getFullYear(), m.getMonth() + 1, 0);
+    titel = `${MON[m.getMonth()]} ${m.getFullYear()}`;
+    let wochen = '';
+    for (let ws = mondayOf(erster); ws <= letzter; ws = addD(ws, 7)){
+      let zellen = '';
+      for (let i = 0; i < 7; i++){
+        const d = addD(ws, i), tag = iso(d), aus = d.getMonth() !== m.getMonth();
+        const e = aus ? [] : planAm(tag), sum = e.reduce((a, x) => a + x.p.min, 0);
+        zellen += `<div class="pl-mtag ${i >= 5 ? 'we' : ''} ${aus ? 'aus' : ''} ${tag === heuteIso ? 'heute' : ''} ${tag === S.planTag ? 'sel' : ''}" ${aus ? '' : `data-plan-tag="${tag}" data-act="pl-tag" data-d="${tag}"`}>
+          <span class="pl-mk"><span class="az-dn">${d.getDate()}</span>${sum ? `<span class="pl-msum">${minKurz(sum)}</span>` : ''}</span>
+          ${mob ? (e.length ? `<span class="pl-punkte">${e.slice(0, 4).map(x => `<i class="dot" style="--c:${areaColor(areaOf(x.t))}"></i>`).join('')}</span>` : '')
+                : e.slice(0, 3).map(x => planBlock(x.t, x.p)).join('') + (e.length > 3 ? `<span class="az-mehr">+${e.length - 3}</span>` : '')}</div>`;
+      }
+      wochen += `<div class="az-woche">${zellen}</div>`;
+    }
+    raster = `<div class="az-cal pl-monat"><div class="az-dow">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(x => `<span>${x}</span>`).join('')}</div>${wochen}</div>`;
+  } else {
+    const ws = S.planWoche, we = addD(ws, 6);
+    titel = `KW ${kw(ws)} <span class="pl-sp">${ws.getDate()}. ${ws.getMonth() !== we.getMonth() ? MON[ws.getMonth()] + ' ' : ''}– ${we.getDate()}. ${MON[we.getMonth()]}</span>`;
+    let spalten = '';
+    for (let i = 0; i < 7; i++){
+      const d = addD(ws, i), tag = iso(d), e = planAm(tag), sum = e.reduce((a, x) => a + x.p.min, 0);
+      spalten += `<div class="pl-tag ${i >= 5 ? 'we' : ''} ${tag === heuteIso ? 'heute' : ''} ${tag === S.planTag ? 'sel' : ''} ${d < TODAY ? 'vorbei' : ''}" data-plan-tag="${tag}" data-act="pl-tag" data-d="${tag}">
+        <div class="pl-tk"><span class="pl-wd">${WD[d.getDay()]}</span><span class="pl-dn">${d.getDate()}.</span><span class="pl-sum">${sum ? minKurz(sum) : ''}</span></div>
+        ${lastBalken(sum)}
+        <div class="pl-bloecke">${e.map(x => planBlock(x.t, x.p)).join('') || `<span class="pl-leer">${mob ? 'frei' : 'hierher ziehen'}</span>`}</div></div>`;
+    }
+    raster = `<div class="pl-woche">${spalten}</div>`;
+  }
+  const kopf = `<div class="cal-head pl-head"><h2>${titel}</h2>
+      ${seg('planArt', [['woche', 'Woche'], ['monat', 'Monat']]).replace(/data-act="set" data-k="planArt"/g, 'data-act="pl-art"')}
+      <button class="icon-btn" data-act="pl-nav" data-v="-1" aria-label="Zurück">${ic('chevL')}</button><button class="btn btn-g btn-s" data-act="pl-heute">Heute</button><button class="icon-btn" data-act="pl-nav" data-v="1" aria-label="Weiter">${ic('chevR')}</button></div>`;
+
+  // Gewählter Tag: Einplanungen mit Dauer, daneben die tatsächlich erfasste Zeit
+  const tag = S.planTag, gd = P(tag), e = planAm(tag), sum = e.reduce((a, x) => a + x.p.min, 0);
+  const vonMs = gd.getTime(), bisMs = addD(gd, 1).getTime();
+  const dauerWahl = (t, p) => {
+    const opts = PLAN_DAUERN.includes(p.min) ? PLAN_DAUERN : [...PLAN_DAUERN, p.min].sort((a, b) => a - b);
+    return `<select class="pl-dauer" data-pl-dauer="${p.id}" data-id="${t.id}" aria-label="Geplante Dauer">${opts.map(m => `<option value="${m}"${m === p.min ? ' selected' : ''}>${minTxt(m)}</option>`).join('')}</select>`;
+  };
+  const tagListe = e.length ? `<div class="pl-tagliste">${e.map(({ t, p }) => {
+      const ist = zeitIn(t, vonMs, bisMs), offen = isOpen(t);
+      return `<div class="pl-zeile ${offen ? '' : 'done'}" data-pl-drag data-id="${t.id}" data-pid="${p.id}">
+        <span class="pl-grip" title="Auf einen anderen Tag ziehen">${ic('grip')}</span>
+        <i class="dot" style="--c:${areaColor(areaOf(t))}"></i>
+        <button class="pl-zt" data-act="open" data-id="${t.id}">${esc(t.title)}</button>
+        ${ist >= 60000 ? `<span class="pl-ist" title="An diesem Tag erfasst">erfasst ${dauerKurz(ist)}</span>` : ''}
+        ${dauerWahl(t, p)}
+        ${tag === heuteIso && offen && !t.timerStart ? `<button class="icon-btn pl-fokus" data-act="timer-start" data-id="${t.id}" title="Fokus starten" aria-label="Fokus starten">${ic('play')}</button>` : ''}
+        <button class="icon-btn pl-weg" data-act="pl-weg" data-id="${t.id}" data-pid="${p.id}" title="Aus der Planung nehmen" aria-label="Aus der Planung nehmen">${ic('close')}</button></div>`;
+    }).join('')}</div>`
+    : `<div class="empty">${mob ? 'Noch nichts geplant. Tippe unten bei einem To-do auf „+“ – oder zieh es am Griff in einen Tag.' : 'Noch nichts geplant. Zieh ein To-do aus der Liste unten in einen Tag – oder klick auf „+“.'}</div>`;
+  const tagBlock = `<div class="sec pl-sec"><h3>${esc(longDate(gd))}</h3><span class="n">${sum ? `${minTxt(sum)} geplant` : ''}</span></div>${tagListe}`;
+
+  // To-dos zum Einplanen, gruppiert wie auf der Deadlines-Seite
+  const offen = filterBasis(T.filter(isOpen));
+  const abHeute = t => plaene(t).filter(p => p.tag >= heuteIso);
+  const plusTxt = `${WD[gd.getDay()]} ${gd.getDate()}.`;
+  const zeile = t => {
+    const d = dueLabel(t), kommend = abHeute(t), ksum = kommend.reduce((a, p) => a + p.min, 0);
+    return `<div class="pl-row ${S.sel === t.id ? 'is-sel' : ''} ${t.timerStart ? 'is-fokus' : ''}" data-pl-drag data-id="${t.id}">
+      <span class="pl-grip" title="Ziehen, um einzuplanen">${ic('grip')}</span>
+      <i class="dot" style="--c:${areaColor(areaOf(t))}"></i>
+      <button class="pl-rt" data-act="open" data-id="${t.id}">${hl(t.title)}</button>
+      ${ksum ? `<span class="pl-chip" title="${esc(kommend.map(p => `${tagTxt(p.tag)}: ${minTxt(p.min)}`).join(' · '))}">${minKurz(ksum)} geplant</span>` : ''}
+      <span class="pl-due ${d.cls}">${esc(d.txt)}</span>
+      <button class="pl-add" data-act="pl-add" data-id="${t.id}" title="Für ${esc(longDate(gd))} einplanen">${ic('plus')}${plusTxt}</button></div>`;
+  };
+  const gruppen = bucketGroups(offen).filter(g => g.items.length);
+  const liste = gruppen.length
+    ? gruppen.map(g => `<div class="sec ${g.cls || ''}"><h3>${esc(g.title)}</h3><span class="n">${g.items.length}</span></div><div class="pl-liste">${g.items.map(zeile).join('')}</div>`).join('')
+    : `<div class="empty">${S.q.trim() ? `Keine Treffer für „${esc(S.q.trim())}“.` : 'Keine offenen To-dos für diesen Filter.'}</div>`;
+
+  return header('Planung', mob ? 'Wann arbeitest du woran – und wie lange?' : 'Zieh To-dos in einen Tag und leg fest, wie lange du daran arbeitest.') +
+    `<div class="pl-kal ${S.planArt}">${kopf}${raster}</div>` + tagBlock +
+    `<div class="sec pl-zu"><h3>Zu planen</h3></div>` + filterLeiste({ ohneAnsicht:true, ohneErledigt:true }) + suchFeld() + liste;
+}
+// Ziehen & Ablegen: Maus an der ganzen Zeile, Finger am Griff (sonst würde jedes Wischen zum Ziehen)
+let plDrag = null, plKlickBis = 0;
+function plZiel(x, y){
+  const z = document.elementFromPoint(x, y)?.closest('[data-plan-tag]') || null;
+  if (z !== plDrag.ziel){ plDrag.ziel?.classList.remove('drop'); z?.classList.add('drop'); plDrag.ziel = z; }
+}
+function plEnde(){
+  if (!plDrag) return;
+  clearInterval(plDrag.scroll); plDrag.ghost?.remove(); plDrag.ziel?.classList.remove('drop');
+  plDrag.src.classList.remove('pl-quelle'); document.body.classList.remove('pl-ziehen');
+  plDrag = null;
+}
+document.addEventListener('pointerdown', e => {
+  if (S.view !== 'planung' || e.button > 0) return;
+  const src = e.target.closest('[data-pl-drag]'); if (!src) return;
+  const griff = e.target.closest('.pl-grip');
+  if (e.pointerType !== 'mouse' && !griff) return;
+  if (!griff && e.target.closest('select, input, .pl-add, .pl-weg, .pl-fokus')) return;
+  plDrag = { src, id:src.dataset.id, pid:src.dataset.pid || null, x0:e.clientX, y0:e.clientY, an:false, ziel:null };
+});
+addEventListener('pointermove', e => {
+  if (!plDrag) return;
+  if (!plDrag.an){
+    if (Math.hypot(e.clientX - plDrag.x0, e.clientY - plDrag.y0) < 6) return;
+    const t = T.find(x => x.id === plDrag.id); if (!t){ plEnde(); return; }
+    plDrag.an = true;
+    const g = document.createElement('div');
+    g.className = 'pl-ghost';
+    g.innerHTML = `<i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span>${esc(t.title)}</span>`;
+    document.body.append(g); plDrag.ghost = g;
+    document.body.classList.add('pl-ziehen'); plDrag.src.classList.add('pl-quelle');
+    // Am Rand des Inhalts mitscrollen, damit der Kalender auch von weit unten erreichbar ist
+    plDrag.scroll = setInterval(() => {
+      if (!plDrag?.an) return;
+      const m = $('#main'), r = m.getBoundingClientRect(), y = plDrag.py;
+      const d = y < r.top + 80 ? -(r.top + 80 - y) / 4 : y > r.bottom - 80 ? (y - (r.bottom - 80)) / 4 : 0;
+      if (d){ m.scrollTop += d; plZiel(plDrag.px, plDrag.py); }
+    }, 16);
+  }
+  plDrag.px = e.clientX; plDrag.py = e.clientY;
+  plDrag.ghost.style.transform = `translate(${e.clientX + 14}px, ${e.clientY + 12}px)`;
+  plZiel(e.clientX, e.clientY);
+});
+addEventListener('pointerup', () => {
+  if (!plDrag) return;
+  const d = plDrag; plEnde();
+  if (!d.an) return;                                  // nur geklickt
+  plKlickBis = Date.now() + 400;                      // der Klick nach dem Ablegen öffnet nichts
+  if (!d.ziel) return;
+  const t = T.find(x => x.id === d.id); if (!t) return;
+  d.pid ? planVerschieben(t, d.pid, d.ziel.dataset.planTag) : planHinzu(t, d.ziel.dataset.planTag);
+});
+addEventListener('pointercancel', plEnde);
+document.addEventListener('click', e => { if (Date.now() < plKlickBis){ e.stopPropagation(); e.preventDefault(); plKlickBis = 0; } }, true);
+document.addEventListener('dragstart', e => { if (e.target.closest?.('[data-pl-drag]')) e.preventDefault(); });
 function viewInbox(){
   const items = T.filter(t => t.status === 'inbox').sort((a, b) => (b.createdTs || 0) - (a.createdTs || 0));
   return header('Eingang', 'Per Sprache erfasst. Kurz prüfen, ergänzen, einsortieren.') +
@@ -1773,7 +2111,7 @@ function kalenderWoche(ws, vis, o = {}){
   for (let i = 0; i < 7; i++){
     const d = addD(ws, i), out = o.monat != null && d.getMonth() !== o.monat, isToday = same(d, TODAY);
     const klick = o.tagKlick ? ` data-act="cal-day" data-d="${iso(d)}"` : o.tagWahl ? ` data-act="tag-wahl" data-d="${iso(d)}"` : '';
-    const gewaehlt = (o.tagKlick && S.calSel.art === 'day' && iso(d) === S.calSel.wert) || (o.tagWahl && iso(d) === S.tag);
+    const gewaehlt = (o.tagKlick && S.calSel?.art === 'day' && iso(d) === S.calSel.wert) || (o.tagWahl && iso(d) === S.tag);
     cells += `<div class="cbg c${i} ${i >= 5 ? 'we' : ''} ${out ? 'out' : ''} ${isToday ? 'today' : ''} ${gewaehlt ? 'sel' : ''}" style="grid-column:${i + 1}"${klick}></div>`;
     const wdTxt = o.tagWahl ? `<i class="cwd">${WD[d.getDay()]}</i>` : '';
     nums += `<div class="cnum ${out ? 'out' : ''} ${isToday ? 'today' : ''}" style="grid-column:${i + 1}">${wdTxt}<span>${d.getDate() === 1 ? `1. ${MONS[d.getMonth()]}` : d.getDate()}</span></div>`;
@@ -1790,51 +2128,11 @@ function kalenderWoche(ws, vis, o = {}){
   }
   if (o.wochenWahl){
     // Im Kalender wählt dieselbe Spalte die ganze Woche aus
-    const anWoche = S.calSel.art === 'week' && S.calSel.wert === iso(ws);
+    const anWoche = S.calSel?.art === 'week' && S.calSel.wert === iso(ws);
     cells += `<div class="cbg calle ${anWoche ? 'sel' : ''}" style="grid-column:8" data-act="cal-week" data-d="${iso(ws)}"></div>`;
     nums += `<div class="cnum calle-l" style="grid-column:8"><span>Ganze<br>Woche</span></div>`;
   }
   return `<div class="wk ${o.tagWahl || o.wochenWahl ? 'wk-wahl' : ''}" style="grid-template-rows:${rows}">${cells}${nums}${barHTML}${items}</div>`;
-}
-function viewCalendar(){
-  const mob = isMobile();
-  const m = S.calMonth, y = m.getFullYear(), mo = m.getMonth();
-  const first = new Date(y, mo, 1), last = new Date(y, mo + 1, 0);
-  // Bereich und Erledigtes steuert dieselbe Filterleiste wie auf den Listenseiten
-  const sichtbar = t => S.area === 'all' || !areaOf(t) || areaOf(t) === S.area;
-  const vis = T.filter(t => t.due && (isOpen(t) || (S.qDone && t.status === 'done')) && sichtbar(t));
-  let weeks = '';
-  for (let ws = mondayOf(first); ws <= last; ws = addD(ws, 7)) weeks += kalenderWoche(ws, vis, { monat:mo, tagKlick:true, wochenWahl:true });
-  // Unter dem Kalender steht genau das, was im gewählten Zeitraum fällig ist – nichts, was ihn nur überspannt.
-  const sel = S.calSel, order = { day:0, week:1, month:2 };
-  const imMonat = (t, key) => t.due.type === 'month' ? t.due.month === key
-    : monthKey(P(t.due.type === 'week' ? t.due.start : t.due.date)) === key;
-  let listTitel, auswahl;
-  if (sel.art === 'month'){
-    listTitel = `${MON[P(sel.wert + '-01').getMonth()]} ${P(sel.wert + '-01').getFullYear()}`;
-    auswahl = vis.filter(t => imMonat(t, sel.wert));
-  } else if (sel.art === 'week'){
-    const wmo = P(sel.wert), wso = addD(wmo, 6);
-    listTitel = `KW ${kw(wmo)} · ${wmo.getDate()}. ${MON[wmo.getMonth()]} – ${wso.getDate()}. ${MON[wso.getMonth()]}`;
-    auswahl = vis.filter(t => t.due.type === 'day' ? (P(t.due.date) >= wmo && P(t.due.date) <= wso)
-      : t.due.type === 'week' ? same(P(t.due.start), wmo) : false);
-  } else {
-    const sd = P(sel.wert);
-    listTitel = longDate(sd);
-    auswahl = vis.filter(t => t.due.type === 'day' && same(P(t.due.date), sd));
-  }
-  const dayList = auswahl.sort((a, b) => order[a.due.type] - order[b.due.type] || sortByDue(a, b));
-  const leerTxt = sel.art === 'month' ? 'In diesem Monat ist nichts fällig.'
-    : sel.art === 'week' ? 'In dieser Woche ist nichts fällig.' : 'An diesem Tag ist nichts fällig.';
-  return header('Kalender', 'Feste Termine als Punkt, „nächste Woche“ als Balken, „nächster Monat“ als Band.') +
-    `<div class="cal-head"><h2>${MON[mo]} ${y}</h2>
-      <button class="btn ${sel.art === 'month' ? 'btn-p' : 'btn-g'} btn-s" data-act="cal-month" data-d="${monthKey(first)}">Ganzer Monat</button>
-      <button class="icon-btn" data-act="cal-prev" aria-label="Vorheriger Monat">${ic('chevL')}</button><button class="btn btn-g btn-s" data-act="cal-today">Heute</button><button class="icon-btn" data-act="cal-next" aria-label="Nächster Monat">${ic('chevR')}</button></div>
-    ${filterLeiste({ ohneAnsicht:true })}
-    <div class="legend"><span><i class="lg-bar"></i>Wochen-Frist</span><span><i class="lg-band"></i>Monats-Frist</span></div>
-    <div class="cal"><div class="wk wk-wahl wk-dow">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((d, i) => `<span style="grid-column:${i + 1}">${d}</span>`).join('')}<span style="grid-column:8"></span></div>${weeks}</div>
-    <div class="sec"><h3>${esc(listTitel)}</h3><span class="n">${dayList.length}</span></div>
-    <div>${dayList.length ? dayList.map(t => rowHTML(t)).join('') : `<div class="empty">${leerTxt}</div>`}</div>`;
 }
 function nextDueTxt(list){
   const n = list.filter(isOpen).filter(t => t.due).sort(sortByDue)[0];
@@ -1848,7 +2146,7 @@ function viewFiltered(kind, id){
   else if (kind === 'cat' && catById(id)){ const c = catById(id); list = T.filter(t => t.cat === id); title = c.name; eyebrow = `<i class="dot" style="--c:${areaColor(c.area)}"></i>${AREAS[c.area].name}`; }
   else if (kind === 'person' && personById(id)){ list = T.filter(t => t.persons.includes(id)); title = personName(id); eyebrow = 'Person'; }
   else if (kind === 'project' && projById(id)){ const p = projById(id); list = T.filter(t => t.project === id); title = p.name; eyebrow = `<i class="dot" style="--c:${areaColor(p.area)}"></i>Projekt · ${AREAS[p.area].name}`; }
-  else { S.view = 'bydeadline'; return viewListe(); }
+  else { S.view = 'deadlines'; return viewDeadlines(); }
   const open = list.filter(isOpen), done = list.filter(t => t.status === 'done').sort((a, b) => b.doneAt.localeCompare(a.doneAt));
   let balken = '';
   if (kind === 'project' && list.length){
@@ -1953,14 +2251,12 @@ function viewSettings(){
 }
 
 // Frühere Seitennamen weiterleiten, damit gespeicherte Zustände und alte Verweise nicht ins Leere laufen
-const ALT_VIEWS = { deadlines:'bydeadline', today:'bydeadline', all:'bydeadline', bycat:'bydeadline', people:'byperson', projects:'byproject' };
+const ALT_VIEWS = { bydeadline:'deadlines', calendar:'deadlines', byperson:'deadlines', byproject:'deadlines', today:'deadlines', all:'deadlines', bycat:'deadlines', people:'deadlines', projects:'deadlines' };
 function renderMain(){
   if (ALT_VIEWS[S.view]) S.view = ALT_VIEWS[S.view];
-  if (S.view !== 'byperson') S.pers = 'all';
-  if (S.view !== 'byproject') S.proj = 'all';
   const [kind, id] = S.view.includes(':') ? S.view.split(/:(.+)/) : [S.view];
-  const views = { bydeadline:viewListe, byperson:viewListe, byproject:viewListe,
-    inbox:viewInbox, recs:viewRecs, analyse:viewAnalyse, calendar:viewCalendar, done:viewDone, archive:viewArchive, parked:viewParked, settings:viewSettings };
+  const views = { deadlines:viewDeadlines, planung:viewPlanung,
+    inbox:viewInbox, recs:viewRecs, analyse:viewAnalyse, done:viewDone, archive:viewArchive, parked:viewParked, settings:viewSettings };
   const html = views[kind] ? views[kind]() : viewFiltered(kind, id);
   const scroll = $('#main').scrollTop;
   $('#main').innerHTML = `<div class="main-inner">${html}</div>`;
@@ -2243,9 +2539,9 @@ function fmtRange(t){ const [s, e] = range(t); return `${s.getDate()}. ${MONS[s.
 /* ============ Tabbar (mobil) ============ */
 function renderTabbar(){
   const tab = (v, icon, l) => `<button class="tab ${S.view === v ? 'on' : ''}" data-act="nav" data-view="${v}">${ic(icon)}${l}</button>`;
-  $('#tabbar').innerHTML = `<button class="tab" data-act="menu">${ic('menu')}Menü</button>` + tab('bydeadline', 'clock', 'Fristen') +
+  $('#tabbar').innerHTML = `<button class="tab" data-act="menu">${ic('menu')}Menü</button>` + tab('deadlines', 'cal', 'Deadlines') +
     `<button class="fab" data-act="assist-capture" aria-label="To-do diktieren">${ic('mic')}</button>` +
-    tab('calendar', 'cal', 'Kalender') + tab('recs', 'spark', 'Empfehlungen');
+    tab('planung', 'plan', 'Planung') + tab('recs', 'spark', 'Empfehlungen');
 }
 function syncScrim(){
   const narrowDetail = S.sel && innerWidth <= 1100;
@@ -2843,7 +3139,12 @@ function zeitBlock(t){
     : 'Noch keine Zeit erfasst.';
   return `<div class="d-sec d-zeit ${laeuft ? 'laeuft' : ''}"><div class="d-head"><div class="d-lab">Zeiterfassung</div>
       <button class="z-link" data-act="zeit-edit" data-id="${t.id}">${offen ? 'Fertig' : 'Korrigieren'}</button></div>
-    ${knopf ? `<div class="z-zeile">${knopf}</div>` : ''}<div class="z-info">${info}</div>${offen ? zeitEditor(t) : ''}</div>`;
+    ${knopf ? `<div class="z-zeile">${knopf}</div>` : ''}<div class="z-info">${info}</div>${planInfo(t)}${offen ? zeitEditor(t) : ''}</div>`;
+}
+function planInfo(t){
+  const k = plaene(t).filter(p => p.tag >= iso(TODAY)).sort((a, b) => a.tag.localeCompare(b.tag));
+  if (!k.length) return '';
+  return `<div class="z-info z-plan">${ic('plan')}Geplant: ${k.slice(0, 3).map(p => `${tagTxt(p.tag)} · ${minTxt(p.min)}`).join(', ')}${k.length > 3 ? ` · +${k.length - 3} weitere` : ''}</div>`;
 }
 /* Zeit von Hand korrigieren: nachtragen, abziehen, einzelne Sitzungen ändern oder löschen.
    Jede Änderung ersetzt die Liste „zeit“ als Ganzes (so gleicht der Abgleich sie sauber ab)
@@ -2957,10 +3258,13 @@ function nav(v){
   // Geöffnetes Projekt bzw. geöffnete Person bleibt in der Übersicht hervorgehoben
   if (/^(project|person):/.test(v)) S.aktivEnt = v.split(/:(.+)/)[1];
   if (v === 'settings' && sess && S.inboxTokens === null) tokenLaden();
+  const vorher = S.view;
   S.view = v; S.confirmDel = null; S.confirmM = null;
   if (GRUPPEN[v]) { S.todaySel = null; S.weekOff = 0; }
-  if (v !== 'byperson') S.pers = 'all';
-  if (v !== 'byproject') S.proj = 'all';
+  if (ALT_VIEWS[v]) v = S.view = ALT_VIEWS[v];
+  if (v === 'deadlines' && vorher !== 'deadlines') S.calSel = null;   // frisch geöffnet: keine alte Tagesauswahl
+  // Person und Projekt gelten auf Deadlines und Planung gemeinsam, anderswo nicht
+  if (v !== 'deadlines' && v !== 'planung'){ S.pers = 'all'; S.proj = 'all'; }
   S.tag = 'all';
   document.body.classList.remove('sb-open');
   if (innerWidth <= 1100) S.sel = null;
@@ -3042,19 +3346,34 @@ document.addEventListener('click', e => {
     case 'theme': S.theme = el.dataset.v; applyTheme(); render(); break;
     case 'new-proj-area': S.newProjArea = el.dataset.v; renderMain(); break;
     case 'proj-area': { const p = projById(id); if (p){ p.area = el.dataset.v; save('projects', p); render(); } break; }
-    case 'goto-day': S.calDay = el.dataset.d; S.calSel = { art:'day', wert:el.dataset.d }; S.calMonth = new Date(P(el.dataset.d).getFullYear(), P(el.dataset.d).getMonth(), 1); nav('calendar'); break;
+    case 'goto-day': { const d = el.dataset.d; nav('deadlines'); S.calDay = d; S.calSel = { art:'day', wert:d }; S.calMonth = new Date(P(d).getFullYear(), P(d).getMonth(), 1); renderMain(); break; }
     case 'cal-area': {
       const v = el.dataset.v;
       S.calAreas[v] = !S.calAreas[v];
       try { localStorage.setItem('brain-calareas', JSON.stringify(S.calAreas)); } catch (e) {}
       renderMain(); break;
     }
-    case 'cal-day': S.calSel = { art:'day', wert:el.dataset.d }; S.calDay = el.dataset.d; renderMain(); break;
-    case 'cal-week': S.calSel = { art:'week', wert:el.dataset.d }; renderMain(); break;
-    case 'cal-month': S.calSel = S.calSel.art === 'month' ? { art:'day', wert:iso(TODAY) } : { art:'month', wert:el.dataset.d }; renderMain(); break;
+    case 'cal-day': S.calSel = S.calSel?.art === 'day' && S.calSel.wert === el.dataset.d ? null : { art:'day', wert:el.dataset.d }; S.calDay = el.dataset.d; renderMain(); break;
+    case 'cal-week': S.calSel = S.calSel?.art === 'week' && S.calSel.wert === el.dataset.d ? null : { art:'week', wert:el.dataset.d }; renderMain(); break;
+    case 'cal-month': S.calSel = S.calSel?.art === 'month' && S.calSel.wert === el.dataset.d ? null : { art:'month', wert:el.dataset.d }; renderMain(); break;
+    case 'cal-clear': S.calSel = null; renderMain(); break;
+    case 'pl-tag': S.planTag = el.dataset.d; renderMain(); break;
+    case 'pl-art': {
+      S.planArt = el.dataset.v; const g = P(S.planTag);
+      S.planWoche = mondayOf(g); S.planMonat = new Date(g.getFullYear(), g.getMonth(), 1);
+      renderMain(); break; }
+    case 'pl-nav': {
+      const n = Number(el.dataset.v);
+      if (S.planArt === 'monat'){ const m = S.planMonat; S.planMonat = new Date(m.getFullYear(), m.getMonth() + n, 1); }
+      else S.planWoche = addD(S.planWoche, 7 * n);
+      planTagAnpassen(); renderMain(); break; }
+    case 'pl-heute': S.planWoche = THIS_MON; S.planMonat = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); S.planTag = iso(TODAY); renderMain(); break;
+    case 'pl-add': { e.stopPropagation(); const t = T.find(x => x.id === id); if (t) planHinzu(t, S.planTag); break; }
+    case 'pl-weg': { e.stopPropagation(); const t = T.find(x => x.id === id); if (!t) break;
+      planSetzen(t, plaene(t).filter(p => p.id !== el.dataset.pid), `„${kurzTitel(t)}“ aus der Planung genommen`); break; }
     case 'cal-prev': S.calMonth = new Date(S.calMonth.getFullYear(), S.calMonth.getMonth() - 1, 1); renderMain(); break;
     case 'cal-next': S.calMonth = new Date(S.calMonth.getFullYear(), S.calMonth.getMonth() + 1, 1); renderMain(); break;
-    case 'cal-today': S.calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); S.calDay = iso(TODAY); S.calSel = { art:'day', wert:iso(TODAY) }; renderMain(); break;
+    case 'cal-today': S.calMonth = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); S.calDay = iso(TODAY); S.calSel = null; renderMain(); break;
     case 'park': { e.stopPropagation(); const t = T.find(x => x.id === id); if (!t) break;
       const vorher = t.status;
       t.status = t.status === 'parked' ? 'open' : 'parked';
@@ -3250,7 +3569,7 @@ document.addEventListener('input', e => {
   if (e.target.id === 'allq' || e.target.id === 'sbq'){
     S.q = e.target.value;
     const id = e.target.id, pos = e.target.selectionStart;
-    if (!GRUPPEN[S.view] && S.view !== 'recs') S.view = 'bydeadline';
+    if (!GRUPPEN[S.view] && S.view !== 'recs' && S.view !== 'planung') S.view = 'deadlines';
     render();
     const f = document.getElementById(id); f.focus(); f.setSelectionRange(pos, pos);
   }
@@ -3284,6 +3603,14 @@ document.addEventListener('click', e => {
   if (z && matchMedia('(pointer:fine)').matches) try { z.showPicker(); } catch {}
 });
 document.addEventListener('change', e => {
+  // Planung: Dauer einer Einplanung geändert
+  const pd = e.target.dataset?.plDauer;
+  if (pd){
+    const t = T.find(x => x.id === e.target.dataset.id); if (!t) return;
+    const min = Number(e.target.value);
+    planSetzen(t, plaene(t).map(p => p.id === pd ? { ...p, min } : p), `Geplant: ${minTxt(min)}`);
+    return;
+  }
   // Zeiterfassung: einzelne Sitzung geändert
   const zs = e.target.dataset?.zs;
   if (zs){
