@@ -27,6 +27,7 @@
   --shadow-lg:0 24px 64px rgba(20,24,33,.20),0 2px 6px rgba(20,24,33,.06);
   --scrim:rgba(24,26,32,.26); --glass:rgba(255,255,255,.8);
   --pastel:rgba(92,139,114,.10); --pastel-2:rgba(92,139,114,.22);
+  --sel-bg:#F1ECF8; --sel-bg-h:#EAE3F5; --sel-line:#8A6CC2;
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){
@@ -42,6 +43,7 @@
     --shadow-lg:0 24px 70px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);
     --scrim:rgba(0,0,0,.5); --glass:rgba(24,25,28,.82);
     --pastel:rgba(137,183,157,.10); --pastel-2:rgba(137,183,157,.18);
+    --sel-bg:#251F33; --sel-bg-h:#2B243B; --sel-line:#B39BE8;
     color-scheme:dark;
   }
 }
@@ -56,6 +58,7 @@
   --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.3);
   --shadow-lg:0 24px 70px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);
   --scrim:rgba(0,0,0,.5); --glass:rgba(24,25,28,.82);
+  --sel-bg:#251F33; --sel-bg-h:#2B243B; --sel-line:#B39BE8;
   color-scheme:dark;
 }
 
@@ -223,7 +226,6 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .row:last-child::after{display:none}
 .row:hover{background:var(--surface-2)}
 .row:hover::after,.row.is-sel::after{opacity:0}
-.row.is-sel{background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent)}
 .row.is-sel .row-title{font-weight:600;color:var(--text)}
 .row.completing{opacity:0;transform:translateX(8px)}
 .row > *{position:relative;z-index:1}
@@ -260,6 +262,42 @@ kbd{font:500 11px/1 -apple-system,system-ui,sans-serif;color:var(--text-3);borde
 .z-uhr{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .z-info{margin-top:8px;font-size:12.5px;color:var(--text-2)}
 .z-info b{color:var(--text);font-weight:600}
+.d-zeit .z-zeile{margin-top:2px}
+.d-zeit .d-head{margin-bottom:8px}
+.z-link{margin-left:auto;font-size:12.5px;font-weight:550;color:var(--accent);padding:3px 8px;border-radius:7px}
+.z-link:hover{background:var(--accent-soft)}
+.z-seit{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-2);margin-left:auto}
+.z-in{font:inherit;font-size:13px;color:var(--text);background:var(--surface-2);border:0;border-radius:8px;padding:5px 8px;height:30px;font-variant-numeric:tabular-nums;outline:none;min-width:0}
+.z-in:focus{box-shadow:inset 0 0 0 1px var(--accent),0 0 0 3px var(--accent-soft)}
+.d-zeit.laeuft .z-in{background:var(--surface)}
+.z-edit{margin-top:12px;display:flex;flex-direction:column;gap:14px}
+.z-tit{font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px}
+.z-tit span{color:var(--text-3);font-weight:500;margin-left:4px}
+.z-chips{display:flex;flex-wrap:wrap;gap:6px}
+.z-chip{font-size:12.5px;font-weight:550;padding:5px 11px;border-radius:999px;background:color-mix(in srgb,var(--ok) 11%,var(--surface));color:var(--ok);font-variant-numeric:tabular-nums}
+.z-chip:hover{background:color-mix(in srgb,var(--ok) 18%,var(--surface))}
+.z-chip.minus{background:var(--surface-2);color:var(--text-2)}
+.z-chip.minus:hover{background:var(--surface-3);color:var(--text)}
+.z-hint{font-size:12px;color:var(--text-3);margin-top:6px}
+.z-sitz{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.z-sitz input[type=date]{width:98px}
+.z-sitz input[type=time]{width:56px;text-align:center}
+.z-in::-webkit-calendar-picker-indicator{display:none}   /* spart Platz; ein Klick ins Feld öffnet die Auswahl trotzdem */
+.z-in::-webkit-datetime-edit{padding:0}
+.z-liste .z-sitz{display:grid;grid-template-columns:auto auto 8px auto minmax(0,1fr) 28px;column-gap:5px}
+.z-liste .z-dauer{text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+.z-bis{color:var(--text-3)}
+.z-dauer{font-size:12.5px;color:var(--text-2);font-variant-numeric:tabular-nums;margin-left:4px}
+.z-dauer em{font-style:normal;color:var(--text-3)}
+.z-weg{margin-left:auto;width:28px;justify-self:end;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--text-3)}
+.z-weg:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent)}
+.z-weg svg.i{width:14px;height:14px}
+.z-liste{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow:auto;margin:0 -4px;padding:0 4px}
+.z-liste .z-sitz{padding:4px 0;border-bottom:1px solid var(--line)}
+.z-liste .z-sitz:last-child{border-bottom:0}
+.z-add{background:var(--create);color:#fff;height:30px;margin-left:4px}
+.z-add:hover{background:var(--create-h)}
+.z-add svg.i{stroke:#fff;width:13px;height:13px}
 .d-zeit.laeuft{background:color-mix(in srgb,var(--ok) 9%,var(--surface));border-radius:12px;padding:12px 14px;margin-left:-14px;margin-right:-14px}
 .fokus{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:70;display:flex;align-items:center;gap:12px;max-width:min(560px,calc(100vw - 32px));padding:8px 8px 8px 16px;border-radius:999px;background:var(--surface);box-shadow:var(--shadow-lg),inset 0 0 0 1.5px var(--ok)}
 .fk-punkt{flex:none;width:9px;height:9px;border-radius:50%;background:var(--ok);animation:fkpuls 1.6s ease-in-out infinite}
@@ -431,6 +469,11 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 .swipe{position:relative;overflow:hidden;border-radius:10px}
 .swipe>.row{background:var(--surface);transition:transform .18s ease}
 .swipe.dragging>.row{transition:none}
+/* Ausgewähltes To-do: zartes Lavendel mit schmaler Kante links – bewusst eine eigene Farbe,
+   damit es sich auch von den blau/rot getönten Abschnitten Heute/Überfällig abhebt */
+.row.is-sel.is-sel.is-sel.is-sel{background:var(--sel-bg);box-shadow:inset 3px 0 0 var(--sel-line)}
+.row.is-sel.is-sel.is-sel.is-sel:hover{background:var(--sel-bg-h)}
+.row.is-sel .rnum{background:color-mix(in srgb,var(--sel-line) 18%,transparent)!important;color:var(--sel-line)!important}
 .swipe-act{position:absolute;inset:0;display:flex;justify-content:flex-end;background:var(--danger);border-radius:10px}
 .swipe-act button{display:flex;align-items:center;gap:6px;color:#fff;font-weight:600;font-size:13.5px;padding:0 18px}
 .swipe-act svg.i{stroke:#fff}
@@ -702,7 +745,12 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .rv{grid-template-columns:90px 1fr auto}
   .toast{bottom:calc(80px + env(safe-area-inset-bottom))}
   .hide-m{display:none}
-  .search input,.sb-new input,.add-in,.opt-new input,.opt-new.sm input,.date-in,.ren,.d-in{font-size:16px}
+  .search input,.sb-new input,.add-in,.opt-new input,.opt-new.sm input,.date-in,.ren,.d-in,.z-in{font-size:16px}
+  .z-in{padding:5px 6px}
+  .z-sitz input[type=date]{width:112px}
+  .z-sitz input[type=time]{width:58px}
+  .z-liste .z-sitz{column-gap:4px;grid-template-columns:auto auto 6px auto minmax(0,1fr) 24px}
+  .z-weg{width:24px}
   .d-md{font-size:16px}
   .md-chk .chkbox{width:18px;height:18px}
   .md-chk .chkbox::after{inset:-11px}
@@ -779,7 +827,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v72';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v73';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1125,7 +1173,7 @@ function relTime(ts){
 const S = {
   view:'bydeadline', sel:null, calMonth:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), calDay:iso(TODAY),
   calSel:{ art:'day', wert:iso(TODAY) },
-  azMonat:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), azTag:iso(TODAY),
+  azMonat:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), azTag:iso(TODAY), zeitEdit:null,
   sort:'due', area:'work', q:'', qDone:false, allView:'list', reorder:false, weekOff:0, online:navigator.onLine, memOnly:false,
   addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
   syncState:'', syncError:'', lastSync:0, authOpen:false, authMode:'in', authBusy:false, authErr:'', inboxTokens:null,
@@ -2203,7 +2251,9 @@ function syncScrim(){
   const narrowDetail = S.sel && innerWidth <= 1100;
   $('#scrim').hidden = !(document.body.classList.contains('sb-open') || narrowDetail);
 }
-function render(){ document.body.classList.toggle('reorder-on', S.reorder); renderSidebar(); renderMain(); renderDetail(); renderTabbar(); renderFokus(); syncScrim(); }
+function render(){ document.body.classList.toggle('reorder-on', S.reorder); renderSidebar(); renderMain(); renderDetail(); renderTabbar(); renderFokus(); syncScrim();
+  leisteAusrichten();   // erst jetzt steht die Breite fest (Detail auf/zu verändert das Raster)
+}
 
 /* ============ Sprach-Parser (regelbasiert; KI folgt in Etappe 4) ============ */
 const L = '[a-zäöüß]';   // Buchstabe – für Wortgrenzen mit Umlauten
@@ -2783,14 +2833,91 @@ setInterval(() => {
 function zeitBlock(t){
   const l = sitzungen(t), letzte = letzteSitzung(t), laeuft = !!t.timerStart;
   const fertig = t.status === 'done' || t.status === 'archived';
+  const offen = S.zeitEdit === t.id;
   const knopf = laeuft
-    ? `<button class="btn btn-stopp" data-act="timer-stop" data-id="${t.id}">${ic('stop')}Stopp</button><span class="z-uhr" data-tick="lauf">${uhrTxt(Date.now() - t.timerStart)}</span>`
+    ? `<button class="btn btn-stopp" data-act="timer-stop" data-id="${t.id}">${ic('stop')}Stopp</button><span class="z-uhr" data-tick="lauf">${uhrTxt(Date.now() - t.timerStart)}</span>
+       <label class="z-seit" title="Startzeit korrigieren">seit <input type="time" class="z-in" data-zlauf="${t.id}" value="${uhrzeit(t.timerStart)}"></label>`
     : fertig ? '' : `<button class="btn btn-fokus" data-act="timer-start" data-id="${t.id}">${ic('play')}Fokus starten</button>`;
   const info = l.length || laeuft
     ? `Insgesamt <b data-tick="ges" data-id="${t.id}">${dauerTxt(zeitGesamt(t))}</b> · ${l.length} ${l.length === 1 ? 'Sitzung' : 'Sitzungen'}${letzte ? ` · zuletzt ${tagKurz(letzte.start)}, ${dauerTxt(letzte.ende - letzte.start)}` : ''}`
     : 'Noch keine Zeit erfasst.';
-  return `<div class="d-sec d-zeit ${laeuft ? 'laeuft' : ''}"><div class="d-lab">Zeiterfassung</div>
-    <div class="z-zeile">${knopf}</div><div class="z-info">${info}</div></div>`;
+  return `<div class="d-sec d-zeit ${laeuft ? 'laeuft' : ''}"><div class="d-head"><div class="d-lab">Zeiterfassung</div>
+      <button class="z-link" data-act="zeit-edit" data-id="${t.id}">${offen ? 'Fertig' : 'Korrigieren'}</button></div>
+    ${knopf ? `<div class="z-zeile">${knopf}</div>` : ''}<div class="z-info">${info}</div>${offen ? zeitEditor(t) : ''}</div>`;
+}
+/* Zeit von Hand korrigieren: nachtragen, abziehen, einzelne Sitzungen ändern oder löschen.
+   Jede Änderung ersetzt die Liste „zeit“ als Ganzes (so gleicht der Abgleich sie sauber ab)
+   und lässt sich über „Rückgängig“ zurücknehmen. */
+const TAG_MS = 86400000;
+function zeitpunkt(tag, hhmm, plusTage = 0){
+  const [y, m, d] = tag.split('-').map(Number), [h, mi] = hhmm.split(':').map(Number);
+  return new Date(y, m - 1, d + plusTage, h, mi).getTime();
+}
+// Datum + Von + Bis → {start, ende}; liegt „Bis“ vor „Von“, endet die Sitzung am Folgetag
+function spanne(tag, von, bis){
+  if (!tag || !von || !bis) return null;
+  const start = zeitpunkt(tag, von);
+  let ende = zeitpunkt(tag, bis);
+  if (ende <= start) ende = zeitpunkt(tag, bis, 1);
+  return isNaN(start) || isNaN(ende) ? null : { start, ende };
+}
+function spannePruefen(z){
+  if (!z) return 'Bitte Datum, Beginn und Ende angeben';
+  if (z.start > Date.now()) return 'Der Beginn liegt in der Zukunft';
+  if (z.ende > Date.now() + 60000) return 'Das Ende liegt in der Zukunft';
+  if (z.ende - z.start > TAG_MS) return 'Eine Sitzung kann höchstens 24 Stunden dauern';
+  return '';
+}
+function zeitSetzen(t, neu, msg){
+  const vorher = sitzungen(t).map(z => ({ ...z }));
+  t.zeit = neu.filter(z => z.ende > z.start).sort((a, b) => a.start - b.start);
+  save('todos', t);
+  undo = () => { t.zeit = vorher; save('todos', t); };
+  render();
+  toast(`${msg} · insgesamt ${dauerTxt(zeitGesamt(t))}`, { act:'undo', label:'Rückgängig' });
+}
+// Minuten hinzufügen: neue Sitzung, die jetzt endet (bzw. dort, wo die laufende Messung beginnt)
+function zeitPlus(t, min){
+  const ende = t.timerStart || Date.now();
+  zeitSetzen(t, [...sitzungen(t), { id:uid(), start:ende - min * 60000, ende, manuell:true }], `${dauerTxt(min * 60000)} hinzugefügt`);
+}
+// Minuten abziehen: von hinten, die jüngsten Sitzungen werden gekürzt oder entfallen
+function zeitMinus(t, min){
+  const l = sitzungen(t).map(z => ({ ...z })).sort((a, b) => b.ende - a.ende);
+  const summe = l.reduce((a, z) => a + z.ende - z.start, 0);
+  if (!summe){ toast(t.timerStart ? 'Noch nichts abgeschlossen – die Startzeit lässt sich oben bei „seit“ ändern' : 'Noch keine Zeit erfasst'); return; }
+  let rest = Math.min(min * 60000, summe);
+  const abzug = rest;
+  for (const z of l){
+    if (!rest) break;
+    const d = z.ende - z.start, weg = Math.min(d, rest);
+    z.ende -= weg; rest -= weg;
+  }
+  zeitSetzen(t, l, `${dauerTxt(abzug)} abgezogen`);
+}
+function zeitEditor(t){
+  const jetzt = Date.now(), r5 = ms => Math.floor(ms / 300000) * 300000;
+  const l = [...sitzungen(t)].sort((a, b) => b.start - a.start);
+  const zeile = z => `<div class="z-sitz" data-z="${z.id}">
+      <input type="date" class="z-in" data-zs="tag" value="${iso(new Date(z.start))}">
+      <input type="time" class="z-in" data-zs="von" value="${uhrzeit(z.start)}"><span class="z-bis">–</span>
+      <input type="time" class="z-in" data-zs="bis" value="${uhrzeit(z.ende)}">
+      <span class="z-dauer"${new Date(z.ende).getDate() !== new Date(z.start).getDate() ? ' title="endet am Folgetag"' : ''}>${dauerKurz(z.ende - z.start)}</span>
+      <button class="z-weg" data-act="zeit-del" data-id="${t.id}" data-z="${z.id}" title="Sitzung löschen" aria-label="Sitzung löschen">${ic('trash')}</button></div>`;
+  return `<div class="z-edit" data-zedit="${t.id}">
+    <div class="z-blk"><div class="z-tit">Schnell anpassen</div>
+      <div class="z-chips">${[30, 15].map(m => `<button class="z-chip minus" data-act="zeit-minus" data-id="${t.id}" data-v="${m}">− ${m} Min.</button>`).join('')}
+      ${[15, 30, 60].map(m => `<button class="z-chip" data-act="zeit-plus" data-id="${t.id}" data-v="${m}">+ ${m === 60 ? '1 Std.' : m + ' Min.'}</button>`).join('')}</div>
+      <div class="z-hint">Abziehen kürzt die jüngsten Sitzungen, Hinzufügen trägt eine Sitzung bis jetzt ein.</div></div>
+    <div class="z-blk"><div class="z-tit">Nachtragen</div>
+      <div class="z-sitz z-neu">
+        <input type="date" class="z-in" data-zn="tag" value="${iso(new Date(jetzt))}">
+        <input type="time" class="z-in" data-zn="von" value="${uhrzeit(r5(jetzt) - 1800000)}"><span class="z-bis">–</span>
+        <input type="time" class="z-in" data-zn="bis" value="${uhrzeit(r5(jetzt))}">
+        <button class="btn z-add" data-act="zeit-add" data-id="${t.id}">${ic('plus')}Hinzufügen</button></div></div>
+    <div class="z-blk"><div class="z-tit">Erfasste Sitzungen${l.length ? ` <span>${l.length}</span>` : ''}</div>
+      ${l.length ? `<div class="z-liste">${l.map(zeile).join('')}</div>` : '<div class="z-hint">Noch keine Sitzungen.</div>'}</div>
+  </div>`;
 }
 function deleteTodo(t){
   const copy = JSON.parse(JSON.stringify(t));
@@ -2938,6 +3065,16 @@ document.addEventListener('click', e => {
       break; }
     case 'timer-start': { e.stopPropagation(); timerStarten(T.find(x => x.id === id)); break; }
     case 'timer-stop': { e.stopPropagation(); timerStoppen(T.find(x => x.id === id)); break; }
+    case 'zeit-edit': S.zeitEdit = S.zeitEdit === id ? null : id; renderDetail(); break;
+    case 'zeit-plus': { const t = T.find(x => x.id === id); if (t) zeitPlus(t, Number(el.dataset.v)); break; }
+    case 'zeit-minus': { const t = T.find(x => x.id === id); if (t) zeitMinus(t, Number(el.dataset.v)); break; }
+    case 'zeit-del': { const t = T.find(x => x.id === id); if (!t) break;
+      zeitSetzen(t, sitzungen(t).filter(z => z.id !== el.dataset.z), 'Sitzung gelöscht'); break; }
+    case 'zeit-add': { const t = T.find(x => x.id === id); if (!t) break;
+      const box = el.closest('.z-neu'), v = k => box.querySelector(`[data-zn="${k}"]`).value;
+      const z = spanne(v('tag'), v('von'), v('bis')), fehler = spannePruefen(z);
+      if (fehler){ toast(fehler); break; }
+      zeitSetzen(t, [...sitzungen(t), { id:uid(), ...z, manuell:true }], `${dauerTxt(z.ende - z.start)} nachgetragen`); break; }
     case 'az-tag': S.azTag = el.dataset.d; renderMain(); break;
     case 'az-monat': { const m = S.azMonat; S.azMonat = new Date(m.getFullYear(), m.getMonth() + Number(el.dataset.v), 1); renderMain(); break; }
     case 'az-heute': S.azMonat = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); S.azTag = iso(TODAY); renderMain(); break;
@@ -3142,7 +3279,34 @@ document.addEventListener('input', e => {
   if (e.target.classList.contains('grow')) grow(e.target);
   saveSoon(t);
 });
+document.addEventListener('click', e => {
+  const z = e.target.closest?.('.z-in');
+  if (z && matchMedia('(pointer:fine)').matches) try { z.showPicker(); } catch {}
+});
 document.addEventListener('change', e => {
+  // Zeiterfassung: einzelne Sitzung geändert
+  const zs = e.target.dataset?.zs;
+  if (zs){
+    const box = e.target.closest('.z-sitz'), t = T.find(x => x.id === e.target.closest('.z-edit')?.dataset.zedit);
+    const alt = t && sitzungen(t).find(z => z.id === box?.dataset.z); if (!alt) return;
+    const v = k => box.querySelector(`[data-zs="${k}"]`).value;
+    const z = spanne(v('tag'), v('von'), v('bis')), fehler = spannePruefen(z);
+    if (fehler){ toast(fehler); renderDetail(); return; }
+    zeitSetzen(t, sitzungen(t).map(x => x.id === alt.id ? { ...x, ...z, manuell:true } : x), 'Sitzung geändert');
+    return;
+  }
+  // Zeiterfassung: Startzeit der laufenden Messung korrigiert
+  const zl = e.target.dataset?.zlauf;
+  if (zl){
+    const t = T.find(x => x.id === zl); if (!t?.timerStart || !e.target.value) return;
+    const jetzt = Date.now(), vorher = t.timerStart;
+    let start = zeitpunkt(iso(new Date(jetzt)), e.target.value);
+    if (start > jetzt) start = zeitpunkt(iso(new Date(jetzt)), e.target.value, -1);   // später als jetzt → gestern
+    t.timerStart = start; save('todos', t);
+    undo = () => { if (t.timerStart){ t.timerStart = vorher; save('todos', t); } };
+    render(); toast(`Startzeit auf ${uhrzeit(start)} gesetzt`, { act:'undo', label:'Rückgängig' });
+    return;
+  }
   const fs = e.target.dataset?.fsel;
   if (fs){ S[fs] = e.target.value; if (fs === 'pers' || fs === 'proj') S.sel = null; render(); return; }
   const f = e.target.dataset?.ef; if (!f) return;
