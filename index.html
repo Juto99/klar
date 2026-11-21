@@ -126,7 +126,7 @@ body.resizing{cursor:col-resize;user-select:none}
 .tile-l{font-size:14px;font-weight:550;color:var(--text)}
 .tile.on{background:var(--accent);box-shadow:none}
 .tile.on svg.i,.tile.on .tile-n,.tile.on .tile-l{color:var(--on-accent)}
-.tile-new{justify-content:center;background:var(--create);box-shadow:none;height:44px}
+.tile-new{background:var(--create);box-shadow:none;height:44px}
 .tile-new:hover{background:var(--create-h)}
 .tile-new .tile-l,.tile-new svg.i{color:#fff}
 .btn-create{background:var(--create);color:#fff}
@@ -462,6 +462,25 @@ body.pl-ziehen,body.pl-ziehen *{cursor:grabbing!important;user-select:none!impor
 .dl-wband .dl-chip{flex:0 1 auto;height:22px;font-size:12px}
 .pl-monat .dl-wband + .pl-mtag{border-left:0}
 .dl-leiste{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:10px 0 18px;font-size:12px}
+/* Deadlines: Spalte „Ganze Woche“ / „Ganzer Monat“ im Kalender */
+.dl-woche{grid-template-columns:repeat(7,minmax(0,1fr)) 34px}
+.dl-monat{display:grid;grid-template-columns:minmax(0,1fr) 34px}
+.dl-mgrid{min-width:0}
+.dl-ganz{display:flex;align-items:center;justify-content:center;min-width:0;padding:8px 0;border-left:1px solid var(--line);background:var(--surface-2);color:var(--text-2);font-size:12px;font-weight:600;letter-spacing:.03em;cursor:pointer;transition:background .12s,color .12s}
+.dl-ganz span{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap}
+.dl-ganz:hover{background:var(--surface-3);color:var(--text)}
+.dl-ganz.sel{background:color-mix(in srgb,var(--sel-line) 16%,var(--surface));color:var(--sel-line);box-shadow:inset 0 0 0 1.5px var(--sel-line)}
+/* Filter: Name schaltet die Gliederung */
+.fsel.fgrp{padding-left:3px}
+.fsel-k{height:26px;padding:0 9px;border-radius:7px;font:inherit;font-size:12.5px;color:var(--text-2);white-space:nowrap;transition:background .12s,color .12s}
+.fsel-k:hover{background:var(--surface-2);color:var(--text)}
+.fsel.akt .fsel-k{background:var(--accent);color:var(--on-accent);font-weight:600}
+/* Plan: Deadline in jeder Zeile */
+.pl-frist{flex:none;display:inline-flex;align-items:center;gap:5px;min-width:104px;font-size:12.5px;color:var(--text-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.pl-frist svg.i{width:13px;height:13px;flex:none;color:var(--text-3)}
+.pl-frist.over{color:var(--danger)}
+.pl-frist.over svg.i{color:var(--danger)}
+.pl-frist.leer{color:var(--text-3)}
 /* Wochenkalender bleibt beim Scrollen durch die Liste oben stehen – so ist das Ziel beim Ziehen immer sichtbar */
 @media (min-width:761px) and (min-height:760px){
   .pl-kal.woche{position:sticky;top:-28px;z-index:6;background:var(--surface);padding:28px 0 8px;margin-top:-24px}
@@ -503,15 +522,16 @@ body.pl-ziehen,body.pl-ziehen *{cursor:grabbing!important;user-select:none!impor
 .fsel.on{color:var(--text);box-shadow:inset 0 0 0 1.5px var(--accent)}
 .fsel select{border:0;background:none;outline:none;color:var(--text);font-size:12.5px;font-family:inherit;max-width:190px;height:100%;padding:0 2px;cursor:pointer}
 .fsel select option{background:var(--surface);color:var(--text)}
-.cols{position:relative;height:15px;margin:4px 0 2px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);user-select:none}
-.cols .c-lab{position:absolute;top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Spaltenkopf wie eine Tabellenüberschrift: eigene Zeile, bleibt beim Scrollen oben stehen,
+   Trennlinien an den Spaltengrenzen zum Breiterziehen */
+.cols{position:sticky;top:0;z-index:5;height:30px;margin:14px 0 6px;border-radius:8px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line),0 1px 0 var(--surface);font-size:12px;font-weight:600;color:var(--text-2);user-select:none}
+.cols .c-lab{position:absolute;top:0;line-height:30px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:help}
 .cols .c-lab.r{text-align:right}
 .cols .c-lab.m{text-align:center}
-.cgrip{position:absolute;top:-5px;height:25px;width:14px;cursor:col-resize;touch-action:none;z-index:2}
-.cgrip::after{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;border-radius:2px;background:var(--line-2);opacity:.5}
-.cgrip:hover::after{opacity:1;background:var(--accent)}
+.cgrip{position:absolute;top:0;height:100%;width:14px;cursor:col-resize;touch-action:none;z-index:2}
+.cgrip::after{content:"";position:absolute;left:6px;top:7px;bottom:7px;width:1px;background:var(--line-2)}
+.cgrip:hover::after,body.cdrag .cgrip::after{left:5px;top:3px;bottom:3px;width:3px;border-radius:2px;background:var(--accent)}
 body.cdrag{cursor:col-resize;user-select:none}
-body.cdrag .cgrip::after{opacity:1;background:var(--accent)}
 .col-row{gap:12px}
 .col-row .col-l{flex:0 0 190px;font-size:14px}
 .col-row .col-r{flex:1 1 auto;min-width:120px}
@@ -900,7 +920,13 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
   .pl-monat .pl-mtag{min-height:58px;padding:4px}
   .pl-msum{font-size:10.5px;margin-left:0}
   .pl-mk{flex-direction:column;align-items:flex-start;gap:1px}
-  .pl-due{display:none}
+  .pl-frist{min-width:0;font-size:12px}
+  .pl-frist svg.i{display:none}
+  .dl-ganz{padding:10px 0;border-left:0;border-top:1px solid var(--line)}
+  .dl-ganz span{writing-mode:horizontal-tb;transform:none}
+  .dl-monat{grid-template-columns:minmax(0,1fr) 26px}
+  .dl-monat .dl-ganz{border-top:0;border-left:1px solid var(--line);padding:0}
+  .dl-monat .dl-ganz span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px}
   .pl-chip{display:none}
   .pl-ist{display:none}
   .pl-zt,.pl-rt{font-size:15px}
@@ -969,7 +995,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v76';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v77';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1319,7 +1345,7 @@ const S = {
   dlArt:'monat', dlWoche:THIS_MON,                 // Termine: Kalender als Woche oder Monat
   planArt:'woche', planWoche:THIS_MON, planMonat:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), planTag:iso(TODAY),
   azMonat:new Date(TODAY.getFullYear(), TODAY.getMonth(), 1), azTag:iso(TODAY), zeitEdit:null,
-  sort:'due', area:'work', q:'', qDone:false, allView:'list', reorder:false, weekOff:0, online:navigator.onLine, memOnly:false,
+  gruppe:'kat', sort:'due', area:'work', q:'', qDone:false, allView:'list', reorder:false, weekOff:0, online:navigator.onLine, memOnly:false,
   addingCat:null, confirmDel:null, confirmM:null, newProjArea:'work', theme:'auto', openArea:{ work:false, private:false },
   syncState:'', syncError:'', lastSync:0, authOpen:false, authMode:'in', authBusy:false, authErr:'', inboxTokens:null,
   calAreas:{ work:true, private:true }, aktivEnt:null, pers:'all', proj:'all', tag:'all'
@@ -1500,30 +1526,30 @@ function groupsHTML(groups, o = {}){
 // ausgerichtet – so sitzt jeder Griff genau auf der Grenze, die er verschiebt.
 function spaltenLeiste(){ return isMobile() ? '' : `<div class="cols" aria-hidden="true"></div>`; }
 const LEISTE_SPALTEN = [
-  ['.row-pct', 'pct', '%'],
-  ['.col-d', 'flag', 'D'],
-  ['.col-w', null, 'W'],
-  ['.col-a', null, 'A'],
-  ['.row-due', 'due', 'Frist'],
-  ['.row-note', 'note', 'Notiz'],
-  ['.row-proj', 'proj', 'Projekt'],
-  ['.row-people', 'people', 'Wer']
+  ['.row-pct', 'pct', '%', 'Fortschritt'],
+  ['.col-d', 'flag', 'D', 'Dringlichkeit'],
+  ['.col-w', null, 'W', 'Wichtigkeit'],
+  ['.col-a', null, 'A', 'Aufwand'],
+  ['.row-due', 'due', 'Frist', 'Deadline'],
+  ['.row-note', 'note', 'Notiz', 'Treffer in Beschreibung oder Kontext'],
+  ['.row-proj', 'proj', 'Projekt', 'Projekt'],
+  ['.row-people', 'people', 'Wer', 'Beteiligte Personen']
 ];
 function leisteAusrichten(){
   const bar = document.querySelector('#main .cols');
   if (!bar) return;
   const row = document.querySelector('#main .row');
   if (!row){ bar.innerHTML = ''; bar.dataset.sig = ''; return; }
-  const felder = [['.row-title', null, 'To-do'], ...LEISTE_SPALTEN]
-    .map(([sel, key, label]) => [sel, key, label, row.querySelector(sel)])
+  const felder = [['.row-title', null, 'To-do', 'Titel'], ...LEISTE_SPALTEN]
+    .map(([sel, key, label, lang]) => [sel, key, label, row.querySelector(sel), lang])
     .filter(([, , , el]) => el && el.getBoundingClientRect().width);
   const sig = felder.map(f => f[0]).join('|');
   // Nur neu aufbauen, wenn sich die Spalten geändert haben – sonst risse ein Neuaufbau
   // beim Ziehen den Griff unter dem Zeiger weg.
   if (bar.dataset.sig !== sig){
-    bar.innerHTML = felder.map(([sel, key, label]) => {
+    bar.innerHTML = felder.map(([sel, key, label, , lang]) => {
       const aus = ['.row-pct', '.row-proj', '.row-people'].includes(sel) ? 'r' : sel.startsWith('.col-') ? 'm' : '';
-      return `<span class="c-lab ${aus}" data-lab="${sel}">${label}</span>` +
+      return `<span class="c-lab ${aus}" data-lab="${sel}" title="${lang}">${label}</span>` +
         (key ? `<span class="cgrip" data-cgrip="${key}" title="Spaltenbreite ziehen – Doppelklick setzt zurück"></span>` : '');
     }).join('');
     bar.dataset.sig = sig;
@@ -1566,7 +1592,7 @@ function renderSidebar(){
     <div class="brand"><div class="brand-txt"><span class="brand-name"><span class="logo"><svg viewBox="0 0 24 24">${ICONS.check}</svg></span><span class="brand-wort">Brain<span class="brand-72">72</span></span><span class="brand-app">ToDo</span></span><span class="brand-tag">copyright THS 2026</span></div></div>
     <label class="search ${S.q ? 'on' : ''}">${ic('search')}<input id="sbq" placeholder="Suchen" value="${esc(S.q)}" aria-label="To-dos durchsuchen" enterkeyhint="search">${S.q ? `<button class="sq-x" data-act="q-clear" aria-label="Suche leeren" title="Suche leeren">${ic('close')}</button>` : ''}</label>
     ${S.q.trim() ? `<button class="switch2 sq-sw ${S.qDone ? 'on' : ''}" data-act="q-done" aria-pressed="${S.qDone}"><span class="sw2"></span>auch Erledigte</button>` : ''}
-    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('deadlines', 'cal', 'Termine', cnt.mitFrist)}${tile('planung', 'plan', 'Plan', cnt.planHeute ? minKurz(cnt.planHeute) : '')}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}${tile('analyse', 'chart', 'Analyse', '')}</div>
+    <div class="tiles"><button class="tile tile-new" data-act="assist-capture">${ic('plus')}<span class="tile-l">Neues To-do anlegen</span></button>${tile('inbox', 'inbox', 'Eingang', cnt.inbox)}${tile('deadlines', 'cal', 'Deadlines', cnt.mitFrist)}${tile('planung', 'plan', 'Plan', cnt.planHeute ? minKurz(cnt.planHeute) : '')}${tile('recs', 'spark', 'Empfehlungen', cnt.all)}${tile('analyse', 'chart', 'Analyse', '')}</div>
     <div class="sb-group">${item('done', 'Erledigt', T.filter(t => t.status === 'done').length, ic('done'))}${item('archive', 'Archiv', T.filter(t => t.status === 'archived').length, ic('archive'))}${item('parked', 'Parkliste', T.filter(t => t.status === 'parked').length, ic('pause'))}${item('settings', 'Einstellungen', '', ic('gear'))}</div>
     <div class="sb-foot">
       <div class="sync"><i class="dot" style="--c:${syncCol}"></i><span>${syncTxt}</span>${syncBtn}<span class="ver" title="Laufende Fassung – Einstellungen → Fassung lädt die neueste">${APP_VERSION}</span></div>
@@ -1579,26 +1605,39 @@ const themeSeg = () => `<div class="seg" role="group" aria-label="Darstellung">$
 const MOBIL_MQ = '(max-width:760px), (max-height:520px) and (pointer:coarse)';
 const isMobile = () => matchMedia(MOBIL_MQ).matches;
 // Listenseiten: dort gelten Suche, Spaltenleiste und Tagesauswahl
-const GRUPPEN = { deadlines:['Termine', 'due'] };
+const GRUPPEN = { deadlines:['Deadlines', 'due'] };
 // Laufende Woche im Kalenderraster – steht auf jeder Listenseite an derselben Stelle.
 // Filterzeile mit Beschriftung – auf allen Listenseiten gleich
 function filterLeiste(o = {}){
   // Neben dem Bereich lässt sich auf einen Tag der Woche und – je nach Seite – auf eine Person
   // oder ein Projekt eingrenzen; der Schalter blendet zusätzlich Erledigtes ein.
-  let wahl = '';
-  if (S.view === 'deadlines' || S.view === 'planung'){
-    wahl += auswahlFeld('pers', 'Person', [...PEOPLE].sort(byName));
-    wahl += auswahlFeld('proj', 'Projekt', [...PROJECTS].sort(byName));
+  // Auf Deadlines und Plan gliedert ein Klick auf den Namen die Liste danach (Kategorie = nach Frist).
+  const gliedern = S.view === 'deadlines' || S.view === 'planung';
+  let wahl = auswahlFeld('area', 'Kategorie', AREA_SEG.slice(1).map(([id, name]) => ({ id, name })), 'Alle', gliedern ? 'kat' : null);
+  if (gliedern){
+    wahl += auswahlFeld('pers', 'Person', [...PEOPLE].sort(byName), 'Alle', 'pers');
+    wahl += auswahlFeld('proj', 'Projekt', [...PROJECTS].sort(byName), 'Alle', 'proj');
   }
   const erledigt = o.ohneErledigt ? '' : `<button class="switch2 sw-erl ${S.qDone ? 'on' : ''}" data-act="q-done" aria-pressed="${S.qDone}"><span class="sw2"></span>Erledigte</button>`;
   return `<div class="tb-group filterbar"><span class="tb-label">Filter</span>
-    <div class="toolbar tb-split" style="width:100%"><div class="f-links">${seg('area', AREA_SEG)}${wahl}${erledigt}</div>${o.ohneAnsicht ? '' : seg('allView', VIEW_SEG)}</div></div>`;
+    <div class="toolbar tb-split" style="width:100%"><div class="f-links">${wahl}${erledigt}</div>${o.ohneAnsicht ? '' : seg('allView', VIEW_SEG)}</div></div>`;
 }
-const auswahlFeld = (key, label, liste, alleTxt = 'Alle') => `<label class="fsel ${S[key] !== 'all' ? 'on' : ''}"><span>${label}</span>
-  <select data-fsel="${key}" aria-label="Nach ${label} filtern">
+function auswahlFeld(key, label, liste, alleTxt = 'Alle', art = null){
+  const akt = art && (S.gruppe || 'kat') === art;
+  const auswahl = `<select data-fsel="${key}" aria-label="Nach ${label} filtern">
     <option value="all"${S[key] === 'all' ? ' selected' : ''}>${alleTxt}</option>
     ${liste.map(o => `<option value="${o.id}"${S[key] === o.id ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}
-  </select></label>`;
+  </select>`;
+  return art
+    ? `<span class="fsel fgrp ${S[key] !== 'all' ? 'on' : ''} ${akt ? 'akt' : ''}"><button class="fsel-k" data-act="gruppe" data-v="${art}" aria-pressed="${akt}" title="${akt ? (art === 'kat' ? 'Liste ist nach Frist gegliedert' : 'Gliederung nach ' + label + ' ausschalten') : `Liste nach ${art === 'kat' ? 'Frist' : label} gliedern`}">${label}</button>${auswahl}</span>`
+    : `<label class="fsel ${S[key] !== 'all' ? 'on' : ''}"><span>${label}</span>${auswahl}</label>`;
+}
+// Gliederung der Liste: nach Frist (Standard), nach Person oder nach Projekt – jeweils chronologisch
+function listeGliedern(list){
+  if (S.gruppe === 'pers') return groupList(list, 'person');
+  if (S.gruppe === 'proj') return groupList(list, 'project');
+  return null;
+}
 function wochenKopf(list, tagWahl = false){
   const wStart = addD(THIS_MON, 7 * S.weekOff), wEnd = addD(wStart, 6);
   const spanne = `${wStart.getDate()}. ${wStart.getMonth() !== wEnd.getMonth() ? MON[wStart.getMonth()] + ' ' : ''}– ${wEnd.getDate()}. ${MON[wEnd.getMonth()]}`;
@@ -1623,11 +1662,13 @@ function inAuswahl(t){
     : monthKey(P(t.due.type === 'week' ? t.due.start : t.due.date)) === sel.wert;
   if (sel.art === 'week'){
     const wmo = P(sel.wert), wso = addD(wmo, 6);
-    return t.due.type === 'day' ? (P(t.due.date) >= wmo && P(t.due.date) <= wso) : t.due.type === 'week' ? same(P(t.due.start), wmo) : false;
+    return t.due.type === 'day' ? (P(t.due.date) >= wmo && P(t.due.date) <= wso) : t.due.type === 'week' ? same(P(t.due.start), wmo)
+      : monatsEnde(t.due.month) >= wmo && monatsEnde(t.due.month) <= wso;
   }
-  return t.due.type === 'day' && same(P(t.due.date), P(sel.wert));
+  return t.due.type === 'day' ? same(P(t.due.date), P(sel.wert)) : t.due.type === 'month' && same(monatsEnde(t.due.month), P(sel.wert));
 }
 // Liegt ein Tag ('JJJJ-MM-TT') im gewählten Kalenderzeitraum?
+const monatsEnde = mk => { const s = P(mk + '-01'); return new Date(s.getFullYear(), s.getMonth() + 1, 0); };
 function imZeitraum(tag){
   const sel = S.calSel; if (!sel) return false;
   if (sel.art === 'day') return sel.wert === tag;
@@ -1640,26 +1681,28 @@ function auswahlTitel(){
   if (sel.art === 'week'){ const a = P(sel.wert), b = addD(a, 6); return `KW ${kw(a)} · ${a.getDate()}. ${MON[a.getMonth()]} – ${b.getDate()}. ${MON[b.getMonth()]}`; }
   return longDate(P(sel.wert));
 }
-// Termine: oben der Kalender (Woche oder Monat, wie im Plan), darunter Filter und die Liste nach Frist.
+// Deadlines: oben der Kalender (Woche oder Monat, wie im Plan), darunter Filter und die Liste nach Frist.
 // Ein angeklickter Tag (oder Woche/Monat) steht in der Liste zuerst, danach Überfällig, Heute, Morgen …
 function fristItem(t){
   const d = dueLabel(t);
-  return `<button class="dl-item ${t.status === 'done' ? 'done' : ''} ${d.cls === 'over' ? 'over' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}" title="${esc(t.title)}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span class="dl-it">${esc(t.title)}</span></button>`;
+  return `<button class="dl-item ${t.status === 'done' ? 'done' : ''} ${d.cls === 'over' ? 'over' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}" title="${esc(t.title)}${t.due?.type === 'month' ? ' · Monatsfrist' : ''}"><i class="dot" style="--c:${areaColor(areaOf(t))}"></i><span class="dl-it">${esc(t.title)}</span></button>`;
 }
 const fristChip = (t, vor = '') => `<button class="dl-chip ${t.status === 'done' ? 'done' : ''} ${S.sel === t.id ? 'is-sel' : ''}" data-act="open" data-id="${t.id}" style="--c:${areaColor(areaOf(t))}" title="${esc(t.title)}"><i class="dot"></i>${vor ? `<span class="dl-cv">${vor}</span>` : ''}<span class="dl-it">${esc(t.title)}</span></button>`;
 function termineKalender(vis){
   const mob = isMobile(), sel = S.calSel, heuteIso = iso(TODAY);
-  const amTag = d => vis.filter(t => t.due?.type === 'day' && same(P(t.due.date), d)).sort((a, b) => a.title.localeCompare(b.title, 'de'));
+  // Monatsfristen stehen am letzten Tag ihres Monats, nach den Tagesfristen
+  const amTag = d => vis.filter(t => (t.due?.type === 'day' && same(P(t.due.date), d)) || (t.due?.type === 'month' && same(monatsEnde(t.due.month), d)))
+    .sort((a, b) => (a.due.type === 'month') - (b.due.type === 'month') || a.title.localeCompare(b.title, 'de'));
   const derWoche = ws => vis.filter(t => t.due?.type === 'week' && same(P(t.due.start), ws));
-  const desMonats = mk => vis.filter(t => t.due?.type === 'month' && t.due.month === mk);
   const tagSel = tag => sel?.art === 'day' && sel.wert === tag;
   let titel, raster, band, periode;
+  const ganz = () => { const an = sel?.art === periode.art && sel.wert === periode.wert;
+    return `<button class="dl-ganz ${an ? 'sel' : ''}" data-act="${periode.art === 'week' ? 'cal-week' : 'cal-month'}" data-d="${periode.wert}" aria-pressed="${an}" title="${periode.txt} auswählen"><span>${periode.txt}</span></button>`; };
   if (S.dlArt === 'woche'){
     const ws = S.dlWoche, we = addD(ws, 6);
     titel = `KW ${kw(ws)} <span class="pl-sp">${ws.getDate()}. ${ws.getMonth() !== we.getMonth() ? MON[ws.getMonth()] + ' ' : ''}– ${we.getDate()}. ${MON[we.getMonth()]}</span>`;
     periode = { art:'week', wert:iso(ws), txt:'Ganze Woche' };
-    band = [...derWoche(ws).map(t => fristChip(t, `KW ${kw(ws)}`)),
-      ...[...new Set([monthKey(ws), monthKey(we)])].flatMap(mk => desMonats(mk).map(t => fristChip(t, MON[P(mk + '-01').getMonth()])))];
+    band = derWoche(ws).map(t => fristChip(t, `KW ${kw(ws)}`));
     let spalten = '';
     for (let i = 0; i < 7; i++){
       const d = addD(ws, i), tag = iso(d), di = amTag(d);
@@ -1667,12 +1710,12 @@ function termineKalender(vis){
         <div class="pl-tk"><span class="pl-wd">${WD[d.getDay()]}</span><span class="pl-dn">${d.getDate()}.</span>${di.length ? `<span class="pl-sum">${di.length}</span>` : ''}</div>
         <div class="pl-bloecke">${di.map(fristItem).join('')}</div></div>`;
     }
-    raster = `<div class="pl-woche dl-woche">${spalten}</div>`;
+    raster = `<div class="pl-woche dl-woche">${spalten}${ganz()}</div>`;
   } else {
     const m = S.calMonth, erster = new Date(m.getFullYear(), m.getMonth(), 1), letzter = new Date(m.getFullYear(), m.getMonth() + 1, 0);
     titel = `${MON[m.getMonth()]} ${m.getFullYear()}`;
     periode = { art:'month', wert:monthKey(erster), txt:'Ganzer Monat' };
-    band = desMonats(monthKey(erster)).map(t => fristChip(t, 'Monat'));
+    band = [];
     let wochen = '';
     for (let ws = mondayOf(erster); ws <= letzter; ws = addD(ws, 7)){
       const wb = derWoche(ws);
@@ -1687,14 +1730,12 @@ function termineKalender(vis){
       }
       wochen += `<div class="az-woche">${wband}${zellen}</div>`;
     }
-    raster = `<div class="az-cal pl-monat dl-monat"><div class="az-dow">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(x => `<span>${x}</span>`).join('')}</div>${wochen}</div>`;
+    raster = `<div class="az-cal pl-monat dl-monat"><div class="dl-mgrid"><div class="az-dow">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(x => `<span>${x}</span>`).join('')}</div>${wochen}</div>${ganz()}</div>`;
   }
-  const periodeAn = sel?.art === periode.art && sel.wert === periode.wert;
   const kopf = `<div class="cal-head pl-head"><h2>${titel}</h2>
       ${seg('dlArt', [['woche', 'Woche'], ['monat', 'Monat']]).replace(/data-act="set" data-k="dlArt"/g, 'data-act="dl-art"')}
       <button class="icon-btn" data-act="cal-prev" aria-label="Zurück">${ic('chevL')}</button><button class="btn btn-g btn-s" data-act="cal-today">Heute</button><button class="icon-btn" data-act="cal-next" aria-label="Weiter">${ic('chevR')}</button></div>`;
-  const leiste = `<div class="dl-leiste"><button class="btn ${periodeAn ? 'btn-p' : 'btn-g'} btn-s" data-act="${periode.art === 'week' ? 'cal-week' : 'cal-month'}" data-d="${periode.wert}">${periode.txt}</button>
-      ${sel ? `<button class="btn btn-t btn-s" data-act="cal-clear">${ic('close')}Auswahl aufheben</button>` : ''}<span class="lg-hint">Tag anklicken: steht in der Liste zuerst</span></div>`;
+  const leiste = `<div class="dl-leiste">${sel ? `<button class="btn btn-t btn-s" data-act="cal-clear">${ic('close')}Auswahl aufheben</button>` : ''}<span class="lg-hint">Tag anklicken: steht in der Liste zuerst</span></div>`;
   return `<div class="dl-kal">${kopf}${band.length ? `<div class="dl-band">${band.join('')}</div>` : ''}${raster}${leiste}</div>`;
 }
 function viewDeadlines(){
@@ -1722,7 +1763,7 @@ function viewDeadlines(){
     const groups = [
       ...(sel ? [{ title:auswahlTitel(), cls:'sec-auswahl', items:offen.filter(inAuswahl).sort((a, b) => order[a.due.type] - order[b.due.type] || sortByDue(a, b)), leer:leerTxt }] : []),
       // Liegt heute bzw. morgen in der Auswahl, stehen deren To-dos schon oben – kein „nichts geplant“ darunter
-      ...bucketGroups(rest).map(g => g.leer && sel && imZeitraum(iso(addD(TODAY, g.leer === IMMER.tomorrow ? 1 : 0))) ? { ...g, leer:null } : g)
+      ...(listeGliedern(rest) || bucketGroups(rest).map(g => g.leer && sel && imZeitraum(iso(addD(TODAY, g.leer === IMMER.tomorrow ? 1 : 0))) ? { ...g, leer:null } : g))
     ];
     const leer = !T.length
       ? `<div class="empty-big"><strong>Willkommen bei Brain72.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Leg links im Menü dein erstes To-do an.'}</div>`
@@ -1730,7 +1771,7 @@ function viewDeadlines(){
       : `<div class="empty-big"><strong>Keine offenen To-dos.</strong>Schön aufgeräumt.</div>`;
     body = (groups.some(g => g.items.length) ? groupsHTML(groups) : (fertig.length ? '' : leer)) + erledigtBlock + erledigteTrefferHTML();
   }
-  return header('Termine', esc(longDate(TODAY))) + kalender + filterLeiste() + suchFeld() + projInfo + body;
+  return header('Deadlines', esc(longDate(TODAY))) + kalender + filterLeiste() + suchFeld() + projInfo + body;
 }
 
 /* ============ Plan ============
@@ -1855,7 +1896,7 @@ function viewPlanung(){
       ${seg('planArt', [['woche', 'Woche'], ['monat', 'Monat']]).replace(/data-act="set" data-k="planArt"/g, 'data-act="pl-art"')}
       <button class="icon-btn" data-act="pl-nav" data-v="-1" aria-label="Zurück">${ic('chevL')}</button><button class="btn btn-g btn-s" data-act="pl-heute">Heute</button><button class="icon-btn" data-act="pl-nav" data-v="1" aria-label="Weiter">${ic('chevR')}</button></div>`;
 
-  // To-dos zum Einplanen, gruppiert wie auf der Seite Termine
+  // To-dos zum Einplanen, gruppiert wie auf der Seite Deadlines
   const gd = P(S.planTag);
   const offen = filterBasis(T.filter(isOpen));
   const abHeute = t => plaene(t).filter(p => p.tag >= heuteIso);
@@ -1866,11 +1907,11 @@ function viewPlanung(){
       <span class="pl-grip" title="Ziehen, um einzuplanen">${ic('grip')}</span>
       <i class="dot" style="--c:${areaColor(areaOf(t))}"></i>
       <button class="pl-rt" data-act="open" data-id="${t.id}">${hl(t.title)}</button>
+      <span class="pl-frist ${d.txt ? d.cls : 'leer'}" title="${d.txt ? `Deadline: ${esc(d.txt)}${d.k ? ' · ' + d.k : ''}` : 'Keine Deadline'}">${ic('cal')}${d.txt ? esc(d.txt) : 'ohne'}</span>
       ${ksum ? `<span class="pl-chip" title="${esc(kommend.map(p => `${tagTxt(p.tag)}${p.von ? ' ' + planZeit(p) : ''}: ${minTxt(p.min)}`).join(' · '))}">${minKurz(ksum)} geplant</span>` : ''}
-      <span class="pl-due ${d.cls}">${esc(d.txt)}</span>
       <button class="pl-add" data-act="pl-add" data-id="${t.id}" title="Für ${esc(longDate(gd))} einplanen (ohne Uhrzeit)">${ic('plus')}${plusTxt}</button></div>`;
   };
-  const gruppen = bucketGroups(offen).filter(g => g.items.length);
+  const gruppen = (listeGliedern(offen) || bucketGroups(offen)).filter(g => g.items.length);
   const liste = gruppen.length
     ? gruppen.map(g => `<div class="sec ${g.cls || ''}"><h3>${esc(g.title)}</h3><span class="n">${g.items.length}</span></div><div class="pl-liste">${g.items.map(zeile).join('')}</div>`).join('')
     : `<div class="empty">${S.q.trim() ? `Keine Treffer für „${esc(S.q.trim())}“.` : 'Keine offenen To-dos für diesen Filter.'}</div>`;
@@ -2648,7 +2689,7 @@ function fmtRange(t){ const [s, e] = range(t); return `${s.getDate()}. ${MONS[s.
 /* ============ Tabbar (mobil) ============ */
 function renderTabbar(){
   const tab = (v, icon, l) => `<button class="tab ${S.view === v ? 'on' : ''}" data-act="nav" data-view="${v}">${ic(icon)}${l}</button>`;
-  $('#tabbar').innerHTML = `<button class="tab" data-act="menu">${ic('menu')}Menü</button>` + tab('deadlines', 'cal', 'Termine') +
+  $('#tabbar').innerHTML = `<button class="tab" data-act="menu">${ic('menu')}Menü</button>` + tab('deadlines', 'cal', 'Deadlines') +
     `<button class="fab" data-act="assist-capture" aria-label="To-do diktieren">${ic('mic')}</button>` +
     tab('planung', 'plan', 'Plan') + tab('recs', 'spark', 'Empfehlungen');
 }
@@ -3438,6 +3479,7 @@ document.addEventListener('click', e => {
     case 'e-imp': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.imp = el.dataset.v || null; }); break; }
     case 'e-load': { const t = T.find(x => x.id === id); if (t) editTodo(t, t => { t.load = el.dataset.v || null; }); break; }
     case 'e-sort': { const t = T.find(x => x.id === id); if (t){ editTodo(t, t => { t.status = 'open'; }); toast('Einsortiert'); } break; }
+    case 'gruppe': S.gruppe = S.gruppe === el.dataset.v && el.dataset.v !== 'kat' ? 'kat' : el.dataset.v; renderMain(); break;
     case 'set': {
       const k = el.dataset.k;
       S[k] = el.dataset.v;
@@ -3757,7 +3799,7 @@ document.addEventListener('change', e => {
     return;
   }
   const fs = e.target.dataset?.fsel;
-  if (fs){ S[fs] = e.target.value; if (fs === 'pers' || fs === 'proj') S.sel = null; render(); return; }
+  if (fs){ S[fs] = e.target.value; if (fs === 'pers' || fs === 'proj' || fs === 'area') S.sel = null; render(); return; }
   const f = e.target.dataset?.ef; if (!f) return;
   const t = T.find(x => x.id === e.target.dataset.id); if (!t) return;
   if (f === 'date'){ editTodo(t, t => { t.due = e.target.value ? day(e.target.value) : null; }); return; }
