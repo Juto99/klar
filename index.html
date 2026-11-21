@@ -995,7 +995,7 @@ mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
 
 <script>
 'use strict';
-const APP_VERSION = 'v77';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
+const APP_VERSION = 'v78';   // bei jeder Veröffentlichung zusammen mit sw.js erhöhen
 
 /* ============ Datum ============ */
 const DAY = 864e5;
@@ -1760,16 +1760,20 @@ function viewDeadlines(){
     const order = { day:0, week:1, month:2 };
     const rest = sel ? offen.filter(t => !inAuswahl(t)) : offen;
     const leerTxt = !sel ? '' : sel.art === 'month' ? 'In diesem Monat ist nichts fällig.' : sel.art === 'week' ? 'In dieser Woche ist nichts fällig.' : 'An diesem Tag ist nichts fällig.';
+    // Nach Person oder Projekt gegliedert: Erledigtes steht in der jeweiligen Gruppe (offen zuerst, dann erledigt),
+    // nicht gesammelt am Ende – ein To-do mit zwei Personen erscheint bei beiden.
+    const gegliedert = S.gruppe === 'pers' || S.gruppe === 'proj';
+    const mitErledigt = list => (listeGliedern(list) || []).map(g => ({ ...g, items:[...g.items].sort((a, b) => (a.status === 'done') - (b.status === 'done')) }));
     const groups = [
       ...(sel ? [{ title:auswahlTitel(), cls:'sec-auswahl', items:offen.filter(inAuswahl).sort((a, b) => order[a.due.type] - order[b.due.type] || sortByDue(a, b)), leer:leerTxt }] : []),
       // Liegt heute bzw. morgen in der Auswahl, stehen deren To-dos schon oben – kein „nichts geplant“ darunter
-      ...(listeGliedern(rest) || bucketGroups(rest).map(g => g.leer && sel && imZeitraum(iso(addD(TODAY, g.leer === IMMER.tomorrow ? 1 : 0))) ? { ...g, leer:null } : g))
+      ...(gegliedert ? mitErledigt([...rest, ...fertig]) : bucketGroups(rest).map(g => g.leer && sel && imZeitraum(iso(addD(TODAY, g.leer === IMMER.tomorrow ? 1 : 0))) ? { ...g, leer:null } : g))
     ];
     const leer = !T.length
       ? `<div class="empty-big"><strong>Willkommen bei Brain72.</strong>${mob ? 'Tipp unten auf das Mikrofon und sprich dein erstes To-do.' : 'Leg links im Menü dein erstes To-do an.'}</div>`
       : S.q.trim() ? `<div class="empty-big"><strong>Keine Treffer für „${esc(S.q.trim())}“.</strong>Suchbegriff ändern oder leeren.</div>`
       : `<div class="empty-big"><strong>Keine offenen To-dos.</strong>Schön aufgeräumt.</div>`;
-    body = (groups.some(g => g.items.length) ? groupsHTML(groups) : (fertig.length ? '' : leer)) + erledigtBlock + erledigteTrefferHTML();
+    body = (groups.some(g => g.items.length) ? groupsHTML(groups, { rowOpts: t => t.status === 'done' ? { noPark:true } : {} }) : (fertig.length ? '' : leer)) + (gegliedert ? '' : erledigtBlock) + erledigteTrefferHTML();
   }
   return header('Deadlines', esc(longDate(TODAY))) + kalender + filterLeiste() + suchFeld() + projInfo + body;
 }
